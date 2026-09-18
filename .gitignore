@@ -1,3 +1,4 @@
 .DS_Store
 .openai/*.local.json
 *.log
+dist/

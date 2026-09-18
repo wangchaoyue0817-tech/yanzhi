@@ -7,26 +7,29 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const icon = name => `<span class="icon-glyph" aria-hidden="true" style="--icon: url('assets/icons/${ICON_FILES[name] || 'handbag.svg'}')"></span>`;
 const escaped = s => s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let skillTimer, bannerTimer, toastTimer, messageTimer;
+let skillDrag=null, cancelSkillGesture=()=>{};
+const skillBatchSize=5;
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,3400);}
 function suspend(ms=14000){state.holdUntil=Date.now()+ms;}
 function blocked(){return state.paused||reduceMotion.matches||document.hidden||state.tab!=='ai'||state.busy||state.pointer||$('skillPopup').classList.contains('show')||!$('menuPanel').hidden||!$('conversationPanel').hidden||document.activeElement===$('inputField');}
-function offset(i){let d=(i-state.center+skills.length)%skills.length;if(d>skills.length/2)d-=skills.length;return d;}
+function offset(i,center=state.center){let d=((i-center)%skills.length+skills.length)%skills.length;if(d>skills.length/2)d-=skills.length;return d;}
 function createCards(){
  $('skillGrid').innerHTML=skills.map((s,i)=>`<button class="skill-card" type="button" data-index="${i}" aria-label="去鉴定：${s.label}"><span class="skill-card-icon">${icon(s.label)}</span><span class="skill-card-label${s.label.length>4?' long':''}">${s.label}</span><span class="skill-action">去鉴定</span></button>`).join('');
  positionCards(true);
 }
 function positionCards(immediate=false){
- const w=$('skillCarousel').clientWidth,step=w*.198;
+ const w=$('skillCarousel').clientWidth,step=w*.198,dragging=skillDrag?.axis==='x';
+ const center=state.center-(dragging&&step?skillDrag.dx/step:0);
  document.querySelectorAll('#skillGrid .skill-card').forEach((el,i)=>{
-  const d=offset(i),a=Math.abs(d),visible=a<=2;
-  if(immediate)el.style.transition='none';else el.style.transition='';
-  el.classList.toggle('center',d===0);el.dataset.light=d===0?'gold':(d<0?'blue':(d===1?'cyan':'violet')); el.classList.toggle('selected',state.selected===skills[i].label);
+  const d=offset(i,center),a=Math.abs(d),visible=dragging?a<3:a<=2,isCenter=a<.5;
+  if(immediate||dragging)el.style.transition='none';else el.style.transition='';
+  el.classList.toggle('center',isCenter);el.dataset.light=isCenter?'gold':(d<0?'blue':(d<1.5?'cyan':'violet')); el.classList.toggle('selected',state.selected===skills[i].label);
   el.style.transform=`translateX(calc(-50% + ${d*step}px)) translateY(${a*7}px) rotate(${d*3.4}deg) scale(${1-a*.08})`;
-  el.style.opacity=visible?(1-a*.025):0;el.style.zIndex=10-a;el.style.pointerEvents=visible?'auto':'none';el.tabIndex=visible?0:-1;el.setAttribute('aria-hidden',String(!visible));el.setAttribute('aria-pressed',String(state.selected===skills[i].label));
+  el.style.opacity=visible?(1-a*.025)*(dragging?Math.min(1,3-a):1):0;el.style.zIndex=Math.round(10-a);el.style.pointerEvents=visible?'auto':'none';el.tabIndex=visible?0:-1;el.setAttribute('aria-hidden',String(!visible));el.setAttribute('aria-pressed',String(state.selected===skills[i].label));
   el.querySelector('.skill-action').textContent='去鉴定';
  });
  $('skillMeter').style.transform=`translateX(${state.center/(skills.length-1)*34}px)`;
- if(immediate) requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('#skillGrid .skill-card').forEach(el=>el.style.transition='')));
+ if(immediate&&!dragging) requestAnimationFrame(()=>requestAnimationFrame(()=>{if(skillDrag?.axis!=='x')document.querySelectorAll('#skillGrid .skill-card').forEach(el=>el.style.transition='');}));
 }
 function moveSkill(dir,manual=false){state.center=(state.center+dir+skills.length)%skills.length;positionCards();if(manual)suspend();}
 function renderPopup(){
@@ -43,6 +46,7 @@ function selectSkill(label){if(state.tab!=='ai')setTab('ai');state.selected=labe
 function openPopup(){state.focusReturn=document.activeElement;$('menuPanel').hidden=true;renderPopup();$('skillPopup').classList.add('show');$('sheetMask').classList.add('show');$('popupClose').focus();}
 function closePopup(){const wasOpen=$('skillPopup').classList.contains('show')||$('agreeSheet').classList.contains('show');$('skillPopup').classList.remove('show');$('sheetMask').classList.remove('show');$('agreeSheet').classList.remove('show');if(wasOpen&&state.focusReturn?.isConnected)state.focusReturn.focus();if(wasOpen)suspend();}
 function setTab(tab){
+ cancelSkillGesture();
  state.tab=tab;$('aiHome').hidden=tab!=='ai';$('expertHome').hidden=tab!=='expert';$('app').classList.toggle('is-expert',tab==='expert');$('conversationPanel').hidden=true;$('menuPanel').hidden=true;
  document.querySelectorAll('.home-mode-tab-item').forEach(el=>{el.classList.toggle('active',el.dataset.tab===tab);el.setAttribute('aria-selected',String(el.dataset.tab===tab));});
  $('pageScroll').scrollTop=0;closePopup();if(tab==='ai')positionCards(true);
@@ -50,6 +54,62 @@ function setTab(tab){
 }
 function setBanner(i,manual=false){state.banner=(i+3)%3;$('bannerTrack').style.transform=`translateX(-${state.banner*100}%)`;document.querySelectorAll('[data-page]').forEach((el,j)=>{el.classList.toggle('active',j===state.banner);el.setAttribute('aria-current',String(j===state.banner));});document.querySelectorAll('[data-banner]').forEach((el,j)=>{el.tabIndex=j===state.banner?0:-1;el.setAttribute('aria-hidden',String(j!==state.banner));});if(manual)state.bannerHold=Date.now()+18000;}
 function toggleMotion(){state.paused=!state.paused;document.body.classList.toggle('motion-paused',state.paused);$('motionControl').textContent=state.paused?'▷':'Ⅱ';$('motionControl').setAttribute('aria-label',state.paused?'继续自动播放':'暂停自动播放');$('motionControl').title=state.paused?'继续自动播放':'暂停自动播放';}
+function bindSkillSwipe(el){
+ let suppressUntil=0,hovering=false;
+ const finish=(cancelled=false,e)=>{
+  const drag=skillDrag;if(!drag||(e&&e.pointerId!==drag.id))return;
+  skillDrag=null;el.classList.remove('is-dragging');
+  if(el.hasPointerCapture(drag.id))el.releasePointerCapture(drag.id);
+  state.pointer=hovering&&document.hasFocus();
+  if(drag.axis){suppressUntil=Date.now()+450;}
+  if(drag.axis==='x'){
+   let steps=0;
+   if(!cancelled){
+    if(e)drag.dx=Math.max(-skillBatchSize*drag.step,Math.min(skillBatchSize*drag.step,drag.base+e.clientX-drag.x));
+    steps=Math.round(-drag.dx/drag.step);
+    if(!steps&&Math.abs(drag.dx)>=Math.min(24,drag.step*.35))steps=drag.dx<0?1:-1;
+    steps=Math.max(-skillBatchSize,Math.min(skillBatchSize,steps));
+   }
+   if(steps)moveSkill(steps,true);else positionCards();
+   if(!cancelled&&el.contains(document.activeElement))el.focus({preventScroll:true});
+  }
+  suspend();
+ };
+ cancelSkillGesture=()=>{hovering=false;finish(true);state.pointer=false;};
+ el.addEventListener('pointerdown',e=>{
+  if(!e.isPrimary||e.button!==0||skillDrag)return;
+  const step=el.clientWidth*.198;if(!step)return;
+  skillDrag={id:e.pointerId,x:e.clientX,y:e.clientY,step,axis:null,dx:0,base:0};
+  state.pointer=true;suspend();
+ });
+ el.addEventListener('pointermove',e=>{
+  const drag=skillDrag;if(!drag||e.pointerId!==drag.id)return;
+  const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+  if(!drag.axis&&Math.max(Math.abs(dx),Math.abs(dy))>8){
+   if(Math.abs(dy)>=Math.abs(dx)){drag.axis='y';return;}
+   // Pick up an in-flight automatic transition from its current visual position.
+   const card=$('skillGrid').children[state.center],style=getComputedStyle(card);
+   const current=new DOMMatrixReadOnly(style.transform);
+   drag.base=current.m41+parseFloat(style.width)/2;
+   drag.axis='x';el.classList.add('is-dragging');el.setPointerCapture(e.pointerId);
+  }
+  if(drag.axis!=='x')return;
+  if(e.cancelable)e.preventDefault();
+  drag.dx=Math.max(-skillBatchSize*drag.step,Math.min(skillBatchSize*drag.step,drag.base+dx));
+  positionCards();
+ },{passive:false});
+ window.addEventListener('pointerup',e=>finish(false,e));
+ window.addEventListener('pointercancel',e=>finish(true,e));
+ el.addEventListener('lostpointercapture',e=>{if(e.target===el&&!el.hasPointerCapture(e.pointerId))finish(true,e);});
+ el.addEventListener('click',e=>{if(Date.now()<suppressUntil){e.preventDefault();e.stopImmediatePropagation();}},true);
+ el.addEventListener('dragstart',e=>e.preventDefault());
+ el.addEventListener('mouseenter',()=>{if(matchMedia('(hover:hover)').matches){hovering=true;state.pointer=true;}});
+ el.addEventListener('mouseleave',()=>{hovering=false;if(!skillDrag)state.pointer=false;});
+ el.addEventListener('focusout',e=>{if(skillDrag&&!el.contains(e.relatedTarget))cancelSkillGesture();});
+ window.addEventListener('blur',cancelSkillGesture);
+ window.addEventListener('pagehide',cancelSkillGesture);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)cancelSkillGesture();});
+}
 function bindSwipe(el,onSwipe){let start=null,moved=false,suppressUntil=0;
  el.addEventListener('pointerdown',e=>{if(e.button&&e.button!==0)return;start={x:e.clientX,y:e.clientY,id:e.pointerId};moved=false;state.pointer=true;suspend();});
  el.addEventListener('pointermove',e=>{if(!start)return;const dx=e.clientX-start.x,dy=e.clientY-start.y;if(Math.abs(dx)>9&&Math.abs(dx)>Math.abs(dy)){moved=true;if(!el.hasPointerCapture(e.pointerId))el.setPointerCapture(e.pointerId);}});
@@ -79,9 +139,9 @@ function sendMessage(){if(state.busy)return;const input=$('inputField'),value=in
 }
 createCards();createTicker();renderPopup();updateSkillBtn();setBanner(0);requestAnimationFrame(tick);
 $('skillGrid').onclick=e=>{const card=e.target.closest('[data-index]');if(card)selectSkill(skills[Number(card.dataset.index)].label);};
-$('prevSkill').onclick=()=>moveSkill(-1,true);$('nextSkill').onclick=()=>moveSkill(1,true);$('motionControl').onclick=toggleMotion;
-$('skillCarousel').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();moveSkill(e.key==='ArrowLeft'?-1:1,true);}});
-bindSwipe($('skillCarousel'),dir=>moveSkill(dir,true));bindSwipe($('bannerViewport'),dir=>setBanner(state.banner+dir,true));
+$('prevSkill').onclick=()=>moveSkill(-skillBatchSize,true);$('nextSkill').onclick=()=>moveSkill(skillBatchSize,true);$('motionControl').onclick=toggleMotion;
+$('skillCarousel').addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();cancelSkillGesture();moveSkill(e.key==='ArrowLeft'?-skillBatchSize:skillBatchSize,true);}});
+bindSkillSwipe($('skillCarousel'));bindSwipe($('bannerViewport'),dir=>setBanner(state.banner+dir,true));
 $('bannerDots').onclick=e=>{const b=e.target.closest('[data-page]');if(b)setBanner(Number(b.dataset.page),true);};
 $('bannerTrack').onclick=e=>{const b=e.target.closest('[data-banner]');if(!b)return;const n=Number(b.dataset.banner);if(n===0)openPopup();else if(n===1)setTab('expert');else selectSkill('估价格');};
 $('skillList').onclick=e=>{const item=e.target.closest('[data-skill]');if(item)selectSkill(item.dataset.skill);};$('skillBtn').onclick=openPopup;$('popupClose').onclick=closePopup;$('sheetMask').onclick=closePopup;

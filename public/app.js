@@ -4,7 +4,7 @@ const order = ['鉴腕表','鉴潮服','鉴包袋','鉴鞋靴','鉴美妆','鉴�
 const skills = order.map(label => ALL.find(s => s.label === label));
 const state = { center:2, selected:'', tab:'ai', banner:0, paused:false, busy:false, pointer:false, holdUntil:0, bannerHold:0, photos:[], focusReturn:null };
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
-const icon = name => ICONS[name] || ICONS.鉴包袋;
+const icon = name => `<span class="icon-glyph" aria-hidden="true" style="--icon: url('assets/icons/${ICON_FILES[name] || 'handbag.svg'}')"></span>`;
 const escaped = s => s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let skillTimer, bannerTimer, toastTimer, messageTimer;
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,3400);}
@@ -20,9 +20,9 @@ function positionCards(immediate=false){
  document.querySelectorAll('#skillGrid .skill-card').forEach((el,i)=>{
   const d=offset(i),a=Math.abs(d),visible=a<=2;
   if(immediate)el.style.transition='none';else el.style.transition='';
-  el.classList.toggle('center',d===0);el.classList.toggle('selected',state.selected===skills[i].label);
+  el.classList.toggle('center',d===0);el.dataset.light=d===0?'gold':(d<0?'blue':(d===1?'cyan':'violet')); el.classList.toggle('selected',state.selected===skills[i].label);
   el.style.transform=`translateX(calc(-50% + ${d*step}px)) translateY(${a*7}px) rotate(${d*3.4}deg) scale(${1-a*.08})`;
-  el.style.opacity=visible?(1-a*.12):0;el.style.zIndex=10-a;el.style.pointerEvents=visible?'auto':'none';el.tabIndex=visible?0:-1;el.setAttribute('aria-hidden',String(!visible));el.setAttribute('aria-pressed',String(state.selected===skills[i].label));
+  el.style.opacity=visible?(1-a*.025):0;el.style.zIndex=10-a;el.style.pointerEvents=visible?'auto':'none';el.tabIndex=visible?0:-1;el.setAttribute('aria-hidden',String(!visible));el.setAttribute('aria-pressed',String(state.selected===skills[i].label));
   el.querySelector('.skill-action').innerHTML=state.selected===skills[i].label?'已开启<b>✓</b>':'开启<b>↗</b>';
  });
  $('skillMeter').style.transform=`translateX(${state.center/(skills.length-1)*34}px)`;
@@ -39,7 +39,7 @@ function updateSkillBtn(){
  else{btn.className='toolbar-btn';btn.innerHTML=initialSkillBtn;}
  $('inputTip').textContent=(HOT.find(s=>s.label===state.selected)||{}).tip||'本服务由AI提供，请注意甄别';
 }
-function selectSkill(label){state.selected=label;state.center=skills.findIndex(s=>s.label===label);positionCards();updateSkillBtn();renderPopup();closePopup();suspend(20000);toast(`已开启${label}，可上传照片或输入问题`);}
+function selectSkill(label){if(state.tab!=='ai')setTab('ai');state.selected=label;state.center=skills.findIndex(s=>s.label===label);positionCards();updateSkillBtn();renderPopup();closePopup();suspend(20000);toast(`已开启${label}，可上传照片或输入问题`);}
 function openPopup(){state.focusReturn=document.activeElement;$('menuPanel').hidden=true;renderPopup();$('skillPopup').classList.add('show');$('sheetMask').classList.add('show');$('popupClose').focus();}
 function closePopup(){const wasOpen=$('skillPopup').classList.contains('show')||$('agreeSheet').classList.contains('show');$('skillPopup').classList.remove('show');$('sheetMask').classList.remove('show');$('agreeSheet').classList.remove('show');if(wasOpen&&state.focusReturn?.isConnected)state.focusReturn.focus();if(wasOpen)suspend();}
 function setTab(tab){
@@ -89,7 +89,7 @@ $('ticker').onclick=e=>{const b=e.target.closest('[data-question]');if(!b)return
 $('inputField').addEventListener('input',syncInput);$('inputField').addEventListener('focus',()=>{syncInput();suspend();});$('inputField').addEventListener('blur',syncInput);$('inputField').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();sendMessage();}});
 $('sendBtn').onclick=sendMessage;$('uploadBtn').onclick=()=>$('photoInput').click();$('photoInput').onchange=e=>{for(const file of e.target.files){if(!file.type.startsWith('image/')){toast('请选择图片文件');continue;}if(file.size>12*1024*1024){toast('单张照片请小于 12MB');continue;}if(state.photos.length>=3){toast('最多选择 3 张照片');break;}state.photos.push({url:URL.createObjectURL(file),name:file.name});}e.target.value='';renderPhotos();suspend();};$('attachmentTray').onclick=e=>{const b=e.target.closest('[data-remove]');if(b){const i=Number(b.dataset.remove);URL.revokeObjectURL(state.photos[i].url);state.photos.splice(i,1);renderPhotos();}};
 $('closeConversation').onclick=()=>{$('conversationPanel').hidden=true;suspend();};
-const menu=document.querySelector('.icon-menu');menu.onclick=e=>{e.stopPropagation();$('menuPanel').hidden=!$('menuPanel').hidden;};$('menuSkills').onclick=openPopup;$('menuMotion').onclick=()=>{toggleMotion();$('menuPanel').hidden=true;};$('newConversation').onclick=()=>{clearTimeout(messageTimer);state.busy=false;$('messages').replaceChildren();$('conversationPanel').hidden=true;$('menuPanel').hidden=true;setTab('ai');toast('已开始新的咨询');};document.addEventListener('click',e=>{if(!e.target.closest('.menu-panel')&&!e.target.closest('.icon-menu'))$('menuPanel').hidden=true;});
+const menu=document.querySelector('.icon-menu');menu.onclick=e=>{e.stopPropagation();$('menuPanel').hidden=!$('menuPanel').hidden;};$('menuSkills').onclick=openPopup;$('menuMotion').onclick=()=>{toggleMotion();$('menuPanel').hidden=true;};$('newConversation').onclick=()=>{clearTimeout(messageTimer);state.busy=false;$('messages').replaceChildren();$('inputField').value='';state.photos.forEach(p=>URL.revokeObjectURL(p.url));state.photos=[];renderPhotos();$('conversationPanel').hidden=true;$('menuPanel').hidden=true;setTab('ai');toast('已开始新的咨询');};document.addEventListener('click',e=>{if(!e.target.closest('.menu-panel')&&!e.target.closest('.icon-menu'))$('menuPanel').hidden=true;});
 // Retain original expert interactions and content. No payment or real order is submitted.
 let agreed=false;$('agreeRow').onclick=e=>{if(e.target.id==='agreeLink'){state.focusReturn=document.activeElement;$('agreeSheet').classList.add('show');$('sheetMask').classList.add('show');return;}agreed=!agreed;$('agreeCheck').classList.toggle('on',agreed);$('agreeCheck').textContent=agreed?'✓':'';};$('expertCta').onclick=()=>{if(!agreed){$('agreeCheck').classList.add('on');setTimeout(()=>{if(!agreed)$('agreeCheck').classList.remove('on');},1450);toast('请先阅读并勾选服务协议');}else toast('这是首页演示，专家下单服务尚未接入');};
 document.querySelectorAll('.home-mode-tab-item').forEach(el=>el.onclick=()=>setTab(el.dataset.tab));

@@ -23,4 +23,6 @@
 ## 维护
 
 `public/original.css` 为原始样式；`public/data.js` 为原技能列表和 SVG 图标。
-`public/app.css`、`public/app.js` 为新版首页样式和交互；banner 图位于 `public/assets/banner-ring.png`。
+`public/app.css` 为基础布局，`public/spectral.css` 为与专家页统一的蓝紫、青蓝、暖金视觉，`public/app.js` 为交互。三张 Banner 与欢迎区光轨位于 `public/assets/*.webp`。
+
+`public/assets/icon-map.js` 映射全部 20 项技能。图标采用 Phosphor 与 Tabler 官方 SVG，来源和 MIT 许可位于 `public/assets/icons/`。

@@ -1,37 +1,40 @@
-# Design QA — 图灵鉴X
+# Design QA — 图灵鉴X · Spectral revision
 
-**Comparison target**
-- Approved direction: latest single-row slender-card mock, exec-0f95e188-361b-4a6d-be83-386852bfd150.png (853 × 1844).
-- User corrections supersede image: exactly five visible categories, three compact question rows, retain original expert page.
-- Browser implementation: http://127.0.0.1:8796/, Codex in-app browser, 390 × 844 CSS viewport. Reference and implementation emitted together in the final visual comparison tool result. Reference has the same portrait ratio; visually normalized to phone width. UI capture at 1x, reference approx 2.19x.
-- Also checked 320 × 667 and desktop framed layout. On short screens content scrolls vertically; composer stays visible. No horizontal page overflow.
+## Comparison target
+- User-approved reference: exec-6175bc2a-c9df-4597-8979-58b569f8594f.png, 853 × 1844.
+- Final implementation and reference emitted together in the browser QA result, normalized to the same portrait ratio.
+- User constraints: one shallow arc row of five slender category cards, all skills cycle; blue, violet, cyan and warm gold lighting; original Expert tab retained; three compact moving topic rows; animated composer perimeter.
+- Browser viewport: 390 × 844. Additional small-screen review: 320 × 667. No horizontal page overflow. Short-screen main content scrolls while the composer remains visible.
 
-**Findings and repairs**
-- [P1, fixed] WELCOME gradient initially appeared as a rectangular fill because CSS background shorthand reset clipping. Restored text clipping explicitly. Verified with final screenshot and computed background-clip: text.
-- [P2, fixed] Source SVG viewBoxes included excess inset; increased icon container optical size so category visuals are readable.
-- [P2, fixed] Restored original expert navigation metrics/background and original expert content. Script comparison confirms expert HTML identical; original stylesheet preserved verbatim.
-- [P3] Category icons intentionally reuse supplied original SVGs, rather than the generated mock's dimensional icon approximations. Banner uses generated raster artwork. No placeholder artwork.
+## Visual result
+- Deep indigo background follows the Expert page; blue-violet CTA gradient with cyan glass edges and warm gold focal points.
+- WELCOME has a slow gold-to-lilac text gradient. The welcome orbit uses dedicated generated artwork.
+- Five visible cards use distinct official vector icons, optical edge reflections and a highlighted center card. No two-row grid.
+- Three generated optical Banner artworks use consistent indigo, cyan and gold lighting. WebP assets total approximately 353 KiB.
+- Three compact topic rows have alternating cyan/gold points and opposite slow motion in the middle row.
+- Composer uses a thin rotating violet/cyan border; controls use the same blue-violet treatment.
+- Deliberate adaptation: crisp licensed line icons replace the mockup's illustrative symbols; small-screen text and spacings prioritize readable, functional controls.
 
-**Fidelity surfaces**
-- Typography: PingFang/system sans serif, compact labels; gold/lilac welcome gradient preserved. Less promotional, more compact hierarchy than image, following request for breathing space.
-- Spacing/layout: one row of five narrow cards, shallow arc; central focus, side cards at lower scale; banner below; three question rows; persistent composer. No two-row card grid.
-- Colors/tokens: #050810 deep navy, #8B5CF6 and #C9A0FF violet family, #F5C542 gold. Dimmed rims and glow intentionally reduce density.
-- Assets: original supplied category SVGs; generated optical ring banner present, sharp and correctly cropped. No external runtime/CDN dependency.
-- Copy: no '探索鉴定技能', '全部技能', or '你还可以这样问' headings; full list available via original '开启技能'. Banner copy is illustrative. Demo response explicitly states no actual AI/order integration.
+## Findings repaired
+- Welcome decoration repositioned so both cyan and gold points remain visible on the 390-pixel layout.
+- Banner pagination's overlapping hit regions corrected; each control now selects its own slide.
+- Pause control now also pauses the new welcome and composer animations.
+- Selecting an AI skill from the Expert menu switches to the AI surface.
+- New consultation clears the draft and pending local photos.
 
-**Interaction verification**
-- Manually advanced 20 times through the browser: all 20 distinct skills visited, wrapping to start; five card faces exposed at any time.
-- Card selection visibly marks selected skill and updates composer capsule; clear control works.
-- All-skills popup displays 20 original items and closes correctly.
-- Banner pagination tested through first and third pages; current accessible slide updates.
-- Consultation input/send tested; user message and honest demo response render.
-- Local image picker tested using banner artwork; thumbnail appears and removal works. No image transmitted.
-- Expert tab switched and visually inspected; original content and agreement retained.
-- Pause/resume control and reduced-motion behavior implemented. Swipe uses pointer distance threshold to avoid accidental selection.
-- Console error/warning logs checked: empty.
-- Original expert markup SHA256: ec1e3ff76ee4314245febd807bece5e8662129cf19a746912904ab88f61e9603.
+## Verification
+- Iterated all 20 categories via browser controls: 20 distinct categories, always five exposed cards, wraps correctly.
+- Observed automatic category and Banner changes after reload; three topic transforms advance.
+- All three Banner artworks inspected; all three pagination states verified. The value Banner selects the estimate skill.
+- Full skill popup inspected; selection and clear action update the composer.
+- Clicking a topic fills the input and updates its character count. Send displays the submitted question and an explicit demo-only response.
+- Local photo picker/removal had been verified in the previous revision; underlying upload behavior is retained.
+- Expert tab inspected visually. Expert section HTML (3302 characters) and original.css (28962 characters) compare identical to the user-provided source.
+- All local resources exist; all 20 icon mappings are distinct and SVGs parse correctly. JavaScript syntax check passes.
+- Browser error and warning logs: empty.
+- Original Expert markup SHA256: ec1e3ff76ee4314245febd807bece5e8662129cf19a746912904ab88f61e9603.
 
-**Limits**
-Browser viewport testing is not a physical WeChat-device test. This is a static hosted webpage demo, not a deployed WeChat mini-program. Real AI appraisal, billing, and expert order flows are out of scope.
+## Limits
+This is a hosted interactive webpage demo, not a published WeChat mini-program. Real AI appraisal, expert ordering and payment are not connected. Responsive browser checks do not replace physical WeChat-device testing.
 
 final result: passed

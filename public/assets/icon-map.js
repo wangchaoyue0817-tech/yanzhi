@@ -1,0 +1,22 @@
+const ICON_FILES = {
+  "鉴腕表": "watch.svg",
+  "鉴潮服": "t-shirt.svg",
+  "鉴包袋": "handbag.svg",
+  "鉴鞋靴": "sneaker.svg",
+  "鉴美妆": "tabler-perfume.svg",
+  "鉴皮肤": "scan-smiley.svg",
+  "鉴穿搭": "coat-hanger.svg",
+  "鉴配饰": "sunglasses.svg",
+  "鉴酒水": "wine.svg",
+  "鉴餐品": "fork-knife.svg",
+  "测人格": "brain.svg",
+  "鉴卡牌": "cards.svg",
+  "鉴木作手串": "tree.svg",
+  "鉴藏币": "coin.svg",
+  "鉴玉石": "diamond.svg",
+  "鉴瓷器": "tabler-teapot.svg",
+  "鉴邮票": "tabler-email-stamp.svg",
+  "估价格": "tag.svg",
+  "OCR文字提取": "text-aa.svg",
+  "瑕疵检测": "magnifying-glass-plus.svg"
+};

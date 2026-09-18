@@ -1,40 +1,28 @@
-# Design QA — 图灵鉴X · Spectral revision
+# Design QA — 第 3 版批注修订
 
-## Comparison target
-- User-approved reference: exec-6175bc2a-c9df-4597-8979-58b569f8594f.png, 853 × 1844.
-- Final implementation and reference emitted together in the browser QA result, normalized to the same portrait ratio.
-- User constraints: one shallow arc row of five slender category cards, all skills cycle; blue, violet, cyan and warm gold lighting; original Expert tab retained; three compact moving topic rows; animated composer perimeter.
-- Browser viewport: 390 × 844. Additional small-screen review: 320 × 667. No horizontal page overflow. Short-screen main content scrolls while the composer remains visible.
+## 范围
+依据用户的 7 条页面批注修订第 2 版。专家页本轮获用户明确授权调整文案与其他设计，旧版“专家 HTML 不变”的限制已被本轮要求取代。original.css 原始文件仍保留不变。
 
-## Visual result
-- Deep indigo background follows the Expert page; blue-violet CTA gradient with cyan glass edges and warm gold focal points.
-- WELCOME has a slow gold-to-lilac text gradient. The welcome orbit uses dedicated generated artwork.
-- Five visible cards use distinct official vector icons, optical edge reflections and a highlighted center card. No two-row grid.
-- Three generated optical Banner artworks use consistent indigo, cyan and gold lighting. WebP assets total approximately 353 KiB.
-- Three compact topic rows have alternating cyan/gold points and opposite slow motion in the middle row.
-- Composer uses a thin rotating violet/cyan border; controls use the same blue-violet treatment.
-- Deliberate adaptation: crisp licensed line icons replace the mockup's illustrative symbols; small-screen text and spacings prioritize readable, functional controls.
+## 逐项检查
+1. 全部 20 个 `.skill-action` 文本均为“去鉴定”；点选后仍保持，选择与取消流程有效。
+2. 话题行高 26→24px，行距 7→4px，整体高度 92→80px。
+3. 发送按钮采用细线上箭头和 34px 蓝紫圆角方形底；箭头无旧旋转。可正常发送并显示明确的演示回复。
+4. AI 与专家模式使用同一组导航 CSS。浏览器计算值验证：两项外宽78px、高28px、12px字体、14px圆角、相同渐变与边框阴影；移除旧专家模式红点。
+5. 专家两行标题与用户文案一致，仅“线上鉴定”有彩色渐变。标题与原光学轨道分区，描述、标签、CTA、数据及协议重新安排。
+6. 取消技能改为20px圆形按钮、13px细线SVG叉号。点击能清空选择且不误开技能列表。
+7. 390×844 视口中 Banner 顶部由426px上移至410px，话题顶部549→527px，输入区顶部663→616px。
 
-## Findings repaired
-- Welcome decoration repositioned so both cyan and gold points remain visible on the 390-pixel layout.
-- Banner pagination's overlapping hit regions corrected; each control now selects its own slide.
-- Pause control now also pauses the new welcome and composer animations.
-- Selecting an AI skill from the Expert menu switches to the AI surface.
-- New consultation clears the draft and pending local photos.
+## 验证
+- 390×844 手机完整首屏检查，320×667 窄屏检查，884×863 桌面手机框预览检查。
+- 窄屏无页面横向溢出，仍展示五张卡片；内容可纵向滚动，输入区可见。
+- 专家标题在320px宽度下无截断/横向溢出。
+- 技能选择、取消、文本发送均通过浏览器操作检查。
+- 用项目自有 Banner 图测试本地图片预览及移除；无外部图片上传。
+- 输入区随本轮布局上移后，会话面板用 ResizeObserver 对齐其上沿。无附件、添加附件、移除附件三种情况，浏览器测得面板下沿与输入区上沿相等。
+- 20项轮播完整遍历、三张Banner分页及自动轮播在第2版已验证，本版保留轮播逻辑。
+- JavaScript语法、资源引用、HTML ID 唯一性与构建检查通过；浏览器错误/警告日志为空。
 
-## Verification
-- Iterated all 20 categories via browser controls: 20 distinct categories, always five exposed cards, wraps correctly.
-- Observed automatic category and Banner changes after reload; three topic transforms advance.
-- All three Banner artworks inspected; all three pagination states verified. The value Banner selects the estimate skill.
-- Full skill popup inspected; selection and clear action update the composer.
-- Clicking a topic fills the input and updates its character count. Send displays the submitted question and an explicit demo-only response.
-- Local photo picker/removal had been verified in the previous revision; underlying upload behavior is retained.
-- Expert tab inspected visually. Expert section HTML (3302 characters) and original.css (28962 characters) compare identical to the user-provided source.
-- All local resources exist; all 20 icon mappings are distinct and SVGs parse correctly. JavaScript syntax check passes.
-- Browser error and warning logs: empty.
-- Original Expert markup SHA256: ec1e3ff76ee4314245febd807bece5e8662129cf19a746912904ab88f61e9603.
-
-## Limits
-This is a hosted interactive webpage demo, not a published WeChat mini-program. Real AI appraisal, expert ordering and payment are not connected. Responsive browser checks do not replace physical WeChat-device testing.
+## 限制
+网页Demo尚未接入真实鉴定、下单或支付，也不是已发布的微信小程序。浏览器视口检查不等同于微信真机测试。
 
 final result: passed

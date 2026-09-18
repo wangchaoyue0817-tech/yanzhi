@@ -12,7 +12,7 @@ function suspend(ms=14000){state.holdUntil=Date.now()+ms;}
 function blocked(){return state.paused||reduceMotion.matches||document.hidden||state.tab!=='ai'||state.busy||state.pointer||$('skillPopup').classList.contains('show')||!$('menuPanel').hidden||!$('conversationPanel').hidden||document.activeElement===$('inputField');}
 function offset(i){let d=(i-state.center+skills.length)%skills.length;if(d>skills.length/2)d-=skills.length;return d;}
 function createCards(){
- $('skillGrid').innerHTML=skills.map((s,i)=>`<button class="skill-card" type="button" data-index="${i}" aria-label="开启${s.label}"><span class="skill-card-icon">${icon(s.label)}</span><span class="skill-card-label${s.label.length>4?' long':''}">${s.label}</span><span class="skill-action">开启<b>↗</b></span></button>`).join('');
+ $('skillGrid').innerHTML=skills.map((s,i)=>`<button class="skill-card" type="button" data-index="${i}" aria-label="去鉴定：${s.label}"><span class="skill-card-icon">${icon(s.label)}</span><span class="skill-card-label${s.label.length>4?' long':''}">${s.label}</span><span class="skill-action">去鉴定</span></button>`).join('');
  positionCards(true);
 }
 function positionCards(immediate=false){
@@ -23,7 +23,7 @@ function positionCards(immediate=false){
   el.classList.toggle('center',d===0);el.dataset.light=d===0?'gold':(d<0?'blue':(d===1?'cyan':'violet')); el.classList.toggle('selected',state.selected===skills[i].label);
   el.style.transform=`translateX(calc(-50% + ${d*step}px)) translateY(${a*7}px) rotate(${d*3.4}deg) scale(${1-a*.08})`;
   el.style.opacity=visible?(1-a*.025):0;el.style.zIndex=10-a;el.style.pointerEvents=visible?'auto':'none';el.tabIndex=visible?0:-1;el.setAttribute('aria-hidden',String(!visible));el.setAttribute('aria-pressed',String(state.selected===skills[i].label));
-  el.querySelector('.skill-action').innerHTML=state.selected===skills[i].label?'已开启<b>✓</b>':'开启<b>↗</b>';
+  el.querySelector('.skill-action').textContent='去鉴定';
  });
  $('skillMeter').style.transform=`translateX(${state.center/(skills.length-1)*34}px)`;
  if(immediate) requestAnimationFrame(()=>requestAnimationFrame(()=>document.querySelectorAll('#skillGrid .skill-card').forEach(el=>el.style.transition='')));
@@ -35,7 +35,7 @@ function renderPopup(){
 const initialSkillBtn=$('skillBtn').innerHTML;
 function updateSkillBtn(){
  const btn=$('skillBtn');
- if(state.selected){btn.className='toolbar-btn toolbar-skill-capsule';btn.innerHTML=`<span class="cap-label">${icon(state.selected)}<span>${state.selected}</span></span><button type="button" class="cap-close" id="clearSkill" aria-label="取消已选技能">×</button>`;$('clearSkill').onclick=e=>{e.stopPropagation();state.selected='';updateSkillBtn();positionCards();renderPopup();};}
+ if(state.selected){btn.className='toolbar-btn toolbar-skill-capsule';btn.innerHTML=`<span class="cap-label">${icon(state.selected)}<span>${state.selected}</span></span><button type="button" class="cap-close" id="clearSkill" aria-label="取消已选技能"><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m5 5 6 6m0-6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>`;$('clearSkill').onclick=e=>{e.stopPropagation();state.selected='';updateSkillBtn();positionCards();renderPopup();};}
  else{btn.className='toolbar-btn';btn.innerHTML=initialSkillBtn;}
  $('inputTip').textContent=(HOT.find(s=>s.label===state.selected)||{}).tip||'本服务由AI提供，请注意甄别';
 }
@@ -95,6 +95,8 @@ let agreed=false;$('agreeRow').onclick=e=>{if(e.target.id==='agreeLink'){state.f
 document.querySelectorAll('.home-mode-tab-item').forEach(el=>el.onclick=()=>setTab(el.dataset.tab));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePopup();$('menuPanel').hidden=true;$('conversationPanel').hidden=true;}if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"],[role="tab"]')){e.preventDefault();e.target.click();}if(e.key==='Tab'&&$('skillPopup').classList.contains('show')){const focusables=[...$('skillPopup').querySelectorAll('button,[tabindex="0"]')];const first=focusables[0],last=focusables.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
 new ResizeObserver(()=>positionCards(true)).observe($('skillCarousel'));
+const composerLayout=new ResizeObserver(()=>{if(state.tab==='ai'){const app=$('app').getBoundingClientRect(),input=$('inputArea').getBoundingClientRect();$('conversationPanel').style.bottom=`${app.bottom-input.top}px`;}});
+['app','inputArea','pageScroll'].forEach(id=>composerLayout.observe($(id)));
 skillTimer=setInterval(()=>{if(!blocked()&&Date.now()>state.holdUntil)moveSkill(1);},5200);bannerTimer=setInterval(()=>{if(!blocked()&&Date.now()>state.bannerHold&&Date.now()>state.holdUntil)setBanner(state.banner+1);},7800);
 if(new URLSearchParams(location.search).get('tab')==='expert')setTab('expert');else setTab('ai');
 window.addEventListener('pagehide',()=>{state.photos.forEach(p=>URL.revokeObjectURL(p.url));});

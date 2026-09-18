@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#050810"><meta name="description" content="图灵鉴X · 从日常好物，到珍藏之选。探索鉴定技能，开启图片咨询。"><title>图灵鉴X · 首页</title><link rel="icon" href="data:,"><link rel="stylesheet" href="original.css"><link rel="stylesheet" href="app.css"></head><body>
+  <div class="stage">
+    <div class="phone" id="phone">
+      <div class="chat-container" id="app">
+        <div class="navbar">
+          <div class="status-bar">
+            <div class="time">11:42</div>
+            <div class="wx-capsule">
+              <div class="capsule-dots">
+                <i class="capsule-dot sm"></i>
+                <i class="capsule-dot md"></i>
+                <i class="capsule-dot sm"></i>
+              </div>
+              <div class="capsule-divider"></div>
+              <div class="capsule-circle">
+                <div class="capsule-circle-ring"></div>
+                <div class="capsule-circle-inner"></div>
+              </div>
+            </div>
+          </div>
+          <div class="navbar-content">
+            <div class="nav-left">
+              <div class="icon-menu" role="button" tabindex="0" aria-label="打开菜单">
+                <svg class="icon-menu-img" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 7h14M5 12h14M5 17h14" stroke="#F2F9FF" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+                <div class="icon-menu-badge"></div>
+              </div>
+            </div>
+            <div class="home-mode-tab">
+              <div role="tab" tabindex="0" class="home-mode-tab-item active" data-tab="ai">
+                <span>AI鉴定</span>
+                <div class="home-mode-tab-dot"></div>
+              </div>
+              <div role="tab" tabindex="0" class="home-mode-tab-item" data-tab="expert">
+                <span>专家鉴定</span>
+                <div class="home-mode-tab-dot"></div>
+              </div>
+            </div>
+            <div class="nav-right"></div>
+          </div>
+        </div>
+
+        <div class="page-scroll" id="pageScroll">
+          <div class="welcome-overlay__inner">
+            <main id="aiHome">
+              <header class="welcome-section">
+                <div class="welcome-accent" aria-hidden="true"></div>
+                <h1 class="welcome-greeting"><span class="greeting-hi">Hi, </span><span class="greeting-name">WELCOME</span></h1>
+                <p class="welcome-description">上传商品图片，为您<span>鉴真假、评成色、估价格</span></p>
+              </header>
+              <section class="skill-section" aria-label="鉴定技能轮播">
+                <div class="skill-carousel" id="skillCarousel" tabindex="0" aria-roledescription="轮播" aria-label="左右滑动切换鉴定品类">
+                  <div id="skillGrid"></div>
+                </div>
+                <div class="carousel-controls">
+                  <button class="quiet-control" id="prevSkill" aria-label="上一个品类">‹</button>
+                  <div class="carousel-meter" aria-hidden="true"><i id="skillMeter"></i></div>
+                  <button class="quiet-control" id="nextSkill" aria-label="下一个品类">›</button>
+                  <button class="motion-control" id="motionControl" aria-label="暂停自动播放" title="暂停自动播放">Ⅱ</button>
+                </div>
+              </section>
+              <section class="banner-section" aria-label="精选推荐">
+                <div class="banner-viewport" id="bannerViewport"><div class="banner-track" id="bannerTrack">
+                  <button class="feature-banner" data-banner="0" aria-label="探索更多鉴定能力"><span class="banner-copy"><strong>探索更多鉴定能力</strong><span>从日常好物，到珍藏之选</span><em>立即探索 <b>↗</b></em></span></button>
+                  <button class="feature-banner banner-second" data-banner="1" aria-label="了解专家鉴定"><span class="banner-copy"><strong>把真伪交给专家</strong><span>让每一份珍藏，多一份笃定</span><em>了解服务 <b>↗</b></em></span></button>
+                  <button class="feature-banner banner-third" data-banner="2" aria-label="开启估价格技能"><span class="banner-copy"><strong>发现好物的价值</strong><span>一张照片，开启价值探索</span><em>试试估价 <b>↗</b></em></span></button>
+                </div></div>
+                <div class="banner-dots" id="bannerDots" aria-label="推荐轮播分页"><button class="active" aria-label="第1条推荐" data-page="0"></button><button aria-label="第2条推荐" data-page="1"></button><button aria-label="第3条推荐" data-page="2"></button></div>
+              </section>
+              <section class="suggestion-ticker" aria-label="咨询话题"><div class="suggestion-ticker-inner" id="ticker"></div></section>
+            </main>
+
+            <div id="expertHome" class="expert-home-section" hidden>
+              <div class="skin-welcome">
+                <div class="skin-welcome-intro">
+                  <div class="skin-hero-main">
+                    <div class="skin-hero-copy">
+                      <div class="skin-welcome-kicker">
+                        <div class="skin-welcome-kicker-line"></div>
+                        <span>线上人工鉴定</span>
+                      </div>
+                      <div class="skin-welcome-title">
+                        <div>把真伪交给</div>
+                        <div class="skin-welcome-title-line">
+                          坐镇的<span class="skin-welcome-title-accent">专家</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="skin-spectrum" aria-hidden="true">
+                      <div class="spectrum-aura"></div>
+                      <div class="spectrum-scan"></div>
+                      <div class="spectrum-ring spectrum-ring-one"></div>
+                      <div class="spectrum-ring spectrum-ring-two"></div>
+                      <div class="spectrum-orbit spectrum-orbit-one">
+                        <i class="spectrum-node spectrum-node-cyan"></i>
+                        <i class="spectrum-node spectrum-node-pink"></i>
+                      </div>
+                      <div class="spectrum-orbit spectrum-orbit-two">
+                        <i class="spectrum-node spectrum-node-cyan"></i>
+                        <i class="spectrum-node spectrum-node-gold"></i>
+                      </div>
+                      <div class="spectrum-orbit spectrum-orbit-three">
+                        <i class="spectrum-node spectrum-node-violet"></i>
+                      </div>
+                      <div class="spectrum-core">
+                        <span class="a">EXPERT</span>
+                        <span class="b">专家鉴定</span>
+                      </div>
+                      <div class="spectrum-reticle"><i></i><i></i><i></i><i></i></div>
+                      <div class="spectrum-beam"></div>
+                    </div>
+                  </div>
+                  <div class="skin-welcome-description">错一赔三，专家一对一鉴定。选择品类与款式后，按点位上传清晰实拍，最快 30 分钟出具结论。</div>
+                  <div class="skin-welcome-tags">
+                    <span>错一赔三</span><span>专家一对一</span><span>最快30分钟</span>
+                  </div>
+                  <div class="skin-welcome-upload" id="expertCta">
+                    <span class="plus">＋</span><span>立即鉴定</span>
+                  </div>
+                  <div class="skin-welcome-stats">
+                    <div><span class="skin-welcome-stat-value">6亿+</span>真伪图库</div>
+                    <div><span class="skin-welcome-stat-value">30</span>分钟出结果</div>
+                    <div><span class="skin-welcome-stat-value">1</span>份专家报告</div>
+                  </div>
+                  <div class="skin-welcome-agreement" id="agreeRow">
+                    <div class="skin-welcome-agreement-check" id="agreeCheck"></div>
+                    <div>开启鉴定即代表您已阅读并同意<span class="skin-welcome-agreement-link" id="agreeLink">《图灵鉴X在线鉴别服务协议》</span></div>
+                  </div>
+                </div>
+                <div class="skin-welcome-divider"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <input id="photoInput" type="file" accept="image/*" multiple hidden>
+        <div class="input-area" id="inputArea">
+          <div class="input-glow-wrapper" id="inputWrap">
+            <div id="attachmentTray" class="attachment-tray" hidden></div>
+            <div class="input-text-row">
+              <textarea class="input-field" id="inputField" maxlength="250" placeholder="请上传图片或输入想聊的话题"></textarea>
+              <span class="input-word-count" id="wordCount">0/250</span>
+            </div>
+            <div class="input-toolbar">
+              <div class="toolbar-left">
+                <button type="button" class="toolbar-btn" id="uploadBtn" aria-label="上传照片">
+                  <svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="5.5" width="17" height="13" rx="2.2" stroke="#fff" stroke-width="1.5"/><circle cx="8.2" cy="10" r="1.6" stroke="#fff" stroke-width="1.3"/><path d="M3.8 16.2 8 13.1l3.2 2.3 3.4-3.6 5.4 4.4" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>
+                  <span>上传照片</span>
+                </button>
+                <div class="toolbar-btn" role="button" tabindex="0" aria-label="开启技能" id="skillBtn">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M12 3.2 13.4 8.6 18.8 10 13.4 11.4 12 16.8 10.6 11.4 5.2 10 10.6 8.6Z" fill="#fff"/><path d="M18.2 14.6 18.9 16.8 21.1 17.5 18.9 18.2 18.2 20.4 17.5 18.2 15.3 17.5 17.5 16.8Z" fill="#fff"/></svg>
+                  <span>开启技能</span>
+                </div>
+              </div>
+              <div class="send-btn" role="button" tabindex="0" aria-label="发送咨询" id="sendBtn">
+                <svg viewBox="0 0 24 24"><path fill="#FFFFFF" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="input-tip" id="inputTip">本服务由AI提供，请注意甄别</div>
+        </div>
+
+        <div class="home-indicator"></div>
+
+        <div class="conversation-panel" id="conversationPanel" hidden><header><button id="closeConversation" aria-label="返回首页">‹</button><strong>鉴定咨询</strong><span>演示会话</span></header><div class="messages" id="messages" aria-live="polite"></div></div>
+        <div class="toast" id="toast" role="status" hidden></div>
+        <div class="menu-panel" id="menuPanel" hidden><strong>图灵鉴X</strong><button id="newConversation">新的咨询</button><button id="menuSkills">选择技能</button><button id="menuMotion">暂停 / 继续动效</button><p>首页交互演示 · 图片仅在本机预览</p></div>
+        <div class="sheet-mask" id="sheetMask"></div>
+        <div class="skill-popup" id="skillPopup" role="dialog" aria-modal="true" aria-label="选择鉴定技能">
+          <div class="skill-popup-header">
+            <div class="skill-popup-title">选择鉴定技能</div>
+            <div class="skill-popup-close" role="button" tabindex="0" aria-label="关闭技能列表" id="popupClose">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6 6 18" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </div>
+          </div>
+          <div class="skill-popup-list" id="skillList"></div>
+        </div>
+
+        <div class="agree-sheet" id="agreeSheet">
+          <h3>图灵鉴X在线鉴别服务协议</h3>
+          <p>图灵鉴X在线鉴别服务由平台AI与专家鉴定师提供，以用户上传图片为依据进行鉴别并给出真假建议。
+
+请按拍摄要求和示例图引导上传图片；照片角度、光线、清晰度等因素可能影响判断结果。
+
+AI可鉴别的产品会在提交订单并付款后即时给出结果，专家鉴定师将按照订单顺序处理。
+
+专家结果出具时效最晚不超过48小时；如需补图，补图期间和补图后的等待时间不计算在内。
+
+平台对最终的专家鉴别结果负责。如最终结果有误，可在订单出具结果30天内按协议申请复核与赔付。
+
+一个订单只能鉴别一件产品，请分开拍摄上传；包含多件同品类产品的图片，平台可能无法给出鉴别结果。
+
+在线鉴别受制于图片质量。由图片角度、光线、清晰度等问题影响鉴别判断的，平台不承担相关责任。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="data.js"></script><script src="app.js"></script></body></html>

@@ -1,0 +1,71 @@
+
+    const ICONS = {
+      测人格: `<svg viewBox="0 0 26 26" fill="none"><circle cx="13" cy="9" r="4" stroke="#fff" stroke-width="1.3"/><path d="M6 21c1.4-3.4 3.9-5 7-5s5.6 1.6 7 5" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/></svg>`,
+      鉴餐品: `<svg viewBox="0 0 26 26" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="m16 2-2.3 2.3a3 3 0 0 0 0 4.2l1.8 1.8a3 3 0 0 0 4.2 0L22 8"/><path d="M15 15 3.3 3.3a4.2 4.2 0 0 0 0 6l7.3 7.3c.7.7 2 .7 2.8 0L15 15Zm0 0 7 7"/><path d="m2.1 21.8 6.4-6.3"/><path d="m19 5-7 7"/></svg>`,
+      鉴包袋: `<svg viewBox="0 0 26 26" fill="none"><rect x="6" y="10" width="14" height="11" rx="2.5" stroke="#fff" stroke-width="1.3"/><path d="M9.5 10V8a3.5 3.5 0 0 1 7 0v2" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/><rect x="11" y="14" width="4" height="2.5" rx=".8" stroke="#fff" stroke-width=".7"/></svg>`,
+      鉴皮肤: `<svg viewBox="0 0 1024 1024"><path fill="#fff" d="M523.6 757c-109.1 0-197.8-114.5-197.8-256 0-132.7 83.1-229 197.8-229s197.8 97.3 197.8 229.9c0 140.6-88.7 255.1-197.8 255.1zm0-437.5c-89.1 0-151.3 74.9-151.3 182.5 0 115 68 209.4 151.3 209.4s151.3-93.1 151.3-209.4c0-106.4-62.1-182.5-151.3-182.5z"/><path fill="#fff" d="M442.2 482.4a188.7 188.7 0 0 1-78-13 23.3 23.3 0 0 1 20.5-41.9c2.1 0 90.1 38.2 281.1-53.1a23.3 23.3 0 0 1 20 42.1c-110.1 52.6-190.6 65.9-243.6 65.9zM162.9 302.5A23.3 23.3 0 0 1 139.6 279v-69.8A69.8 69.8 0 0 1 209.5 139.4h69.8a23.3 23.3 0 1 1 0 46.5h-69.8a23.3 23.3 0 0 0-23.3 23.3v69.8a23.3 23.3 0 0 1-23.3 23.3zM279.3 884.4h-69.8A69.8 69.8 0 0 1 139.6 814.5v-69.8a23.3 23.3 0 0 1 46.5 0v69.8a23.3 23.3 0 0 0 23.3 23.3h69.8a23.3 23.3 0 1 1 0 46.5zM814.5 884.4h-69.8a23.3 23.3 0 0 1 0-46.5h69.8a23.3 23.3 0 0 0 23.3-23.3v-69.8a23.3 23.3 0 1 1 46.5 0v69.8a69.8 69.8 0 0 1-69.8 69.8zM861.1 302.5a23.3 23.3 0 0 1-23.3-23.3v-69.8a23.3 23.3 0 0 0-23.3-23.3h-71.2a23.3 23.3 0 1 1 0-46.5H814.5a69.8 69.8 0 0 1 69.8 69.8v69.8a23.3 23.3 0 0 1-23.3 23.3z"/></svg>`,
+      鉴穿搭: `<svg viewBox="0 0 24 24" fill="none"><path d="M9 4.5A3.5 3.5 0 0 0 12 6a3.5 3.5 0 0 0 3-1.5l4 2.5-2 4-2-1v9.5H9V10l-2 1-2-4 4-2.5Z" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 14h6" stroke="#fff" stroke-width="1.7" stroke-linecap="round"/></svg>`,
+      鉴美妆: `<svg viewBox="0 0 26 26" fill="none"><rect x="7" y="10" width="12" height="12" rx="2" stroke="#fff" stroke-width="1.3"/><path d="M10 10V8a3 3 0 0 1 6 0v2" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/><circle cx="13" cy="16" r="2" stroke="#fff" stroke-width="1"/></svg>`,
+      鉴腕表: `<svg viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="7" stroke="#fff" stroke-width="1.3"/><rect x="12" y="4" width="2" height="3" rx=".5" stroke="#fff"/><rect x="12" y="19" width="2" height="3" rx=".5" stroke="#fff"/><path d="M13 9v4M13 13h2.5" stroke="#fff" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+      鉴酒水: `<svg viewBox="0 0 26 26" fill="none"><path d="M10 8v12a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2V8" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/><rect x="11" y="6" width="4" height="3" rx=".5" stroke="#fff"/><rect x="12" y="4" width="2" height="1.5" rx=".3" stroke="#fff"/><path d="M11 14h4" stroke="#fff" stroke-linecap="round"/></svg>`,
+      鉴潮服: `<svg viewBox="0 0 26 26" fill="none"><path d="M7 5s3 2 6 2 6-2 6-2l3 3-2 2-2-1v12H8V9L6 10l-2-2 3-3z" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/></svg>`,
+      鉴鞋靴: `<svg viewBox="0 0 24 24" fill="none"><path d="M4 16.5c2.2-1 4.6-1.6 7.4-1.2 2.4.3 3.6 1.6 5.6 2.2 1.6.5 3 .2 3 .2v1.8H4v-3Z" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/><path d="M5 16.2V10.8c0-1.4.8-2.6 2.4-3.1L12 6.4v8.6" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>`,
+      鉴卡牌: `<svg viewBox="0 0 26 26" fill="none"><rect x="7" y="4" width="12" height="18" rx="1.5" stroke="#fff" stroke-width="1.3"/><path d="M13 9l1.1 2.2 2.4.4-1.7 1.7.4 2.4L13 14.4 10.8 15.7l.4-2.4-1.7-1.7 2.4-.4L13 9z" stroke="#fff" stroke-linejoin="round"/></svg>`,
+      鉴木作手串: `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3.2" stroke="#fff" stroke-width="1.4"/><circle cx="12" cy="4.6" r="1.5" stroke="#fff" stroke-width="1.2"/><circle cx="12" cy="19.4" r="1.5" stroke="#fff" stroke-width="1.2"/><circle cx="4.6" cy="12" r="1.5" stroke="#fff" stroke-width="1.2"/><circle cx="19.4" cy="12" r="1.5" stroke="#fff" stroke-width="1.2"/><circle cx="6.8" cy="6.8" r="1.3" stroke="#fff" stroke-width="1.1"/><circle cx="17.2" cy="6.8" r="1.3" stroke="#fff" stroke-width="1.1"/><circle cx="6.8" cy="17.2" r="1.3" stroke="#fff" stroke-width="1.1"/><circle cx="17.2" cy="17.2" r="1.3" stroke="#fff" stroke-width="1.1"/></svg>`,
+      鉴配饰: `<svg viewBox="0 0 26 26" fill="none"><path d="M7 8c0-3.2 2.7-5 6-5s6 1.8 6 5" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/><path d="M7 8c1.6 3.4 3.6 8.2 6 12.5C15.4 16.2 17.4 11.4 19 8" stroke="#fff" stroke-width="1.3" stroke-linecap="round"/><path d="M9.5 12.5h7" stroke="#fff" stroke-width="1.1" stroke-linecap="round"/></svg>`,
+      鉴藏币: `<svg viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="9" stroke="#fff" stroke-width="1.3"/><circle cx="13" cy="13" r="6" stroke="#fff" stroke-width=".7" stroke-dasharray="2 1.5"/><path d="M11 13h4M13 11v4" stroke="#fff" stroke-linecap="round"/></svg>`,
+      鉴玉石: `<svg viewBox="0 0 26 26" fill="none"><path d="M13 5l6 4v8l-6 4-6-4V9l6-4z" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/><path d="M13 5v16M7 9l6 4 6-4M7 17l6-4 6 4" stroke="#fff" stroke-width=".6" opacity=".6"/></svg>`,
+      鉴瓷器: `<svg viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="9" stroke="#fff" stroke-width="1.3"/><circle cx="13" cy="13" r="6" stroke="#fff" stroke-width=".7" stroke-dasharray="2 1.5"/><path d="M11 13h4M13 11v4" stroke="#fff" stroke-linecap="round"/></svg>`,
+      鉴邮票: `<svg viewBox="0 0 26 26" fill="none"><circle cx="13" cy="13" r="9" stroke="#fff" stroke-width="1.3"/><circle cx="13" cy="13" r="6" stroke="#fff" stroke-width=".7" stroke-dasharray="2 1.5"/><path d="M11 13h4M13 11v4" stroke="#fff" stroke-linecap="round"/></svg>`,
+      估价格: `<svg viewBox="0 0 26 26" fill="none"><path d="M5 4l8 1 8 9-8 8-9-8-1-8 2-2z" stroke="#fff" stroke-width="1.3" stroke-linejoin="round"/><circle cx="9" cy="8" r="1.5" fill="#fff"/></svg>`,
+      OCR文字提取: `<svg viewBox="0 0 26 26" fill="none"><rect x="5" y="3" width="16" height="20" rx="2" stroke="#fff" stroke-width="1.3"/><path d="M8 9h10M8 13h8M8 17h6" stroke="#fff" stroke-linecap="round"/></svg>`,
+      瑕疵检测: `<svg viewBox="0 0 26 26" fill="none"><circle cx="12" cy="12" r="6.5" stroke="#fff" stroke-width="1.3"/><path d="M17 17l4.5 4.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><path d="M10 9.5l2 3 1.5-2 1 1.5" stroke="#fff" stroke-width=".9" stroke-linecap="round" stroke-linejoin="round"/><circle cx="8.5" cy="14.5" r="1.2" stroke="#fff" stroke-width=".7"/></svg>`,
+    };
+
+    const HOT = [
+      { label: "测人格", badge: "new", tip: "本服务由AI提供，请注意甄别" },
+      { label: "鉴餐品", badge: "活动", tip: "本服务由AI提供，请注意甄别" },
+      { label: "鉴包袋", badge: "", tip: "本服务由AI提供，请注意甄别" },
+      { label: "鉴皮肤", badge: "new", tip: "本服务由AI提供，请注意甄别" },
+      { label: "鉴穿搭", badge: "new", tip: "结果仅作日常穿搭参考" },
+      { label: "鉴美妆", badge: "", tip: "本服务由AI提供，请注意甄别" },
+    ];
+
+    const ALL = [
+      { label: "鉴包袋", badge: "" },
+      { label: "鉴皮肤", badge: "new" },
+      { label: "鉴美妆", badge: "" },
+      { label: "鉴穿搭", badge: "new" },
+      { label: "鉴腕表", badge: "" },
+      { label: "鉴酒水", badge: "" },
+      { label: "测人格", badge: "new" },
+      { label: "鉴潮服", badge: "" },
+      { label: "鉴鞋靴", badge: "" },
+      { label: "鉴卡牌", badge: "new" },
+      { label: "鉴木作手串", badge: "new" },
+      { label: "鉴配饰", badge: "new" },
+      { label: "鉴藏币", badge: "" },
+      { label: "鉴玉石", badge: "" },
+      { label: "鉴瓷器", badge: "" },
+      { label: "鉴邮票", badge: "" },
+      { label: "鉴餐品", badge: "活动" },
+      { label: "估价格", badge: "" },
+      { label: "OCR文字提取", badge: "" },
+      { label: "瑕疵检测", badge: "" },
+    ];
+
+    const SUGGESTIONS = [
+      "中古包鉴真假，重点看哪些细节",
+      "二手奢侈品交易时最容易踩哪些坑？",
+      "优质蛋白的来源有哪些",
+      "怎么辨别美妆小样假货？",
+      "绝版中古款适合长期持有还是短期转手？",
+      "omega-3脂肪酸对人体的作用",
+      "怎么区分碧玉和玻璃仿制品？",
+      "背了3年的包还保值吗？给我一些保养指南",
+      "人体每天的营养摄入有哪些",
+      "哪些老钱币最值得普通收藏爱好者关注？",
+      "预算 1 万内，买什么二手包性价比最高？",
+      "减脂期间应该怎么搭配三餐？",
+    ];
+

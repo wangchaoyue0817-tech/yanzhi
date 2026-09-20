@@ -10,44 +10,37 @@ const icon = name => `<span class="icon-glyph" aria-hidden="true" style="--icon:
 const escaped = s => s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let skillTimer, bannerTimer, toastTimer, messageTimer;
 let skillDrag=null, cancelSkillGesture=()=>{};
-let badgeRevision=0;
 const skillBatchSize=5;
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,3400);}
 function suspend(ms=14000){state.holdUntil=Date.now()+ms;}
 function blocked(){return state.paused||reduceMotion.matches||document.hidden||state.tab!=='ai'||state.busy||state.pointer||$('skillPopup').classList.contains('show')||!$('menuPanel').hidden||!$('conversationPanel').hidden||document.activeElement===$('inputField');}
 function offset(i,center=state.center){let d=((i-center)%skills.length+skills.length)%skills.length;if(d>skills.length/2)d-=skills.length;return d;}
 function createCards(){
- $('skillGrid').innerHTML=skills.map((s,i)=>`<button class="skill-card" type="button" data-index="${i}" aria-label="去鉴定：${s.label}"><span class="skill-badge skill-badge--${cardBadges[i].tone}" id="skillBadge-${i}" hidden>${cardBadges[i].text}</span><span class="skill-card-icon">${icon(s.label)}</span><span class="skill-card-label${s.label.length>4?' long':''}">${s.label}</span><span class="skill-action">去鉴定</span></button>`).join('');
+ $('skillGrid').innerHTML=skills.map((s,i)=>`<button class="skill-card" type="button" data-index="${i}" aria-label="去鉴定：${s.label}"><span class="skill-card-icon">${icon(s.label)}</span><span class="skill-card-label${s.label.length>4?' long':''}">${s.label}</span><span class="skill-action">去鉴定</span></button>`).join('');
  positionCards(true);
 }
 function positionCards(immediate=false){
  const w=$('skillCarousel').clientWidth,step=w*.198,dragging=skillDrag?.axis==='x';
  const center=state.center-(dragging&&step?skillDrag.dx/step:0);
+ const nearest=((Math.round(center)%skills.length)+skills.length)%skills.length;
  document.querySelectorAll('#skillGrid .skill-card').forEach((el,i)=>{
-  const d=offset(i,center),a=Math.abs(d),visible=dragging?a<3:a<=2,isCenter=a<.5;
+  const d=offset(i,center),a=Math.abs(d),visible=dragging?a<3:a<=2,isCenter=i===nearest;
   if(immediate||dragging)el.style.transition='none';else el.style.transition='';
   el.classList.toggle('center',isCenter);el.dataset.light=isCenter?'gold':(d<0?'blue':(d<1.5?'cyan':'violet')); el.classList.toggle('selected',state.selected===skills[i].label);
   el.style.transform=`translateX(calc(-50% + ${d*step}px)) translateY(${a*7}px) rotate(${d*3.4}deg) scale(${1-a*.08})`;
   el.style.opacity=visible?(1-a*.025)*(dragging?Math.min(1,3-a):1):0;el.style.zIndex=Math.round(10-a);el.style.pointerEvents=visible?'auto':'none';el.tabIndex=visible?0:-1;el.setAttribute('aria-hidden',String(!visible));el.setAttribute('aria-pressed',String(state.selected===skills[i].label));
   el.querySelector('.skill-action').textContent='去鉴定';
+  if(isCenter)el.setAttribute('aria-describedby','skillCenterBadge');else el.removeAttribute('aria-describedby');
  });
- updateCenterBadge(immediate,dragging);
+ updateCenterBadge(nearest);
  $('skillMeter').style.transform=`translateX(${state.center/(skills.length-1)*34}px)`;
  if(immediate&&!dragging) requestAnimationFrame(()=>requestAnimationFrame(()=>{if(skillDrag?.axis!=='x')document.querySelectorAll('#skillGrid .skill-card').forEach(el=>el.style.transition='');}));
 }
-function updateCenterBadge(immediate,dragging){
- const revision=++badgeRevision;
- document.querySelectorAll('#skillGrid .skill-badge').forEach(badge=>{badge.hidden=true;badge.parentElement.removeAttribute('aria-describedby');});
- if(dragging)return;
- const card=$('skillGrid').children[state.center],badge=card.querySelector('.skill-badge');
- const reveal=()=>{if(revision===badgeRevision&&skillDrag?.axis!=='x'&&card.classList.contains('center')){badge.hidden=false;card.setAttribute('aria-describedby',badge.id);}};
- if(immediate){reveal();return;}
- // Wait for the card itself to settle, so the badge never appears on an approaching side card.
- requestAnimationFrame(()=>{
-  if(revision!==badgeRevision)return;
-  const transitions=card.getAnimations().filter(animation=>animation.transitionProperty==='transform');
-  Promise.allSettled(transitions.map(animation=>animation.finished)).then(reveal);
- });
+function updateCenterBadge(index){
+ // A persistent overlay keeps the badge visible before interaction and throughout every transition.
+ const badge=$('skillCenterBadge'),data=cardBadges[index];
+ if(badge.textContent!==data.text)badge.textContent=data.text;
+ badge.className=`skill-badge skill-badge--${data.tone}`;
 }
 function moveSkill(dir,manual=false){state.center=(state.center+dir+skills.length)%skills.length;positionCards();if(manual)suspend();}
 function renderPopup(){

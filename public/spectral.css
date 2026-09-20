@@ -32,6 +32,7 @@
 #aiHome .skill-badge{position:absolute;z-index:3;top:7px;right:6px;display:flex;align-items:center;justify-content:center;height:16px;min-width:29px;padding:0 6px;border:1px solid #d4c8ff45;border-radius:5px 7px 5px 7px;box-shadow:inset 0 1px 0 #ffffff24,0 2px 7px #06091628;font-size:8px;font-weight:600;line-height:1;letter-spacing:.5px;white-space:nowrap;pointer-events:none}
 #aiHome .skill-badge--new{color:#e2eeff;border-color:#96c3ff70;background:linear-gradient(125deg,#385b83e6,#51418ce6);text-shadow:0 0 6px #a9d9ff44}
 #aiHome .skill-badge--gold{color:#ffe4b3;border-color:#e7c38b66;background:linear-gradient(125deg,#685339db,#443044e8);text-shadow:0 0 6px #ffc67528}
+#aiHome #skillCenterBadge{z-index:21;top:15px;left:calc(50% + min(12.25%,50px) - 7px);right:auto;transform:translateX(-100%)}
 .icon-glyph{display:inline-block;width:100%;height:100%;flex-shrink:0;background:currentColor;-webkit-mask:var(--icon) center/contain no-repeat;mask:var(--icon) center/contain no-repeat}
 #aiHome .skill-card .skill-card-icon{position:relative;z-index:2;flex-shrink:0;width:56px;height:56px;margin-top:30px;opacity:1;filter:drop-shadow(0 0 2px #8db1ff75) drop-shadow(0 0 7px #376bf93d)}
 #aiHome .skill-card .icon-glyph{background:linear-gradient(145deg,#f2efff 0%,#c1c6ff 32%,var(--card-light) 72%,#e5d5ff 100%)}

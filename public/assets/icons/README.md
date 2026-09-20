@@ -10,4 +10,4 @@ Three optional, more literal category alternatives are supplied from the officia
 
 Tabler SVGs have a 24 px grid and original stroke-width=2; setting stroke-width=1.5 gives the same effective weight as Phosphor regular. Geometry is unmodified. Use the default mapping for the purest single-library consistency, or substitute these three for more literal recognition.
 
-No project files were edited. Preserve the relevant MIT license text when shipping the chosen assets.
+The expert picker also uses official Phosphor regular controls and category icons, downloaded from the same repository: x, caret-left, caret-right, arrow-right, magnifying-glass, check, chat-circle-dots, shield-check, info, barbell, pill, paw-print, soccer-ball, devices, device-mobile, crown, game-controller, pen-nib, drop, flower, seal-check and bowl-food. Preserve the relevant MIT license text when shipping these assets.

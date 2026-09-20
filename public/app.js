@@ -2,8 +2,15 @@
 const $ = id => document.getElementById(id);
 const order = ['鉴腕表','鉴潮服','鉴包袋','鉴鞋靴','鉴美妆','鉴皮肤','鉴穿搭','鉴配饰','鉴酒水','鉴餐品','测人格','鉴卡牌','鉴木作手串','鉴藏币','鉴玉石','鉴瓷器','鉴邮票','估价格','OCR文字提取','瑕疵检测'];
 const skills = order.map(label => ALL.find(s => s.label === label));
-// Demo merchandising badges; replace these display defaults with live campaign data when integrating.
-const cardBadges = skills.map(s => s.badge === 'new' ? {text:'NEW',tone:'new'} : s.badge === '活动' ? {text:'活动',tone:'gold'} : {text:'限免',tone:'gold'});
+// Fixed demo assignments: badges belong to skills, never to carousel positions.
+// Empty values deliberately leave a card unlabelled. Replace with live campaign data when integrating.
+const skillBadges = {
+ '鉴腕表':'', '鉴潮服':'NEW', '鉴包袋':'限免', '鉴鞋靴':'活动', '鉴美妆':'',
+ '鉴皮肤':'NEW', '鉴穿搭':'', '鉴配饰':'限免', '鉴酒水':'活动', '鉴餐品':'',
+ '测人格':'NEW', '鉴卡牌':'NEW', '鉴木作手串':'', '鉴藏币':'活动', '鉴玉石':'',
+ '鉴瓷器':'限免', '鉴邮票':'NEW', '估价格':'限免', 'OCR文字提取':'', '瑕疵检测':'活动'
+};
+const badgeTones = {'NEW':'new','限免':'gold','活动':'event'};
 const state = { center:2, selected:'', tab:'ai', banner:0, paused:false, busy:false, pointer:false, holdUntil:0, bannerHold:0, photos:[], focusReturn:null };
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const icon = name => `<span class="icon-glyph" aria-hidden="true" style="--icon: url('assets/icons/${ICON_FILES[name] || 'handbag.svg'}')"></span>`;
@@ -16,7 +23,10 @@ function suspend(ms=14000){state.holdUntil=Date.now()+ms;}
 function blocked(){return state.paused||reduceMotion.matches||document.hidden||state.tab!=='ai'||state.busy||state.pointer||$('skillPopup').classList.contains('show')||!$('menuPanel').hidden||!$('conversationPanel').hidden||document.activeElement===$('inputField');}
 function offset(i,center=state.center){let d=((i-center)%skills.length+skills.length)%skills.length;if(d>skills.length/2)d-=skills.length;return d;}
 function createCards(){
- $('skillGrid').innerHTML=skills.map((s,i)=>`<button class="skill-card" type="button" data-index="${i}" aria-label="去鉴定：${s.label}"><span class="skill-card-icon">${icon(s.label)}</span><span class="skill-card-label${s.label.length>4?' long':''}">${s.label}</span><span class="skill-action">去鉴定</span></button>`).join('');
+ $('skillGrid').innerHTML=skills.map((s,i)=>{
+  const badge=skillBadges[s.label],badgeId=`skillBadge-${i}`;
+  return `<button class="skill-card" type="button" data-index="${i}" aria-label="去鉴定：${s.label}"${badge?` aria-describedby="${badgeId}"`:''}>${badge?`<span class="skill-badge skill-badge--${badgeTones[badge]}" id="${badgeId}">${badge}</span>`:''}<span class="skill-card-icon">${icon(s.label)}</span><span class="skill-card-label${s.label.length>4?' long':''}">${s.label}</span><span class="skill-action">去鉴定</span></button>`;
+ }).join('');
  positionCards(true);
 }
 function positionCards(immediate=false){
@@ -30,17 +40,9 @@ function positionCards(immediate=false){
   el.style.transform=`translateX(calc(-50% + ${d*step}px)) translateY(${a*7}px) rotate(${d*3.4}deg) scale(${1-a*.08})`;
   el.style.opacity=visible?(1-a*.025)*(dragging?Math.min(1,3-a):1):0;el.style.zIndex=Math.round(10-a);el.style.pointerEvents=visible?'auto':'none';el.tabIndex=visible?0:-1;el.setAttribute('aria-hidden',String(!visible));el.setAttribute('aria-pressed',String(state.selected===skills[i].label));
   el.querySelector('.skill-action').textContent='去鉴定';
-  if(isCenter)el.setAttribute('aria-describedby','skillCenterBadge');else el.removeAttribute('aria-describedby');
  });
- updateCenterBadge(nearest);
  $('skillMeter').style.transform=`translateX(${state.center/(skills.length-1)*34}px)`;
  if(immediate&&!dragging) requestAnimationFrame(()=>requestAnimationFrame(()=>{if(skillDrag?.axis!=='x')document.querySelectorAll('#skillGrid .skill-card').forEach(el=>el.style.transition='');}));
-}
-function updateCenterBadge(index){
- // A persistent overlay keeps the badge visible before interaction and throughout every transition.
- const badge=$('skillCenterBadge'),data=cardBadges[index];
- if(badge.textContent!==data.text)badge.textContent=data.text;
- badge.className=`skill-badge skill-badge--${data.tone}`;
 }
 function moveSkill(dir,manual=false){state.center=(state.center+dir+skills.length)%skills.length;positionCards();if(manual)suspend();}
 function renderPopup(){

@@ -51,6 +51,41 @@ const EXPERT_CATALOG = [
     "styleLabel": "款式 / 系列",
     "groups": [
       {
+        "name": "肌肤之钥 CPB",
+        "ai": true,
+        "styles": [
+          {
+            "name": "全品牌通用瓶鉴定",
+            "ai": true,
+            "badge": "无损"
+          },
+          {
+            "name": "全品牌通用盒鉴定",
+            "ai": true,
+            "badge": "无损"
+          },
+          "4D立体紧颜精华液",
+          "长管隔离",
+          "光采赋活精华露"
+        ]
+      },
+      {
+        "name": "造物者 Creator",
+        "styles": [
+          "香水",
+          "身体护理"
+        ]
+      },
+      {
+        "name": "信仰 CREED",
+        "ai": true,
+        "styles": [
+          "拿破仑之水",
+          "银色山泉",
+          "爱尔兰绿花"
+        ]
+      },
+      {
         "name": "迪奥 Dior",
         "styles": [
           "口红 / 唇釉",

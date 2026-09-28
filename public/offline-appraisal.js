@@ -52,7 +52,6 @@
       <span class="offline-eyebrow"><i aria-hidden="true"></i>线下实物鉴别</span>
       <h2>寄件至鉴定中心</h2>
       <p>出具线下实物鉴别报告</p>
-      <span class="offline-intro-orbit" aria-hidden="true"></span>
     </header>
     <section class="offline-benefits" aria-label="六项服务保障">
       <ul>${benefits.map(item => `<li>${glyph(item.icon)}<span>${item.name}</span></li>`).join('')}</ul>
@@ -63,7 +62,7 @@
       <p class="offline-process-note">如需代发货或代收货，可指定收货地址。</p>
     </section>
     <section class="offline-categories" aria-labelledby="offlineCategoryTitle">
-      <div class="offline-section-head"><h2 id="offlineCategoryTitle">选择鉴别品类</h2><span>6 个品类</span></div>
+      <div class="offline-section-head"><h2 id="offlineCategoryTitle">选择鉴别品类</h2></div>
       <div class="offline-category-list">${categories.map((item, index) => `
         <button class="offline-category" type="button" data-offline-category="${item.key}" aria-label="选择${item.name}，线下评鉴价格 ${item.price} 元">
           <span class="offline-product-art">${glyph(item.icon, 'offline-product-fallback')}<span class="offline-product-photo" style="background-position:${index % 3 * 50}% ${Math.floor(index / 3) * 100}%" aria-hidden="true"></span></span>
@@ -73,6 +72,14 @@
         </button>`).join('')}
       </div>
     </section>`;
+  // Reuse the expert hero's complete orbital system so both services share the same visual language.
+  const expertSpectrum = document.querySelector('#expertHome .skin-spectrum');
+  if (expertSpectrum) {
+    const spectrum = expertSpectrum.cloneNode(true);
+    spectrum.classList.add('offline-spectrum');
+    spectrum.querySelector('.spectrum-core .b').textContent = '实物鉴别';
+    page.querySelector('.offline-intro').append(spectrum);
+  }
   pageScroll.querySelector('.welcome-overlay__inner').append(page);
 
   const productSprite = new Image();

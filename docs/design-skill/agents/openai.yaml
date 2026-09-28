@@ -1,0 +1,6 @@
+interface:
+  display_name: "图灵鉴X 设计规范"
+  short_description: "统一图灵鉴X、专家鉴定和图灵评鉴的色彩、排版、组件与动效"
+  default_prompt: "使用 $tuling-jianx-design 规范设计或优化图灵鉴X页面，延续现有品牌风格，并检查视觉与交互一致性。"
+policy:
+  allow_implicit_invocation: true

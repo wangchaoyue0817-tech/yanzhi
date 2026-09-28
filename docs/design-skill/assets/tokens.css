@@ -1,0 +1,36 @@
+/* 图灵鉴X 新组件语义变量。源自现有界面并归一化，不自动覆盖历史组件。 */
+:root {
+  --jx-bg: #050810;
+  --jx-bg-indigo: #0f0f2c;
+  --jx-surface: #151627;
+  --jx-surface-control: #232631;
+  --jx-text: #f1f0ff;
+  --jx-text-body: #bec3d2;
+  --jx-text-muted: #aaa9c3;
+  --jx-blue: #595ff2;
+  --jx-purple: #7b55ea;
+  --jx-cyan: #6ddfff;
+  --jx-gold: #ffd16c;
+  --jx-price: #e4cda2;
+  --jx-border: rgba(166, 188, 227, .13);
+  --jx-border-active: rgba(184, 169, 255, .42);
+  --jx-primary: linear-gradient(112deg, #5b68ed 0%, #7753dd 58%, #a660d1 100%);
+  --jx-spectrum: linear-gradient(100deg, #a4dbff, #adadff 35%, #dbabef 67%, #ffe0a2);
+  --jx-font: "PingFang SC", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  --jx-space-1: 4px;
+  --jx-space-2: 8px;
+  --jx-space-3: 12px;
+  --jx-space-4: 16px;
+  --jx-space-5: 20px;
+  --jx-space-6: 24px;
+  --jx-space-8: 32px;
+  --jx-radius-card: 16px;
+  --jx-radius-button: 14px;
+  --jx-radius-sheet: 24px;
+  --jx-radius-pill: 999px;
+  --jx-primary-height: 53px;
+  --jx-secondary-height: 38px;
+  --jx-motion-feedback: 200ms;
+  --jx-motion-sheet: 420ms;
+  --jx-ease: cubic-bezier(.22, .65, .25, 1);
+}

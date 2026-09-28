@@ -59,12 +59,13 @@ function selectSkill(label){if(state.tab!=='ai')setTab('ai');state.selected=labe
 function openPopup(){state.focusReturn=document.activeElement;$('menuPanel').hidden=true;renderPopup();$('skillPopup').classList.add('show');$('sheetMask').classList.add('show');$('popupClose').focus();}
 function closePopup(){const wasOpen=$('skillPopup').classList.contains('show')||$('agreeSheet').classList.contains('show');$('skillPopup').classList.remove('show');$('sheetMask').classList.remove('show');$('agreeSheet').classList.remove('show');if(wasOpen&&state.focusReturn?.isConnected)state.focusReturn.focus();if(wasOpen)suspend();}
 function setTab(tab){
+ const wasOffline=window.offlineRouter?.closeForTab()||false;
  window.expertPicker?.close(false);
  cancelSkillGesture();
  state.tab=tab;$('aiHome').hidden=tab!=='ai';$('expertHome').hidden=tab!=='expert';$('app').classList.toggle('is-expert',tab==='expert');$('conversationPanel').hidden=true;$('menuPanel').hidden=true;
  document.querySelectorAll('.home-mode-tab-item').forEach(el=>{el.classList.toggle('active',el.dataset.tab===tab);el.setAttribute('aria-selected',String(el.dataset.tab===tab));});
  $('pageScroll').scrollTop=0;closePopup();if(tab==='ai')positionCards(true);
- const url=new URL(location.href);if(tab==='expert')url.searchParams.set('tab','expert');else url.searchParams.delete('tab');history.replaceState(null,'',url);
+ const url=new URL(location.href);if(wasOffline)url.searchParams.delete('view');if(tab==='expert')url.searchParams.set('tab','expert');else url.searchParams.delete('tab');history.replaceState(history.state,'',url);
 }
 function setBanner(i,manual=false){state.banner=(i+3)%3;$('bannerTrack').style.transform=`translateX(-${state.banner*100}%)`;document.querySelectorAll('[data-page]').forEach((el,j)=>{el.classList.toggle('active',j===state.banner);el.setAttribute('aria-current',String(j===state.banner));});document.querySelectorAll('[data-banner]').forEach((el,j)=>{el.tabIndex=j===state.banner?0:-1;el.setAttribute('aria-hidden',String(j!==state.banner));});if(manual)state.bannerHold=Date.now()+18000;}
 function toggleMotion(){state.paused=!state.paused;document.body.classList.toggle('motion-paused',state.paused);$('motionControl').textContent=state.paused?'▷':'Ⅱ';$('motionControl').setAttribute('aria-label',state.paused?'继续自动播放':'暂停自动播放');$('motionControl').title=state.paused?'继续自动播放':'暂停自动播放';}

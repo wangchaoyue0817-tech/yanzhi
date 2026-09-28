@@ -1,0 +1,52 @@
+/* An electronic report in the shared indigo service palette. */
+.or-report{color:#f1f0ff;min-width:0}
+.or-edition{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 2px 12px;color:#a9a7c2;font-size:11px;line-height:1.5;letter-spacing:.4px}
+.or-demo-label,.or-score-label{display:inline-flex;align-items:center;min-height:23px;padding:2px 8px;border:1px solid #a195d92b;border-radius:999px;background:#9784d80a;color:#b7adcf;font-size:10px;line-height:1.5;white-space:nowrap;letter-spacing:0}
+.or-certificate{position:relative;overflow:hidden;padding:21px 16px 3px;border:1px solid #afa4e82b;border-radius:18px;background:radial-gradient(ellipse at 50% 0,#6159b92e,transparent 42%),linear-gradient(150deg,#171a30ed,#111421);box-shadow:inset 0 1px 0 #dfd2ff0b}
+.or-certificate:before{content:"";position:absolute;top:0;left:19%;right:19%;height:1px;background:linear-gradient(90deg,transparent,#a6d5fa80,#a898e875,transparent);pointer-events:none}
+.or-verdict{text-align:center}
+.or-verdict-emblem{position:relative;display:grid;place-items:center;width:56px;height:56px;margin:0 auto 11px;border:1px solid #aca2ee36;border-radius:50%;background:radial-gradient(circle at 35% 20%,#8fbcf420,#8175c010 75%);color:#bcb5fa;box-shadow:0 0 0 6px #bba4ff03,inset 0 1px 0 #c8d8ff12}
+.or-verdict-emblem .of-icon{width:32px;height:32px;background:linear-gradient(145deg,#b4dcff,#bba6ed 68%,#e0cdaa)}
+.or-verdict h2{margin:0;font-size:26px;line-height:1.35;font-weight:600;letter-spacing:1px;color:#b4c5ff;background:linear-gradient(100deg,#a4dbff,#b8b4ff 58%,#dbc5ec);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.or-verdict p{margin:9px 0 0;color:#b6b6cd;font-size:12px;line-height:1.8}
+.or-photo{position:relative;display:grid;place-items:center;min-height:194px;margin:18px 0 3px;padding:14px 18px 30px;overflow:hidden;border:1px solid #b7adf10c;border-radius:13px;background:radial-gradient(ellipse at 50% 30%,#b2bce414,transparent 73%),#080d171f}
+.or-photo .or-product-image{display:block;width:170px;height:170px;max-width:100%;object-fit:contain;border-radius:8px}
+.or-photo img{display:block;width:100%;height:170px;object-fit:contain;border-radius:8px}
+.or-photo figcaption{position:absolute;left:0;right:0;bottom:9px;display:flex;align-items:center;justify-content:center;gap:5px;color:#999bb4;font-size:10px;line-height:1.5}
+.or-photo figcaption span{width:3px;height:3px;border-radius:50%;background:#88cbe7;box-shadow:0 0 5px #88cbe72e}
+.or-details{margin:0;padding:0}
+.or-details>div{display:flex;align-items:baseline;justify-content:space-between;gap:16px;min-height:45px;padding:13px 0;border-bottom:1px solid #acadd811;line-height:1.5}
+.or-details>div:last-child{border-bottom:0}
+.or-details dt{flex-shrink:0;font-size:12px;color:#a8a8bf}
+.or-details dd{margin:0;font-size:13px;font-weight:500;color:#e6e5f4;text-align:right;overflow-wrap:anywhere}
+.or-details .or-number{font-size:12px;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.or-score-card,.or-assessor-card{margin-top:12px;padding:16px;border:1px solid #ada6e31c;border-radius:16px;background:linear-gradient(125deg,#191d3273,#1515268f);box-shadow:inset 0 1px 0 #c6b5ff04}
+.or-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.or-score-card h3,.or-assessor-card h3{margin:0;color:#e7e6f5;font-size:15px;line-height:1.4;font-weight:550}
+.or-score-label{min-height:21px;font-size:10px;padding:1px 7px;color:#afa7ca;background:#8072b70b}
+.or-score-summary{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:12px 0 10px}
+.or-score-value{color:#e4cda2;font-size:31px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.or-score-value span{padding-left:6px;font-size:12px;font-weight:400;letter-spacing:0;color:#999ab3}
+.or-score-description{color:#aaa8c2;font-size:11px;line-height:1.5}
+.or-score-track{height:5px;overflow:hidden;border-radius:999px;background:#b3afd015}
+.or-score-track>span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#87b8fb,#9270ed);box-shadow:0 0 8px #9585ff20}
+.or-score-card p{margin:11px 0 0;font-size:11px;line-height:1.7;color:#a3a2bc}
+.or-assessor-row{display:flex;align-items:center;gap:10px;margin-top:13px;min-width:0}
+.or-assessor-emblem{flex-shrink:0;display:grid;place-items:center;width:38px;height:38px;border-radius:12px;border:1px solid #9dbbdf26;background:linear-gradient(135deg,#526eaf29,#67519d1c);color:#b7c6ef}
+.or-assessor-emblem .of-icon{width:22px;height:22px}
+.or-assessor-row>div{min-width:0;flex:1}
+.or-assessor-row strong{display:block;font-size:12px;line-height:1.65;font-weight:500;color:#d6d6e8;overflow-wrap:anywhere}
+.or-assessor-row strong>span{color:#a5a1bb;font-size:10px;font-weight:400}
+.or-assessor-row time{display:block;margin-top:3px;color:#9395ad;font-size:10px;line-height:1.5;font-variant-numeric:tabular-nums}
+.or-assessor-status{color:#a5d2d4;font-size:10px;line-height:1.5;white-space:nowrap}
+.or-report .or-report-note{margin:13px 0 18px;text-align:center;font-size:10px;line-height:1.7;color:#9995af}
+.or-footer{display:grid;grid-template-columns:1fr 1.18fr;gap:10px;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,#0d1021dd,#0d1021);backdrop-filter:blur(15px)}
+.or-action{min-height:49px;display:flex;align-items:center;justify-content:center;gap:7px;border-radius:15px;font-size:14px;line-height:1.5;font-weight:550;transition:filter .2s,transform .2s}
+.or-action .of-icon{width:17px;height:17px}
+.or-action-secondary{border:1px solid #a89cd62d;background:#20223a75;color:#d3cfeb}
+.or-action-primary{border:1px solid #b8a9ff6b;background:var(--jx-service-cta,linear-gradient(112deg,#5b68ed 0%,#7753dd 58%,#a660d1 100%));color:#fff;box-shadow:inset 0 1px 0 #e2dbff3b,0 5px 16px #6a4feb17}
+.or-action:hover{filter:brightness(1.08)}
+.or-action:active{transform:translateY(1px);filter:brightness(.94)}
+.or-action:focus-visible{outline:2px solid #b5eaff;outline-offset:3px}
+@media(max-width:350px){.or-certificate{padding-left:13px;padding-right:13px}.or-verdict h2{font-size:24px}.or-photo{min-height:176px;padding-left:12px;padding-right:12px}.or-photo .or-product-image{width:150px;height:150px}.or-photo img{height:150px}.or-score-card,.or-assessor-card{padding:14px}.or-assessor-status{display:none}.or-score-card p{font-size:11px}.or-action{font-size:13px}.or-footer{padding-left:16px;padding-right:16px}.or-details>div{gap:10px}}
+@media(prefers-reduced-motion:reduce){.or-action{transition:none}}

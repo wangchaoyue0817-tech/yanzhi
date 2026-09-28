@@ -24,7 +24,7 @@
     { name: '仓库收货', icon: 'warehouse' },
     { name: '多重鉴定', icon: 'magnifying-glass' },
     { name: '封装上链', icon: 'package' },
-    { name: '寄回/回收', icon: 'shield-check' }
+    { name: '寄回用户', icon: 'shield-check' }
   ];
   const categories = [
     { key: 'beauty', name: '美妆', price: '0.01', icon: 'tabler-perfume' },
@@ -106,6 +106,7 @@
   }
   function close(restoreFocus = true) {
     if (!isOpen) return;
+    window.offlineOrders?.hide();
     isOpen = false;
     page.hidden = true;
     nav.hidden = true;
@@ -116,18 +117,18 @@
     }
     app.dispatchEvent(new CustomEvent('offline:close', { bubbles: true, detail: { restoreFocus } }));
   }
-  nav.querySelector('.offline-back').addEventListener('click', () => close());
+  nav.querySelector('.offline-back').addEventListener('click', () => { if (window.offlineOrders?.isOpen) window.offlineOrders.back(); else close(); });
   document.addEventListener('click', event => {
     if (event.target.closest('#offlineEntry')) open();
   });
   document.addEventListener('keydown', event => {
-    if (isOpen && event.key === 'Escape') { event.preventDefault(); close(); }
+    if (isOpen && !window.offlineOrders?.isOpen && event.key === 'Escape') { event.preventDefault(); close(); }
   });
   page.addEventListener('click', event => {
     const card = event.target.closest('[data-offline-category]');
     if (!card) return;
     const item = categories.find(category => category.key === card.dataset.offlineCategory);
-    if (typeof window.toast === 'function') window.toast(`已选择${item.name} · ¥${item.price}。当前为界面演示，寄件与下单流程尚未开放。`);
+    window.offlineOrders?.start(item.key);
   });
   window.offlineAppraisal = { open, close, get isOpen() { return isOpen; } };
 })();

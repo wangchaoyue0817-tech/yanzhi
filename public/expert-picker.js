@@ -139,7 +139,7 @@
   }
  });
  e('epGroupSearch').addEventListener('input',renderGroups);e('epStyleSearch').addEventListener('input',renderStyles);
- e('epAgree').addEventListener('change',()=>{agreed=e('epAgree').checked;e('agreeCheck').classList.toggle('on',agreed);e('agreeCheck').textContent=agreed?'✓':'';picker.confirmed=false;renderSelection();});
+ e('epAgree').addEventListener('change',()=>{agreed=e('epAgree').checked;picker.confirmed=false;renderSelection();});
  root.addEventListener('keydown',event=>{
   if(event.key==='Escape'){event.preventDefault();event.stopPropagation();if(['feedback','agreement'].includes(picker.view))back();else close();return;}
   if(['ArrowDown','ArrowUp','ArrowRight','ArrowLeft'].includes(event.key)&&event.target.matches('[data-ep-style]')){event.preventDefault();const options=[...e('epStyles').querySelectorAll('[data-ep-style]')];const direction=['ArrowDown','ArrowRight'].includes(event.key)?1:-1;options[(options.indexOf(event.target)+direction+options.length)%options.length]?.click();e('epStyles').querySelector('[aria-checked="true"]')?.scrollIntoView({block:'nearest',inline:'nearest'});return;}

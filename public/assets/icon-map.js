@@ -5,6 +5,7 @@ const ICON_FILES = {
   "鉴鞋靴": "sneaker.svg",
   "鉴美妆": "tabler-perfume.svg",
   "鉴皮肤": "scan-smiley.svg",
+  "鉴颜值": "face-sparkle.svg",
   "鉴穿搭": "coat-hanger.svg",
   "鉴配饰": "sunglasses.svg",
   "鉴酒水": "wine.svg",

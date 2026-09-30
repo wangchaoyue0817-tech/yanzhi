@@ -1,12 +1,12 @@
 'use strict';
 const $ = id => document.getElementById(id);
-const order = ['鉴腕表','鉴潮服','鉴包袋','鉴鞋靴','鉴美妆','鉴皮肤','鉴穿搭','鉴配饰','鉴酒水','鉴餐品','测人格','鉴卡牌','鉴木作手串','鉴藏币','鉴玉石','鉴瓷器','鉴邮票','估价格','OCR文字提取','瑕疵检测'];
+const order = ['鉴腕表','鉴潮服','鉴包袋','鉴鞋靴','鉴美妆','鉴皮肤','鉴颜值','鉴穿搭','鉴配饰','鉴酒水','鉴餐品','测人格','鉴卡牌','鉴木作手串','鉴藏币','鉴玉石','鉴瓷器','鉴邮票','估价格','OCR文字提取','瑕疵检测'];
 const skills = order.map(label => ALL.find(s => s.label === label));
 // Fixed demo assignments: badges belong to skills, never to carousel positions.
 // Empty values deliberately leave a card unlabelled. Replace with live campaign data when integrating.
 const skillBadges = {
  '鉴腕表':'', '鉴潮服':'NEW', '鉴包袋':'限免', '鉴鞋靴':'活动', '鉴美妆':'',
- '鉴皮肤':'NEW', '鉴穿搭':'', '鉴配饰':'限免', '鉴酒水':'活动', '鉴餐品':'',
+ '鉴皮肤':'NEW', '鉴颜值':'', '鉴穿搭':'', '鉴配饰':'限免', '鉴酒水':'活动', '鉴餐品':'',
  '测人格':'NEW', '鉴卡牌':'NEW', '鉴木作手串':'', '鉴藏币':'活动', '鉴玉石':'',
  '鉴瓷器':'限免', '鉴邮票':'NEW', '估价格':'限免', 'OCR文字提取':'', '瑕疵检测':'活动'
 };

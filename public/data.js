@@ -27,6 +27,7 @@
       { label: "鉴餐品", badge: "活动", tip: "本服务由AI提供，请注意甄别" },
       { label: "鉴包袋", badge: "", tip: "本服务由AI提供，请注意甄别" },
       { label: "鉴皮肤", badge: "new", tip: "本服务由AI提供，请注意甄别" },
+      { label: "鉴颜值", badge: "", tip: "本服务由AI提供，请注意甄别" },
       { label: "鉴穿搭", badge: "new", tip: "结果仅作日常穿搭参考" },
       { label: "鉴美妆", badge: "", tip: "本服务由AI提供，请注意甄别" },
     ];
@@ -34,6 +35,7 @@
     const ALL = [
       { label: "鉴包袋", badge: "" },
       { label: "鉴皮肤", badge: "new" },
+      { label: "鉴颜值", badge: "" },
       { label: "鉴美妆", badge: "" },
       { label: "鉴穿搭", badge: "new" },
       { label: "鉴腕表", badge: "" },
@@ -68,4 +70,3 @@
       "预算 1 万内，买什么二手包性价比最高？",
       "减脂期间应该怎么搭配三餐？",
     ];
-

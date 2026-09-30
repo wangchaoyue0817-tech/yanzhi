@@ -26,7 +26,7 @@ function createCards(){
  $('skillGrid').innerHTML=skills.map((s,i)=>{
   const badge=skillBadges[s.label],badgeId=`skillBadge-${i}`;
   const beauty=s.label==='鉴颜值';
-  return `<button class="skill-card" type="button" data-index="${i}" aria-label="${beauty?'体验 AI 鉴颜值演示':`去鉴定：${s.label}`}"${badge?` aria-describedby="${badgeId}"`:''}>${badge?`<span class="skill-badge skill-badge--${badgeTones[badge]}" id="${badgeId}">${badge}</span>`:''}<span class="skill-card-icon">${icon(s.label)}</span><span class="skill-card-label${s.label.length>4?' long':''}">${s.label}</span><span class="skill-action">${beauty?'去体验':'去鉴定'}</span></button>`;
+  return `<button class="skill-card" type="button" data-index="${i}" aria-label="${beauty?'开启 AI 鉴颜值':`去鉴定：${s.label}`}"${badge?` aria-describedby="${badgeId}"`:''}>${badge?`<span class="skill-badge skill-badge--${badgeTones[badge]}" id="${badgeId}">${badge}</span>`:''}<span class="skill-card-icon">${icon(s.label)}</span><span class="skill-card-label${s.label.length>4?' long':''}">${s.label}</span><span class="skill-action">${beauty?'去鉴定':'去鉴定'}</span></button>`;
  }).join('');
  positionCards(true);
 }
@@ -40,7 +40,7 @@ function positionCards(immediate=false){
   el.classList.toggle('center',isCenter);el.dataset.light=isCenter?'gold':(d<0?'blue':(d<1.5?'cyan':'violet')); el.classList.toggle('selected',state.selected===skills[i].label);
   el.style.transform=`translateX(calc(-50% + ${d*step}px)) translateY(${a*7}px) rotate(${d*3.4}deg) scale(${1-a*.08})`;
   el.style.opacity=visible?(1-a*.025)*(dragging?Math.min(1,3-a):1):0;el.style.zIndex=Math.round(10-a);el.style.pointerEvents=visible?'auto':'none';el.tabIndex=visible?0:-1;el.setAttribute('aria-hidden',String(!visible));el.setAttribute('aria-pressed',String(state.selected===skills[i].label));
-  el.querySelector('.skill-action').textContent=skills[i].label==='鉴颜值'?'去体验':'去鉴定';
+  el.querySelector('.skill-action').textContent=skills[i].label==='鉴颜值'?'去鉴定':'去鉴定';
  });
  $('skillMeter').style.transform=`translateX(${state.center/(skills.length-1)*34}px)`;
  if(immediate&&!dragging) requestAnimationFrame(()=>requestAnimationFrame(()=>{if(skillDrag?.axis!=='x')document.querySelectorAll('#skillGrid .skill-card').forEach(el=>el.style.transition='');}));

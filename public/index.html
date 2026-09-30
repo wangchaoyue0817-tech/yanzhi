@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#050810"><meta name="description" content="图灵鉴X · 从日常好物，到珍藏之选。探索鉴定技能，开启图片咨询。"><title>图灵鉴X · 首页</title><link rel="icon" href="data:,"><link rel="stylesheet" href="original.css"><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="spectral.css?v=7"><link rel="stylesheet" href="expert-refinement.css?v=11"><link rel="stylesheet" href="expert-picker.css?v=9"><link rel="stylesheet" href="offline-appraisal.css?v=11"><link rel="stylesheet" href="offline-orders.css?v=13"><link rel="stylesheet" href="offline-order-report.css?v=13"><link rel="stylesheet" href="offline-order-controller.css?v=13"><link rel="stylesheet" href="beauty-analysis.css?v=1"></head><body>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#050810"><meta name="description" content="图灵鉴X · 从日常好物，到珍藏之选。探索鉴定技能，开启图片咨询。"><title>图灵鉴X · 首页</title><link rel="icon" href="data:,"><link rel="stylesheet" href="original.css"><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="spectral.css?v=7"><link rel="stylesheet" href="expert-refinement.css?v=11"><link rel="stylesheet" href="expert-picker.css?v=9"><link rel="stylesheet" href="offline-appraisal.css?v=11"><link rel="stylesheet" href="offline-orders.css?v=13"><link rel="stylesheet" href="offline-order-report.css?v=13"><link rel="stylesheet" href="offline-order-controller.css?v=13"><link rel="stylesheet" href="beauty-analysis.css?v=2"></head><body>
   <div class="stage">
     <div class="phone" id="phone">
       <div class="chat-container" id="app">
@@ -125,48 +125,39 @@
           </div>
         </div>
 
-        <section class="beauty-page" id="beautyPage" role="dialog" aria-modal="true" aria-label="AI 鉴颜值演示" hidden>
+        <section class="beauty-page" id="beautyPage" role="dialog" aria-modal="true" aria-label="AI 鉴颜值" hidden>
           <header class="beauty-header">
-            <button type="button" class="beauty-back" id="beautyBack" aria-label="返回首页"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m15 18-6-6 6-6M9 12h11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <button type="button" class="beauty-icon-button" id="beautyBack" aria-label="返回首页"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14 6-6 6 6 6M8 12h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             <div class="beauty-brand"><strong>AI 鉴颜值</strong><small>TURING BEAUTY LAB</small></div>
-            <span class="beauty-demo-badge">演示版</span>
+            <button type="button" class="beauty-icon-button beauty-scene-button" id="beautyScenes" aria-label="场景切换"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h9m4 0h3M4 17h3m4 0h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="15" cy="7" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="17" r="2" stroke="currentColor" stroke-width="1.5"/></svg></button>
           </header>
           <div class="beauty-scroll" id="beautyScroll">
             <section class="beauty-entry" id="beautyEntry">
-              <div class="beauty-hero-main">
-                <div class="beauty-hero-copy"><div class="beauty-kicker"><i></i>五官比例 · 风格解析</div><h1>读懂五官的<br><span>每一份光彩</span></h1></div>
-                <div class="beauty-face-orbit" aria-hidden="true"><i class="beauty-orbit-line"></i><i class="beauty-orbit-line"></i><i class="beauty-orbit-line"></i><b></b><span></span></div>
+              <div class="beauty-entry-hero">
+                <div class="beauty-kicker"><i></i>五官比例 · 风格解析</div>
+                <h1>读懂五官的<br><em>每一份光彩</em></h1>
+                <div class="beauty-orbit" aria-hidden="true"><i></i><i></i><i></i><b></b><span></span></div>
               </div>
-              <p class="beauty-description">上传一张清晰正脸照，查看五官、肤色与整体协调度的演示报告，并获得按部位拆解的日常变美思路。</p>
-              <div class="beauty-pills"><span>五官拆解</span><span>专属建议</span><span>单品灵感</span></div>
-              <button type="button" class="beauty-primary" id="beautyUpload"><span aria-hidden="true">＋</span>上传照片，开始鉴颜值</button>
-              <button type="button" class="beauty-demo-link" id="beautyTryDemo">先体验一份演示报告 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <div class="beauty-stats"><span><b>5</b>项五官维度</span><span><b>4</b>组变美思路</span><span><b>1</b>张分享海报</span></div>
-              <aside class="beauty-privacy-note"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 5 6v5c0 4.8 2.9 8 7 10 4.1-2 7-5.2 7-10V6l-7-3Z" stroke="currentColor" stroke-width="1.4"/><path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg><p>演示页面不会上传照片。分数、排名、建议和效果预览均为模拟内容，不代表真实评价或统一审美标准。</p></aside>
-              <input type="file" id="beautyPhotoInput" accept="image/*" hidden>
+              <p class="beauty-description">一张照片，发现你的颜值高光。解读五官与整体风格，找到适合自己的变美方向。</p>
+              <div class="beauty-pills"><span>五官解析</span><span>妆发建议</span><span>专属美妆</span></div>
+              <button type="button" class="beauty-primary" id="beautyUpload"><span aria-hidden="true">＋</span>上传照片，开启分析</button>
+              <button type="button" class="beauty-photo-choice" id="beautyStart"><img id="beautyEntryPhoto" src="assets/beauty-demo-portrait.png" alt="已选照片"><span><b>使用这张照片开启分析</b><small>发现属于你的高光时刻</small></span><i aria-hidden="true">↗</i></button>
+              <div class="beauty-stats"><span><b>5</b>项五官维度</span><span><b>6</b>组变美思路</span><span><b>1</b>份专属报告</span></div>
+              <p class="beauty-entry-footer">每一种美，都有自己的表达。</p>
             </section>
             <section class="beauty-scanning" id="beautyScanning" hidden>
-              <div class="beauty-scan-image"><img id="beautyScanImage" src="assets/beauty-demo-portrait.png" alt="本次演示照片"><i></i><span></span></div>
-              <div class="beauty-scan-copy"><small>BEAUTY ANALYSIS · DEMO</small><h1>正在整理你的<br>专属变美报告</h1><p id="beautyScanStep">识别五官轮廓与比例</p><div class="beauty-progress"><i id="beautyProgressBar"></i></div><span id="beautyProgressText">0%</span></div>
-              <button type="button" class="beauty-cancel" id="beautyCancel">取消体验</button>
+              <div class="beauty-scan-orbit"><div class="beauty-scan-image"><img id="beautyScanImage" src="assets/beauty-demo-portrait.png" alt="正在分析的照片"><i></i></div><span></span><span></span></div>
+              <small class="beauty-eyebrow">发现你的独特之美</small><h1>你的高光<br>正在被发现</h1>
+              <p id="beautyScanStep" role="status">识别五官轮廓与比例</p>
+              <div class="beauty-progress" role="progressbar" aria-label="报告生成进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="beautyProgress"><i id="beautyProgressBar"></i></div><b id="beautyProgressText">0%</b>
+              <button type="button" class="beauty-text-button" id="beautyCancel">取消分析</button>
             </section>
-            <article class="beauty-report" id="beautyReport" hidden>
-              <div class="beauty-report-heading"><small>BEAUTY REPORT <i>演示结果</i></small><h1>你的专属变美报告</h1><p>以原生五官为基础，找到更适合你的日常表达</p></div>
-              <section class="beauty-score-card"><div class="beauty-score-top"><div><small>综合颜值演示分</small><strong>76<span>/100</span></strong></div><div class="beauty-rank"><small>演示排名</small><b>超过 <em>62%</em></b><span>的演示样例</span></div></div><i class="beauty-score-track"><b></b></i><p>整体协调感自然，眉眼表现突出；可以从眼尾层次与面部气色开始调整。</p></section>
-              <section class="beauty-comparison"><header><h2>现在与变美效果示意</h2><span>仅作妆感预览</span></header><div class="beauty-photo-pair"><figure><div class="beauty-photo-frame"><img id="beautyBefore" src="assets/beauty-demo-portrait.png" alt="当前演示照片"></div><figcaption><b>现在的照片</b><span>当前 · 76 分</span></figcaption></figure><figure><div class="beauty-photo-frame beauty-after-frame"><img id="beautyAfter" src="assets/beauty-demo-portrait.png" alt="按建议调整后的效果示意"><i>效果示意</i></div><figcaption><b>变美效果预览</b><span>模拟妆感 · 86 分</span></figcaption></figure></div><p class="beauty-photo-disclaimer">预览仅模拟光色和妆感，不改变五官；分数与排名为固定演示值。</p></section>
-              <section class="beauty-after-card"><div><small>优化后演示分</small><strong>86<span>/100</span></strong></div><div class="beauty-after-rank"><small>演示排名</small><b>超过 84%</b><span>的演示样例</span></div><p>变化方向：提亮眉眼、平衡面部色彩，让整体表达更舒展。</p></section>
-              <section class="beauty-dimensions"><header><div><small>FEATURE BALANCE</small><h2>五官与整体协调度</h2></div><span>演示评分</span></header><div class="beauty-metric-list"><div><span>五官协调</span><i><b style="width:84%"></b></i><strong>84</strong></div><div><span>眉眼表现</span><i><b style="width:86%"></b></i><strong>86</strong></div><div><span>肤色状态</span><i><b style="width:78%"></b></i><strong>78</strong></div><div><span>面部轮廓</span><i><b style="width:81%"></b></i><strong>81</strong></div><div><span>整体风格</span><i><b style="width:80%"></b></i><strong>80</strong></div></div></section>
-              <section class="beauty-ideas"><header><div><small>PERSONAL GLOW-UP PLAN</small><h2>变美思路 · 按部位拆解</h2></div><span>4 个方向</span></header>
-                <article class="beauty-part"><div class="beauty-part-heading"><i>01</i><div><h3>眉眼</h3><small>协调度演示分 84</small></div></div><p>保留自然眉峰，眉尾轻轻拉长；杏棕眼影由浅到深晕染眼尾，再用栗棕眼线贴近睫毛根部，提神但不显厚重。</p><div class="beauty-product-list"><div class="beauty-product"><i class="beauty-swatch" style="--swatch:#a8785f"></i><div><small>映色 · 杏雾暖棕（演示款）</small><b>柔棕九色眼影盘</b><span>体验装 · ¥59（模拟价格）</span></div><button type="button" data-demo-purchase="眼影盘">单品购买</button></div><div class="beauty-product"><i class="beauty-swatch" style="--swatch:#574038"></i><div><small>映色 · 栗棕（演示款）</small><b>丝绒持妆眼线胶笔</b><span>体验装 · ¥35（模拟价格）</span></div><button type="button" data-demo-purchase="眼线胶笔">单品购买</button></div></div></article>
-                <article class="beauty-part"><div class="beauty-part-heading"><i>02</i><div><h3>底妆与气色</h3><small>协调度演示分 80</small></div></div><p>选接近颈部的暖调底妆，薄薄均匀肤色；腮红落在苹果肌外侧并向上晕开，保留自然肌理。</p><div class="beauty-product-list"><div class="beauty-product"><i class="beauty-swatch" style="--swatch:#d9ad98"></i><div><small>映色 · 暖调二白（演示款）</small><b>柔光轻薄气垫</b><span>体验装 · ¥69（模拟价格）</span></div><button type="button" data-demo-purchase="气垫">单品购买</button></div></div></article>
-                <article class="beauty-part"><div class="beauty-part-heading"><i>03</i><div><h3>唇形</h3><small>协调度演示分 78</small></div></div><p>以茶玫瑰色从唇中向外晕开，轻轻强调唇峰和下唇中部，边缘保持柔软，让气色更明亮。</p><div class="beauty-product-list"><div class="beauty-product"><i class="beauty-swatch" style="--swatch:#a45c64"></i><div><small>映色 · 茶玫瑰（演示款）</small><b>暖调柔雾口红</b><span>小样 · ¥39（模拟价格）</span></div><button type="button" data-demo-purchase="口红">单品购买</button></div></div></article>
-                <article class="beauty-part"><div class="beauty-part-heading"><i>04</i><div><h3>整体协调</h3><small>协调度演示分 82</small></div></div><p>脸侧留出轻盈发丝层次；高光少量点在颧骨高点，控制妆面重点，让五官看起来更舒展。</p><div class="beauty-product-list"><div class="beauty-product"><i class="beauty-swatch" style="--swatch:#d6c49c"></i><div><small>映色 · 月砂金（演示款）</small><b>细闪柔光高光</b><span>小样 · ¥45（模拟价格）</span></div><button type="button" data-demo-purchase="高光">单品购买</button></div></div></article>
-              </section>
-              <aside class="beauty-report-note">分数、排名、效果、建议、品牌、商品与价格均为演示内容。建议仅作妆发灵感参考，审美没有统一标准；本体验不会上传照片，也不会创建订单。</aside>
-              <button type="button" class="beauty-poster-button" id="beautyPoster"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 17v3h14v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>下载变美报告海报</button>
-              <p class="beauty-poster-status" id="beautyPosterStatus" role="status" aria-live="polite" hidden></p>
-              <button type="button" class="beauty-again" id="beautyAgain">再体验一次</button>
-            </article>
+            <article class="beauty-report" id="beautyReport" aria-label="你的颜值报告" hidden></article>
+          </div>
+          <input type="file" id="beautyPhotoInput" accept="image/*" hidden>
+          <div class="beauty-overlay" id="beautyOverlay" hidden>
+            <button type="button" class="beauty-scrim" aria-label="关闭面板" data-beauty-close></button>
+            <section class="beauty-sheet" id="beautySheet" role="dialog" aria-modal="true" aria-labelledby="beautySheetTitle"><header><h2 id="beautySheetTitle"></h2><button type="button" class="beauty-icon-button" data-beauty-close aria-label="关闭面板">×</button></header><div id="beautySheetBody"></div></section>
           </div>
           <div class="beauty-toast" id="beautyToast" role="status" aria-live="polite" hidden></div>
         </section>
@@ -233,4 +224,4 @@ AI可鉴别的产品会在提交订单并付款后即时给出结果，专家鉴
     </div>
   </div>
 
-  <script src="data.js"></script><script src="assets/icon-map.js"></script><script src="app.js?v=13"></script><script src="beauty-analysis.js?v=1"></script><script src="expert-catalog.js?v=9"></script><script src="expert-picker.js?v=12"></script><script src="offline-appraisal.js?v=13"></script><script src="offline-order-model.js?v=13"></script><script src="offline-order-views.js?v=13"></script><script src="offline-order-report.js?v=13"></script><script src="offline-order-controller.js?v=13"></script><script src="offline-router.js?v=13"></script></body></html>
+  <script src="data.js"></script><script src="assets/icon-map.js"></script><script src="app.js?v=13"></script><script type="module" src="beauty-analysis.js?v=2"></script><script src="expert-catalog.js?v=9"></script><script src="expert-picker.js?v=12"></script><script src="offline-appraisal.js?v=13"></script><script src="offline-order-model.js?v=13"></script><script src="offline-order-views.js?v=13"></script><script src="offline-order-report.js?v=13"></script><script src="offline-order-controller.js?v=13"></script><script src="offline-router.js?v=13"></script></body></html>

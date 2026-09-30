@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#050810"><meta name="description" content="图灵鉴X · 从日常好物，到珍藏之选。探索鉴定技能，开启图片咨询。"><title>图灵鉴X · 首页</title><link rel="icon" href="data:,"><link rel="stylesheet" href="original.css"><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="spectral.css?v=7"><link rel="stylesheet" href="expert-refinement.css?v=11"><link rel="stylesheet" href="expert-picker.css?v=9"><link rel="stylesheet" href="offline-appraisal.css?v=11"><link rel="stylesheet" href="offline-orders.css?v=13"><link rel="stylesheet" href="offline-order-report.css?v=13"><link rel="stylesheet" href="offline-order-controller.css?v=13"><link rel="stylesheet" href="beauty-analysis.css?v=2"></head><body>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#050810"><meta name="description" content="图灵鉴X · 从日常好物，到珍藏之选。探索鉴定技能，开启图片咨询。"><title>图灵鉴X · 首页</title><link rel="icon" href="data:,"><link rel="stylesheet" href="original.css"><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="spectral.css?v=7"><link rel="stylesheet" href="expert-refinement.css?v=11"><link rel="stylesheet" href="expert-picker.css?v=9"><link rel="stylesheet" href="offline-appraisal.css?v=11"><link rel="stylesheet" href="offline-orders.css?v=13"><link rel="stylesheet" href="offline-order-report.css?v=13"><link rel="stylesheet" href="offline-order-controller.css?v=13"><link rel="stylesheet" href="beauty-analysis.css?v=16"><link rel="stylesheet" href="beauty-entry-v16.css?v=16"><link rel="stylesheet" href="beauty-report-v16.css?v=16"></head><body>
   <div class="stage">
     <div class="phone" id="phone">
       <div class="chat-container" id="app">
@@ -126,24 +126,29 @@
         </div>
 
         <section class="beauty-page" id="beautyPage" role="dialog" aria-modal="true" aria-label="AI 鉴颜值" hidden>
+          <div class="beauty-entry-ambient beauty-entry-ambient-one" aria-hidden="true"></div><div class="beauty-entry-ambient beauty-entry-ambient-two" aria-hidden="true"></div>
           <header class="beauty-header">
-            <button type="button" class="beauty-icon-button" id="beautyBack" aria-label="返回首页"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14 6-6 6 6 6M8 12h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-            <div class="beauty-brand"><strong>AI 鉴颜值</strong><small>TURING BEAUTY LAB</small></div>
-            <button type="button" class="beauty-icon-button beauty-scene-button" id="beautyScenes" aria-label="场景切换"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h9m4 0h3M4 17h3m4 0h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="15" cy="7" r="2" stroke="currentColor" stroke-width="1.5"/><circle cx="9" cy="17" r="2" stroke="currentColor" stroke-width="1.5"/></svg></button>
+            <button type="button" class="beauty-menu" id="beautyMenu" aria-label="打开鉴颜值菜单"><i></i><i></i><i></i></button>
+            <div class="beauty-brand"><span class="beauty-brand-star" aria-hidden="true">✦</span><div><strong>AI 鉴颜值</strong><small>TURING BEAUTY LAB</small></div></div>
+            <span class="beauty-header-balance" aria-hidden="true"></span>
           </header>
           <div class="beauty-scroll" id="beautyScroll">
-            <section class="beauty-entry" id="beautyEntry">
-              <div class="beauty-entry-hero">
-                <div class="beauty-kicker"><i></i>五官比例 · 风格解析</div>
-                <h1>读懂五官的<br><em>每一份光彩</em></h1>
-                <div class="beauty-orbit" aria-hidden="true"><i></i><i></i><i></i><b></b><span></span></div>
+            <section class="beauty-entry skin-hero" id="beautyEntry">
+              <div class="skin-hero-main">
+                <div class="skin-hero-copy"><div class="skin-hero-kicker"><i></i>面部美学解析</div><h1>发现你的<br><span>每一面高光</span></h1></div>
+                <div class="skin-spectrum" aria-hidden="true">
+                  <div class="spectrum-scan"></div>
+                  <div class="spectrum-ring ring-one"></div><div class="spectrum-ring ring-two"></div>
+                  <div class="spectrum-orbit orbit-one"><i></i><i></i></div><div class="spectrum-orbit orbit-two"><i></i><i></i></div><div class="spectrum-orbit orbit-three"><i></i></div>
+                  <div class="spectrum-core"><b>BEAUTY</b><small>颜值解析</small></div>
+                  <div class="spectrum-reticle"><i></i><i></i><i></i><i></i></div>
+                </div>
               </div>
-              <p class="beauty-description">一张照片，发现你的颜值高光。解读五官与整体风格，找到适合自己的变美方向。</p>
-              <div class="beauty-pills"><span>五官解析</span><span>妆发建议</span><span>专属美妆</span></div>
-              <button type="button" class="beauty-primary" id="beautyUpload"><span aria-hidden="true">＋</span>上传照片，开启分析</button>
-              <button type="button" class="beauty-photo-choice" id="beautyStart"><img id="beautyEntryPhoto" src="assets/beauty-demo-portrait.png" alt="已选照片"><span><b>使用这张照片开启分析</b><small>发现属于你的高光时刻</small></span><i aria-hidden="true">↗</i></button>
-              <div class="beauty-stats"><span><b>5</b>项五官维度</span><span><b>6</b>组变美思路</span><span><b>1</b>份专属报告</span></div>
-              <p class="beauty-entry-footer">每一种美，都有自己的表达。</p>
+              <p class="skin-hero-description">让镜头发现五官之间的和谐与光彩，一张清晰正脸照，即可开启 5 维美学解析，解锁你的专属变美思路。</p>
+              <div class="feature-pills"><span>五官解析</span><span>隐私保护</span><span>专属建议</span></div>
+              <button type="button" class="primary-cta" id="beautyUpload"><span aria-hidden="true">＋</span> 开启我的颜值解析</button>
+              <div class="skin-hero-stats"><span><b>5</b>项美学维度</span><span><b>6</b>大变美方向</span><span><b>1</b>份专属报告</span></div>
+              <p class="privacy-note">照片仅在当前设备处理，不上传至服务器<br><span>关闭页面后，已上传照片将自动释放</span></p>
             </section>
             <section class="beauty-scanning" id="beautyScanning" hidden>
               <div class="beauty-scan-orbit"><div class="beauty-scan-image"><img id="beautyScanImage" src="assets/beauty-demo-portrait.png" alt="正在分析的照片"><i></i></div><span></span><span></span></div>
@@ -154,6 +159,17 @@
             </section>
             <article class="beauty-report" id="beautyReport" aria-label="你的颜值报告" hidden></article>
           </div>
+          <footer class="beauty-composer" id="beautyComposer">
+            <div class="beauty-composer-box">
+              <input id="beautyPrompt" type="text" maxlength="250" autocomplete="off" aria-label="想尝试的妆容与风格" placeholder="上传照片，聊聊想尝试的妆容与风格…">
+              <div class="beauty-composer-actions">
+                <button type="button" id="beautyComposerUpload"><span aria-hidden="true">▣</span> 照片</button>
+                <button type="button" id="beautyComposerSkill"><span aria-hidden="true">✦</span> AI 鉴颜值</button>
+                <button type="button" class="beauty-composer-send" id="beautyComposerSend" aria-label="发送颜值咨询">➤</button>
+              </div>
+            </div>
+            <small>发现个人风格，绽放独特光彩</small>
+          </footer>
           <input type="file" id="beautyPhotoInput" accept="image/*" hidden>
           <div class="beauty-overlay" id="beautyOverlay" hidden>
             <button type="button" class="beauty-scrim" aria-label="关闭面板" data-beauty-close></button>
@@ -224,4 +240,4 @@ AI可鉴别的产品会在提交订单并付款后即时给出结果，专家鉴
     </div>
   </div>
 
-  <script src="data.js"></script><script src="assets/icon-map.js"></script><script src="app.js?v=13"></script><script type="module" src="beauty-analysis.js?v=2"></script><script src="expert-catalog.js?v=9"></script><script src="expert-picker.js?v=12"></script><script src="offline-appraisal.js?v=13"></script><script src="offline-order-model.js?v=13"></script><script src="offline-order-views.js?v=13"></script><script src="offline-order-report.js?v=13"></script><script src="offline-order-controller.js?v=13"></script><script src="offline-router.js?v=13"></script></body></html>
+  <script src="data.js"></script><script src="assets/icon-map.js"></script><script src="app.js?v=13"></script><script type="module" src="beauty-analysis.js?v=16"></script><script src="expert-catalog.js?v=9"></script><script src="expert-picker.js?v=12"></script><script src="offline-appraisal.js?v=13"></script><script src="offline-order-model.js?v=13"></script><script src="offline-order-views.js?v=13"></script><script src="offline-order-report.js?v=13"></script><script src="offline-order-controller.js?v=13"></script><script src="offline-router.js?v=13"></script></body></html>

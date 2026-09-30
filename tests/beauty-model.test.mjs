@@ -95,6 +95,58 @@ test('guidance and honor copy change with the score tier, with clear low and hig
   }
 });
 
+test('compact area previews fit the card limits and retain the complete advice', () => {
+  const shortText = (value, limit, label) => {
+    assert.equal(typeof value, 'string', label);
+    assert.ok(value.trim().length > 0, label);
+    assert.ok([...value].length <= limit, `${label}: ${[...value].length} exceeds ${limit}`);
+  };
+  for (let score = 0; score <= 100; score++) {
+    const report = createReport(score);
+    shortText(report.strength, 24, `${score} strength`);
+    shortText(report.focus, 24, `${score} focus`);
+    assert.equal(new Set(report.areas.map(area => area.summary)).size, AREAS.length);
+    for (const [index, area] of report.areas.entries()) {
+      const label = `${score} ${area.id}`;
+      shortText(area.summary, 24, `${label} summary`);
+      assert.equal(area.actions.length, 2, `${label} actions`);
+      assert.equal(new Set(area.actions).size, 2, `${label} distinct actions`);
+      area.actions.forEach(action => shortText(action, 10, `${label} action`));
+      shortText(area.beforeLabel, 7, `${label} before label`);
+      shortText(area.afterLabel, 7, `${label} after label`);
+      assert.ok(area.reason.endsWith(AREAS[index].reason), `${label} full reason`);
+      assert.deepEqual(area.steps, AREAS[index].steps, `${label} full steps`);
+      assert.equal(area.after, AREAS[index].after, `${label} full after description`);
+    }
+  }
+  const reports = TIERS.map(tier => createReport(tier.sampleScore));
+  for (let index = 0; index < AREAS.length; index++) {
+    assert.equal(new Set(reports.map(report => report.areas[index].summary)).size, TIERS.length);
+    for (const report of reports.slice(-2)) assert.match(report.areas[index].summary, /保留/);
+  }
+});
+
+test('compact product previews contain a reason and exactly two distinct features', () => {
+  for (const tier of TIERS) {
+    for (const product of createReport(tier.sampleScore).products) {
+      assert.ok(product.shortReason.trim());
+      assert.ok([...product.shortReason].length <= 24, `${product.id} short reason`);
+      assert.ok(product.shortName.trim());
+      assert.ok([...product.shortName].length <= 10, `${product.id} short name`);
+      assert.equal(product.shortFeatures.length, 2);
+      assert.equal(new Set(product.shortFeatures).size, 2);
+      for (const feature of product.shortFeatures) {
+        assert.ok(feature.trim());
+        assert.ok([...feature].length <= 9, `${product.id} short feature`);
+      }
+      const original = PRODUCTS.find(item => item.id === product.id);
+      assert.equal(product.reason, original.reason);
+      assert.deepEqual(product.features, original.features);
+      assert.equal(product.usage, original.usage);
+    }
+  }
+});
+
 test('a rendered report cannot mutate future reports or shared catalog values', () => {
   const original = createReport(90);
   const changed = createReport(90);
@@ -103,10 +155,14 @@ test('a rendered report cannot mutate future reports or shared catalog values', 
   changed.dimensions[0].score = 0;
   changed.areas[0].steps.push('changed');
   changed.areas[0].productIds.push('invalid');
+  changed.areas[0].actions[0] = 'changed';
   changed.products[0].features[0] = 'changed';
+  changed.products[0].shortFeatures[0] = 'changed';
   changed.keywords[0] = 'changed';
   assert.deepEqual(createReport(90), original);
   assert.ok(Object.isFrozen(TIERS[0]));
   assert.ok(Object.isFrozen(AREAS[0].steps));
+  assert.ok(Object.isFrozen(AREAS[0].actions));
   assert.ok(Object.isFrozen(PRODUCTS[0].features));
+  assert.ok(Object.isFrozen(PRODUCTS[0].shortFeatures));
 });

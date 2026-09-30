@@ -9,6 +9,15 @@ const THEMES = [
   { name: '惊艳焦点', accent: '#F5D795', light: '#FFF5DE', glow: '#8A64EE', heading: '你的惊艳，值得登场' },
 ];
 
+// The score controls the artwork, independently of caller-supplied badge copy.
+const ART_DIRECTIONS = [
+  { edition: 'NATURAL BEAUTY', rings: 0, aurora: 0, stars: 6, crown: 'none', metal: ['#FFFFFF', '#D8E6FC', '#9CAECF'] },
+  { edition: 'FRESH BEAUTY', rings: 1, aurora: 2, stars: 14, crown: 'star', metal: ['#FFFFFF', '#D9D8FF', '#A5BFFF'] },
+  { edition: 'RADIANT BEAUTY', rings: 2, aurora: 3, stars: 24, crown: 'gem', metal: ['#FFFFFF', '#EDC5FF', '#BCA4FF', '#77DBF4'] },
+  { edition: 'THE SPOTLIGHT', rings: 2, aurora: 4, stars: 38, crown: 'laurel', metal: ['#FFFDF1', '#F7DBA4', '#C99452', '#FFF2C4'] },
+  { edition: 'THE BEAUTY ICON', rings: 3, aurora: 6, stars: 64, crown: 'crown', metal: ['#FFFFFF', '#FBDA96', '#E8ABDA', '#95E5FC', '#BBA7FF', '#FFF2C9'] },
+];
+
 /** Validate the shared report contract before loading any personal images. */
 export function normalizeBeautyPosterReport(report) {
   if (!report || typeof report !== 'object') throw new TypeError('缺少颜值报告');
@@ -33,6 +42,7 @@ export function normalizeBeautyPosterReport(report) {
     tierName: cleanText(report.tier?.title || report.tier?.name, THEMES[level].name, 10),
     afterTierName: cleanText(report.afterTier?.title || report.afterTier?.name, THEMES[afterLevel].name, 10),
     theme: { ...THEMES[level], accent: /^#[0-9a-f]{6}$/i.test(report.tier?.accent || '') ? report.tier.accent : THEMES[level].accent },
+    artwork: { ...ART_DIRECTIONS[level], metal: [...ART_DIRECTIONS[level].metal] },
     keywords: ['眉眼更有神', '气色更通透', '风格更协调'].map((fallback, index) => cleanText(keywords[index], fallback, 18)),
   };
 }
@@ -87,7 +97,7 @@ function line(ctx, x1, y1, x2, y2, color, width = 1) {
 }
 
 function text(ctx, content, x, y, size, color = '#F1F0FF', weight = 500, align = 'left') {
-  ctx.font = `${weight} ${size}px ${FONT}`;
+  ctx.font = `${Math.round(weight / 100) * 100} ${size}px ${FONT}`;
   ctx.textAlign = align;
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = color;
@@ -145,196 +155,295 @@ function portrait(ctx, image, x, y, width, height, radius, focalY = 0.36) {
   ctx.restore();
 }
 
-function badge(ctx, x, y, level, theme) {
-  const radius = 53 + level * 3;
-  ctx.save();
-  glow(ctx, x, y, radius * 1.7, theme.glow, 0.22 + level * 0.035);
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, Math.PI * 2);
-  const face = ctx.createLinearGradient(x - radius, y - radius, x + radius, y + radius);
-  face.addColorStop(0, 'rgba(24,24,53,.94)');
-  face.addColorStop(1, 'rgba(9,12,26,.94)');
-  ctx.fillStyle = face;
-  ctx.fill();
-  ctx.lineWidth = 1.3;
-  ctx.strokeStyle = theme.accent;
+function gradient(ctx, x1, y1, x2, y2, colors) {
+  const result = ctx.createLinearGradient(x1, y1, x2, y2);
+  colors.forEach((color, index) => result.addColorStop(index / (colors.length - 1), color));
+  return result;
+}
+
+function border(ctx, x, y, width, height, radius, color, weight = 1) {
+  roundedPath(ctx, x, y, width, height, radius);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = weight;
   ctx.stroke();
-  if (level >= 2) {
-    ctx.beginPath();
-    ctx.arc(x, y, radius - 7, 0, Math.PI * 2);
-    ctx.globalAlpha = 0.4;
-    ctx.stroke();
-    ctx.globalAlpha = 1;
+}
+
+function polygon(ctx, points, fill, stroke) {
+  ctx.beginPath();
+  points.forEach(([x, y], index) => index ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 1.4; ctx.stroke(); }
+}
+
+function ornament(ctx, x, y, artwork, theme) {
+  const metal = gradient(ctx, x - 95, y - 58, x + 105, y + 68, artwork.metal);
+  if (artwork.crown === 'none') {
+    sparkle(ctx, x, y, 13, theme.light);
+    return;
   }
-  if (level >= 3) {
-    // An open laurel follows the same thin geometric line language as the app.
-    for (let side = -1; side <= 1; side += 2) {
-      for (let index = 0; index < 5; index++) {
-        const angle = (Math.PI / 3) + index * 0.2;
-        const lx = x + side * Math.sin(angle) * (radius - 14);
-        const ly = y + Math.cos(angle) * (radius - 14);
+  if (artwork.crown === 'star') {
+    glow(ctx, x, y, 66, '#786EFF', 0.45);
+    sparkle(ctx, x, y, 29, metal);
+    sparkle(ctx, x + 38, y + 10, 6, '#84E2FF');
+    return;
+  }
+  if (artwork.crown === 'gem') {
+    glow(ctx, x, y, 95, '#A377FF', 0.6);
+    polygon(ctx, [[x,y-42],[x+32,y-13],[x+21,y+23],[x-21,y+23],[x-32,y-13]], metal, '#F3DEFF');
+    polygon(ctx, [[x,y-42],[x+12,y-13],[x,y+23],[x-12,y-13]], '#F1DFFF77');
+    line(ctx, x-32, y-13, x+32, y-13, '#FFFFFF99');
+    return;
+  }
+  glow(ctx, x, y, 132, '#BD8C4C', 0.3);
+  glow(ctx, x, y - 15, 86, '#8F71FF', 0.38);
+  if (artwork.crown === 'laurel') {
+    for (const side of [-1, 1]) {
+      for (let i = 0; i < 7; i++) {
         ctx.save();
-        ctx.translate(lx, ly);
-        ctx.rotate(-side * (angle - 0.4));
+        ctx.translate(x + side * (28 + Math.sin(i * 0.23) * 40), y + 26 - i * 11);
+        ctx.rotate(side * (0.2 + i * 0.13));
         ctx.beginPath();
-        ctx.ellipse(0, 0, 3, 7, 0, 0, Math.PI * 2);
-        ctx.fillStyle = theme.accent;
+        ctx.ellipse(0, 0, 5, 13, 0, 0, Math.PI * 2);
+        ctx.fillStyle = metal;
         ctx.fill();
         ctx.restore();
       }
     }
+    sparkle(ctx, x, y - 5, 30, metal);
+    sparkle(ctx, x, y - 50, 7, '#FFF2C5');
+    return;
   }
-  if (level === 0) {
-    ctx.beginPath();
-    ctx.arc(x, y, 20, 0, Math.PI * 2);
-    ctx.strokeStyle = theme.light;
-    ctx.stroke();
-    sparkle(ctx, x, y, 13, theme.light);
-  } else if (level === 1) {
-    sparkle(ctx, x, y, 25, theme.light);
-  } else {
-    ctx.beginPath();
-    ctx.moveTo(x, y - 26);
-    ctx.lineTo(x + 23, y - 7);
-    ctx.lineTo(x + 14, y + 22);
-    ctx.lineTo(x - 14, y + 22);
-    ctx.lineTo(x - 23, y - 7);
-    ctx.closePath();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = theme.light;
-    ctx.stroke();
-    line(ctx, x, y - 26, x, y + 22, theme.accent);
-    line(ctx, x - 23, y - 7, x + 23, y - 7, theme.accent);
-    if (level === 4) {
-      sparkle(ctx, x + 22, y - 27, 8, theme.light);
-      sparkle(ctx, x - 20, y + 24, 4, theme.accent);
+  // Each face is a separate metallic facet; this remains sharp at export size.
+  const peaks = [[x-81,y-31],[x-42,y-8],[x,y-64],[x+42,y-8],[x+81,y-31],[x+64,y+30],[x-64,y+30]];
+  ctx.save();
+  ctx.shadowColor = '#F7CF84';
+  ctx.shadowBlur = 19;
+  polygon(ctx, peaks, metal, '#FFF0C4');
+  ctx.restore();
+  polygon(ctx, [[x,y-64],[x-20,y+23],[x,y+14],[x+20,y+23]], '#FFFDEBAA');
+  polygon(ctx, [[x-81,y-31],[x-64,y+30],[x-43,y+15]], '#9268BA66');
+  polygon(ctx, [[x+81,y-31],[x+64,y+30],[x+43,y+15]], '#6C96B66B');
+  polygon(ctx, [[x-42,y-8],[x-20,y+23],[x-57,y+23]], '#F1D9AC99');
+  polygon(ctx, [[x+42,y-8],[x+20,y+23],[x+57,y+23]], '#FFF8DAB0');
+  border(ctx, x-64, y+25, 128, 14, 6, '#FFF0C4', 2);
+  line(ctx, x-56, y+31, x+56, y+31, '#C89B61', 5);
+  for (const [dx,dy,r] of [[0,-67,8],[-82,-34,6],[82,-34,6]]) sparkle(ctx,x+dx,y+dy,r,'#FFFAE0');
+  sparkle(ctx, x+64, y+27, 10, '#FFFFFF');
+}
+
+function aurora(ctx, report) {
+  const colors = ['#7255F2', '#409BEB', '#B061D8', '#66DADB', '#D79C5E', '#8472F1'];
+  for (let i=0;i<report.artwork.aurora;i++) {
+    ctx.save();
+    ctx.translate(540, 530);
+    ctx.rotate(-0.62 + i * 0.25);
+    ctx.scale(0.22 + (i % 3) * 0.05, 1);
+    glow(ctx, -680 + i * 245, -140 + (i % 2) * 170, 820, colors[i], report.level === 4 ? 0.55 : 0.24);
+    ctx.restore();
+  }
+  if (report.level === 4) {
+    // Broad translucent folds form an aurora curtain behind the portrait stage.
+    for (let i=0;i<4;i++) {
+      const x=100+i*235;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x-90,120);
+      ctx.bezierCurveTo(x+220,300,x-210,540,x+80,940);
+      ctx.bezierCurveTo(x-55,570,x+300,320,x+35,120);
+      ctx.closePath();
+      ctx.fillStyle=gradient(ctx,x,120,x+110,940,[colors[i]+'05',colors[i]+'29',colors[i]+'04']);
+      ctx.fill();
+      ctx.restore();
     }
+  }
+  if (report.level >= 3) {
+    for (let i=0;i<24;i++) {
+      const angle = i * Math.PI * 2 / 24;
+      const strength = i % 3 === 0 ? 0.18 : 0.08;
+      line(ctx, 540+Math.cos(angle)*290, 590+Math.sin(angle)*285, 540+Math.cos(angle)*590, 590+Math.sin(angle)*580, `rgba(226,196,139,${strength})`, i%3===0?1.4:0.8);
+    }
+  }
+}
+
+function ring(ctx, x, y, rx, ry, rotation, colors, strength = 1) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  const metal = gradient(ctx, -rx, -ry, rx, ry, colors);
+  ctx.beginPath();
+  ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2);
+  ctx.globalAlpha = strength * 0.22;
+  ctx.lineWidth = 19;
+  ctx.strokeStyle = metal;
+  ctx.shadowColor = colors[1];
+  ctx.shadowBlur = 25;
+  ctx.stroke();
+  ctx.globalAlpha = strength * 0.7;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.globalAlpha = strength;
+  ctx.lineWidth = 1.3;
+  ctx.strokeStyle = '#F4E6FF';
+  ctx.shadowBlur = 4;
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = strength * 0.3;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, rx+9, ry+9, 0, 0, Math.PI * 2);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = metal;
+  ctx.stroke();
+  ctx.globalAlpha = strength;
+  for (const angle of [0.16, 3.27]) {
+    const px = Math.cos(angle)*rx, py = Math.sin(angle)*ry;
+    glow(ctx, px, py, 32, colors[1], 0.55);
+    sparkle(ctx, px, py, 7, '#FFF8E8');
   }
   ctx.restore();
 }
 
-function drawPoster(ctx, before, after, report) {
-  const { theme, level } = report;
-  const background = ctx.createLinearGradient(0, 0, WIDTH, HEIGHT);
-  background.addColorStop(0, '#11112B');
-  background.addColorStop(0.48, '#080B17');
-  background.addColorStop(1, '#0C1020');
-  ctx.fillStyle = background;
-  ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  glow(ctx, 1010, 10, 730, theme.glow, 0.13 + level * 0.025);
-  glow(ctx, 50, 1800, 570, '#555BBD', 0.09);
-
-  sparkle(ctx, 76, 65, 13, theme.accent);
-  text(ctx, '鉴X', 103, 77, 34, '#F1F0FF', 600);
-  text(ctx, 'AI 颜值报告', 1008, 75, 24, '#B9BED2', 500, 'right');
-  text(ctx, theme.heading, 64, 147, 48, '#F1F0FF', 550);
-
-  portrait(ctx, before, 64, 184, 952, 866, 34);
-  ctx.save();
-  roundedPath(ctx, 64, 184, 952, 866, 34);
-  ctx.clip();
-  const shade = ctx.createLinearGradient(0, 475, 0, 1050);
-  shade.addColorStop(0, 'rgba(6,8,20,0)');
-  shade.addColorStop(0.28, 'rgba(6,8,20,.04)');
-  shade.addColorStop(0.57, 'rgba(6,8,20,.65)');
-  shade.addColorStop(1, 'rgba(6,8,20,.99)');
-  ctx.fillStyle = shade;
-  ctx.fillRect(64, 184, 952, 866);
-  const edgeShade = ctx.createLinearGradient(64, 0, 1016, 0);
-  edgeShade.addColorStop(0, 'rgba(8,10,25,.18)');
-  edgeShade.addColorStop(0.48, 'rgba(8,10,25,0)');
-  edgeShade.addColorStop(1, 'rgba(8,10,25,.12)');
-  ctx.fillStyle = edgeShade;
-  ctx.fillRect(64, 184, 952, 866);
-
+function artworkFrame(ctx, report) {
+  const {level, theme} = report;
+  border(ctx, 28, 28, 1024, 1864, 29, gradient(ctx,0,0,1080,1920,['#79C8ED55',theme.accent+'88','#746FF027',theme.accent+'55']), level >= 3 ? 1.8 : 1);
   if (level >= 3) {
+    border(ctx, 37, 37, 1006, 1846, 23, '#D9C39822');
+    for (const [x,y,sx,sy] of [[48,48,1,1],[1032,48,-1,1],[48,1872,1,-1],[1032,1872,-1,-1]]) {
+      line(ctx,x,y,x+sx*70,y,theme.accent,1.5);
+      line(ctx,x,y,x,y+sy*70,theme.accent,1.5);
+      polygon(ctx,[[x+sx*12,y+sy*3],[x+sx*20,y+sy*12],[x+sx*12,y+sy*21],[x+sx*4,y+sy*12]],theme.accent+'99');
+    }
+  }
+}
+
+function drawPoster(ctx, before, after, report) {
+  const { theme, level, artwork } = report;
+  ctx.fillStyle = gradient(ctx,0,0,WIDTH,HEIGHT,['#10132D','#060918','#0A0D22']);
+  ctx.fillRect(0, 0, WIDTH, HEIGHT);
+  glow(ctx, 530, 525, 790, theme.glow, 0.17 + level * 0.04);
+  glow(ctx, 65, 1800, 530, '#4348AF', 0.2);
+  aurora(ctx, report);
+
+  // Fine radial etching makes the stage read as a physical engraved object.
+  if (level >= 2) {
     ctx.save();
-    ctx.translate(534, 700);
-    ctx.rotate(-0.33);
-    ctx.strokeStyle = theme.accent;
-    ctx.globalAlpha = 0.32;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 655, 430, 0, 0.25, 1.63);
-    ctx.stroke();
-    ctx.globalAlpha = level === 4 ? 0.35 : 0.17;
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 675, 445, 0, 0.25, 1.63);
-    ctx.stroke();
+    ctx.strokeStyle = '#A69BDD18';
+    ctx.lineWidth = 1;
+    for (let i=0;i<4;i++) {
+      ctx.beginPath();
+      ctx.ellipse(540,585,370+i*18,420+i*18,0,0,Math.PI*2);
+      ctx.stroke();
+    }
     ctx.restore();
   }
-  ctx.restore();
+  for(let i=0;i<artwork.stars;i++) {
+    const left = i%2===0;
+    const x = left ? 64+(i*67%168) : 848+(i*47%168);
+    const y = 169+(i*113%953);
+    const size = i%9===0 ? 9 : i%3===0 ? 4 : 1.4;
+    sparkle(ctx,x,y,size,i%3===0?theme.light:'#A5BDFC',i%9===0?0.95:0.5);
+  }
+  artworkFrame(ctx, report);
+  sparkle(ctx, 82, 86, 14, theme.accent);
+  text(ctx, '鉴X', 109, 98, 35, '#F1F0FF', 650);
+  text(ctx, 'AI 颜值报告', 997, 96, 25, '#C7CBDD', 500, 'right');
+  line(ctx, 77, 120, 1003, 120, '#A9A6D322');
+  text(ctx, artwork.edition, 540, 167, 20, theme.accent, 500, 'center');
+  text(ctx, theme.heading, 540, 203, 40, '#F7F5FF', 550, 'center');
 
-  roundedPath(ctx, 64, 184, 952, 866, 34);
-  ctx.strokeStyle = level >= 3 ? 'rgba(236,208,155,.38)' : 'rgba(190,200,238,.22)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  badge(ctx, 925, 272, level, theme);
-  if (level >= 2) {
-    const points = [[991, 421, 7], [51, 763, 5], [994, 929, 8], [828, 165, 4]];
-    points.slice(0, level === 4 ? 4 : level === 3 ? 3 : 1).forEach(([x, y, size]) => sparkle(ctx, x, y, size, theme.light, 0.85));
+  const ringColors = level>=3 ? ['#AB84F7','#FFF0C9','#D99854','#95DFF5','#9985F5'] : ['#7770ED',theme.light,'#76CFEF','#8570CF'];
+  if(artwork.rings>=1) ring(ctx,540,605,396,324,-0.48,ringColors,level===1?0.32:0.6);
+  if(artwork.rings>=2) ring(ctx,540,605,419,295,0.49,ringColors,level===4?0.9:0.62);
+  if(artwork.rings>=3) ring(ctx,540,605,443,248,-0.05,['#7EB8FD','#FFECB3','#CCA0ED','#64DBEB'],0.94);
+
+  // Rings and the crown stay outside the face, which has a separate clean frame.
+  const photo = {x:280,y:284,width:520,height:622,radius:level>=3?62:36};
+  glow(ctx,540,548,325,theme.glow,0.31);
+  portrait(ctx,before,photo.x,photo.y,photo.width,photo.height,photo.radius,0.2);
+  ctx.save();
+  roundedPath(ctx,photo.x,photo.y,photo.width,photo.height,photo.radius);
+  ctx.clip();
+  const shade=gradient(ctx,0,633,0,910,['#06091800','#070A1810','#080B21DF','#080B21']);
+  ctx.fillStyle=shade;
+  ctx.fillRect(photo.x,633,photo.width,280);
+  ctx.restore();
+  border(ctx,photo.x-7,photo.y-7,photo.width+14,photo.height+14,photo.radius+7,gradient(ctx,280,284,800,906,[theme.light+'CB',theme.accent+'28','#8DB9F955',theme.light+'22']),level>=3?2.4:1.5);
+  if(level>=3) border(ctx,photo.x-17,photo.y-17,photo.width+34,photo.height+34,photo.radius+17,theme.accent+'33',1);
+  ornament(ctx,540,280,artwork,theme);
+  if(level>=3) {
+    sparkle(ctx,805,365,17,'#FFEDD0');
+    sparkle(ctx,283,706,12,'#C5E7FF');
+    line(ctx,101,1050,101,400,theme.accent+'40');
+    line(ctx,979,1050,979,400,theme.accent+'40');
   }
 
-  text(ctx, '当前颜值', 108, 790, 24, '#D5D7E4');
-  const scoreGradient = ctx.createLinearGradient(100, 800, 355, 940);
-  scoreGradient.addColorStop(0, '#FFFFFF');
-  scoreGradient.addColorStop(1, theme.accent);
-  const scoreText = format(report.score);
-  const scoreSize = scoreText.length > 3 ? 132 : 166;
-  text(ctx, scoreText, 100, 946, scoreSize, scoreGradient, 600);
-  ctx.font = `600 ${scoreSize}px ${FONT}`;
-  const scoreWidth = ctx.measureText(scoreText).width;
-  text(ctx, '/ 100', 110 + scoreWidth, 942, 27, '#BCC2D5', 400);
-  text(ctx, report.tierName, 490, 866, 49, theme.light, 600);
-  text(ctx, `超过 ${format(report.percentile)}% 的人`, 492, 923, 30, '#E2E3EE');
-  line(ctx, 108, 980, 972, 980, 'rgba(213,219,245,.21)');
-  const captions = ['保留自然感，发现更多可能', '自然协调，越看越有自己的味道', '鲜明的你，让人一眼记住', '五官与气质相得益彰', '属于你的惊艳，自带光芒'];
-  text(ctx, captions[level], 108, 1021, 26, '#BEC3D2');
-
-  text(ctx, '看见更出彩的自己', 64, 1143, 40, '#F1F0FF', 550);
-  line(ctx, 655, 1131, 1016, 1131, 'rgba(166,188,227,.2)');
-
-  portrait(ctx, after, 64, 1182, 384, 436, 22, 0.34);
-  roundedPath(ctx, 64, 1182, 384, 436, 22);
-  ctx.strokeStyle = 'rgba(202,208,237,.24)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
+  text(ctx, '当前颜值', 540, 879, 24, '#C4C7DC',500,'center');
+  const scoreText=format(report.score);
+  const scoreSize=scoreText.length>3?148:scoreText.length===3?166:190;
+  const metal=gradient(ctx,355,901,730,1044,artwork.metal);
   ctx.save();
-  roundedPath(ctx, 64, 1182, 384, 436, 22);
-  ctx.clip();
-  const afterShade = ctx.createLinearGradient(0, 1488, 0, 1618);
-  afterShade.addColorStop(0, 'rgba(8,10,23,0)');
-  afterShade.addColorStop(1, 'rgba(8,10,23,.76)');
-  ctx.fillStyle = afterShade;
-  ctx.fillRect(64, 1470, 384, 148);
-  text(ctx, '变美后的你', 91, 1585, 27, '#FFFFFF', 500);
+  ctx.shadowColor=level>=3?'#CC9B54':'#806EDB';
+  ctx.shadowBlur=level===4?35:level===3?22:8;
+  text(ctx,scoreText,540,1045,scoreSize,metal,650,'center');
   ctx.restore();
+  text(ctx,'/ 100',540,1086,22,'#979EBB',450,'center');
+  const titleSize=report.tierName.length>6?42:52;
+  text(ctx,report.tierName,540,1150,titleSize,theme.light,650,'center');
+  line(ctx,182,1135,332,1135,gradient(ctx,182,0,332,0,['#8C81C100',theme.accent+'88']),1);
+  line(ctx,748,1135,898,1135,gradient(ctx,748,0,898,0,[theme.accent+'88','#8C81C100']),1);
+  const rank=`超过 ${format(report.percentile)}% 的人`;
+  roundedPath(ctx,307,1171,466,57,28);
+  ctx.fillStyle=gradient(ctx,307,1171,773,1228,['#7863D922',level>=3?'#CBA45820':'#438DB01C']);
+  ctx.fill();
+  border(ctx,307,1171,466,57,28,theme.accent+'50');
+  text(ctx,rank,540,1209,28,theme.light,550,'center');
 
-  text(ctx, '变美后颜值', 498, 1215, 24, '#BEC3D2');
-  const afterScoreText = format(report.afterScore);
-  const afterSize = afterScoreText.length > 3 ? 102 : 122;
-  text(ctx, afterScoreText, 490, 1349, afterSize, theme.light, 550);
-  ctx.font = `550 ${afterSize}px ${FONT}`;
-  const afterWidth = ctx.measureText(afterScoreText).width;
-  text(ctx, '/ 100', 504 + afterWidth, 1344, 25, '#AAAFC7', 400);
-  text(ctx, report.afterTierName, 498, 1409, 32, '#E6E4F7');
-  text(ctx, `超过 ${format(report.afterPercentile)}% 的人`, 498, 1460, 28, '#BEC3D2');
-  line(ctx, 498, 1493, 1016, 1493, 'rgba(166,188,227,.2)');
-  text(ctx, '颜值提升', 498, 1553, 25, '#BEC3D2');
-  const difference = Math.round((report.afterScore - report.score) * 10) / 10;
-  text(ctx, `${difference >= 0 ? '+' : ''}${format(difference)}`, 1016, 1562, 57, theme.accent, 550, 'right');
-  text(ctx, '每个细节，都更接近你喜欢的样子', 498, 1605, 22, '#909BB6');
+  // Independent after portrait and score keep both versions legible at phone size.
+  roundedPath(ctx,64,1282,952,342,25);
+  ctx.fillStyle=gradient(ctx,64,1282,1016,1624,['#20213D','#111831','#0C132B']);
+  ctx.fill();
+  border(ctx,64,1282,952,342,25,gradient(ctx,64,1282,1016,1624,['#8ABEEB72','#9680DC50',theme.accent+'66']),1.4);
+  text(ctx,'看见更出彩的自己',64,1265,26,'#C8CCE2',550);
+  portrait(ctx,after,79,1297,268,312,15,0.22);
+  ctx.save();
+  roundedPath(ctx,79,1297,268,312,15);
+  ctx.clip();
+  ctx.fillStyle=gradient(ctx,0,1510,0,1609,['#090B2100','#090B21B3']);
+  ctx.fillRect(79,1510,268,99);
+  text(ctx,'变美后的你',213,1582,22,'#FFFFFF',500,'center');
+  ctx.restore();
+  text(ctx,'变美后颜值',382,1328,22,'#A6ADC8');
+  const afterText=format(report.afterScore);
+  const afterSize=afterText.length>3?90:104;
+  text(ctx,afterText,378,1446,afterSize,gradient(ctx,380,1356,615,1446,artwork.metal),600);
+  ctx.font=`600 ${afterSize}px ${FONT}`;
+  text(ctx,'/ 100',390+ctx.measureText(afterText).width,1443,22,'#969FBC');
+  text(ctx,report.afterTierName,382,1502,29,'#EAE6F7',600);
+  text(ctx,`超过 ${format(report.afterPercentile)}% 的人`,382,1550,25,'#B9C2DC');
+  const difference=Math.round((report.afterScore-report.score)*10)/10;
+  const differenceText=`${difference>=0?'+':''}${format(difference)}`;
+  roundedPath(ctx,797,1310,190,88,15);
+  ctx.fillStyle=level>=3?'#CEA86414':'#8E79EE17';
+  ctx.fill();
+  border(ctx,797,1310,190,88,15,theme.accent+'40');
+  text(ctx,'颜值提升',892,1338,19,'#AFB5CA',500,'center');
+  text(ctx,differenceText,892,1380,36,theme.light,600,'center');
+  text(ctx,'每个细节，都更有自己的样子',382,1592,20,'#8693B1');
 
-  text(ctx, '这一次的变化', 64, 1691, 24, '#929DB8');
-  report.keywords.forEach((keyword, index) => {
-    const x = 64 + index * 326;
-    text(ctx, String(index + 1).padStart(2, '0'), x, 1740, 22, theme.accent, 500);
-    wrappedText(ctx, keyword, x, 1789, 280, 29, '#E2E4F2', 40, 2);
-    if (index < 2) line(ctx, x + 301, 1717, x + 301, 1812, 'rgba(166,188,227,.16)');
+  text(ctx,'这一次的变化',64,1683,24,'#ADB5CF');
+  report.keywords.forEach((keyword,index)=>{
+    const x=64+index*322;
+    roundedPath(ctx,x,1703,308,102,17);
+    ctx.fillStyle=gradient(ctx,x,1703,x+308,1805,['#8F77EF13','#35447E0D']);
+    ctx.fill();
+    border(ctx,x,1703,308,102,17,theme.accent+'2B');
+    text(ctx,String(index+1).padStart(2,'0'),x+17,1734,17,theme.accent,600);
+    wrappedText(ctx,keyword,x+17,1768,274,25,'#DDE1F1',29,2);
   });
-  line(ctx, 64, 1846, 1016, 1846, 'rgba(166,188,227,.18)');
-  text(ctx, '让你的美，更有自己的样子。', 64, 1894, 25, '#B9C0D3');
-  sparkle(ctx, 987, 1886, 9, theme.accent);
+  line(ctx,64,1831,1016,1831,gradient(ctx,64,0,1016,0,['#8073BE00',theme.accent+'66','#8073BE00']));
+  text(ctx,'让你的美，更有自己的样子。',540,1867,24,'#B4BDD5',500,'center');
+  sparkle(ctx,73,1831,6,theme.accent);
+  sparkle(ctx,1007,1831,6,theme.accent);
 }
 
 /** Render an export-ready PNG without initiating a download or changing the page. */

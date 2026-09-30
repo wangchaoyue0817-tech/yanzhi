@@ -1,0 +1,108 @@
+/* Entry composition ported from the supplied skin v10 source.
+ * Sources: globals.css final skin-hero/scanner rules and report-v10 header balance.
+ * Keep this scoped to the beauty surface; the JianX homepage retains its own shell.
+ */
+.beauty-page:not([hidden]),.chat-container.is-beauty .beauty-page { inset:0;background:linear-gradient(180deg,#080b1c,#050718 64%,#090a1d);isolation:isolate; }
+.beauty-page { color:#f5f3ff;font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;line-height:1.5; }
+.beauty-page:before { content:"";position:absolute;inset:0;z-index:-1;opacity:.42;background-image:linear-gradient(#6f5cff08 1px,transparent 1px),linear-gradient(90deg,#6f5cff08 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(to bottom,black,transparent 72%);pointer-events:none; }
+.beauty-page .beauty-entry-ambient { position:absolute;z-index:-1;border-radius:50%;filter:blur(70px);pointer-events:none; }
+.beauty-page .beauty-entry-ambient-one { width:240px;height:240px;background:#624bff40;right:-120px;top:95px; }
+.beauty-page .beauty-entry-ambient-two { width:180px;height:180px;background:#183e9440;left:-100px;bottom:160px; }
+.beauty-page .beauty-header { position:relative;z-index:5;display:flex;align-items:center;justify-content:space-between;flex:0 0 94px;height:94px;padding:27px 20px 12px;border-bottom:1px solid #ffffff08;background:linear-gradient(#080b1df5,transparent); }
+.beauty-page .beauty-menu { border:0;background:transparent;width:40px;height:40px;display:grid;place-content:center;gap:5px;padding:0;opacity:.9; }
+.beauty-page .beauty-menu i { display:block;width:23px;height:1.5px;background:#dddff0;border-radius:2px; }
+.beauty-page .beauty-header-balance { display:block;width:40px;height:40px;flex:none; }
+.beauty-page .beauty-brand { display:flex;align-items:center;gap:9px;text-align:left; }
+.beauty-page .beauty-brand-star { color:#a58cff;text-shadow:0 0 18px #836dff;font-size:18px; }
+.beauty-page .beauty-brand strong { display:block;font-size:16px;font-weight:700;letter-spacing:.06em; }
+.beauty-page .beauty-brand small { display:block;margin-top:3px;font-size:7px;letter-spacing:.25em;color:#777f9f; }
+.beauty-page .beauty-scroll:has(.beauty-entry:not([hidden])) { padding:8px 18px 190px; }
+.beauty-page .beauty-entry { position:relative;width:100%;min-height:0;padding:24px 2px 28px;border:0;border-bottom:1px solid #7567ff22;border-radius:0;background:radial-gradient(circle at 82% 17%,#6f5cff12,transparent 32%);box-shadow:none;overflow:visible; }
+.beauty-page .skin-hero-main { position:relative;min-height:178px; }
+.beauty-page .skin-hero-copy { position:relative;z-index:2;width:68%;padding-top:11px; }
+.beauty-page .skin-hero-kicker { display:flex;align-items:center;gap:8px;color:#b8a8dc;font-size:10px;letter-spacing:.12em; }
+.beauty-page .skin-hero-kicker i { width:29px;height:1px;background:linear-gradient(90deg,#7a6cff,#d8c5ff); }
+.beauty-page .skin-hero h1 { margin:17px 0 0;font-size:31px;font-weight:400;line-height:1.23;letter-spacing:-.055em; }
+.beauty-page .skin-hero h1 span { background:linear-gradient(90deg,#fff 0,#c5a6ff 38%,#ee9ee0 76%,#75d8ff);background-clip:text;-webkit-background-clip:text;color:transparent;text-shadow:0 0 28px #876cff22; }
+.beauty-page .skin-hero-description { position:relative;z-index:2;margin:1px 0 14px;color:#a8aec4;font-size:12px;line-height:1.8; }
+.beauty-page .skin-hero .feature-pills { display:flex;gap:6px;margin:12px 0 15px; }
+.beauty-page .skin-hero .feature-pills span { padding:5px 8px;border:1px solid #806dff38;border-radius:99px;background:#6f5cff0d;color:#a8a0c3;font-size:9px; }
+.beauty-page .skin-hero .primary-cta { width:100%;height:56px;border:1px solid #c2a6ff35;border-radius:16px;background:linear-gradient(105deg,#595ff2 0,#7b55ea 55%,#b55ad5 100%);box-shadow:0 13px 34px #6f5cff45,inset 0 1px #ffffff55;color:#f5f3ff;font-weight:700;font-size:15px;letter-spacing:.03em;transition:transform .2s; }
+.beauty-page .skin-hero .primary-cta:active { transform:scale(.98); }
+.beauty-page .skin-hero .primary-cta span { font-size:20px;font-weight:300;vertical-align:-1px;margin-right:4px; }
+.beauty-page .skin-hero-stats { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:18px 0 1px; }
+.beauty-page .skin-hero-stats span { display:flex;align-items:baseline;justify-content:center;width:100%;min-width:0;color:#737b98;font-size:8px;white-space:nowrap;text-align:center; }
+.beauty-page .skin-hero-stats b { margin-right:2px;background:linear-gradient(180deg,#fff,#c9a9ff);background-clip:text;-webkit-background-clip:text;color:transparent;font-size:19px; }
+.beauty-page .skin-hero .privacy-note { margin:15px 0 0;text-align:center;color:#666e8e;font-size:9px;line-height:1.7; }
+.beauty-page .skin-hero .privacy-note span { display:inline-block;margin-top:2px;color:#aaa0e2;line-height:1.45; }
+
+/* Complete three-orbit scanner, including the final slow pearl cadence. */
+.beauty-page .skin-spectrum { position:absolute;z-index:1;right:-11px;top:-7px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#6f5cff1f 0 25%,transparent 57%),radial-gradient(circle at 76% 25%,#5ce1ff14,transparent 22%);filter:drop-shadow(0 0 24px #725fff4d);isolation:isolate;overflow:hidden;pointer-events:none; }
+.beauty-page .skin-spectrum:before { content:"";position:absolute;inset:7px;border-radius:50%;background:radial-gradient(circle at 18% 31%,#72e3ff 0 1px,transparent 2px),radial-gradient(circle at 76% 18%,#fff 0 1px,transparent 1.8px),radial-gradient(circle at 87% 63%,#f4a7df 0 1px,transparent 2px),radial-gradient(circle at 28% 83%,#a99cff 0 1px,transparent 2px);opacity:.75;animation:beautySpectrumTwinkle 5.4s ease-in-out infinite; }
+.beauty-page .skin-spectrum:after { content:"";position:absolute;z-index:4;left:27px;right:27px;top:23px;height:1px;border-radius:99px;background:linear-gradient(90deg,transparent,#6ce4ff 18%,#fff 50%,#a789ff 78%,transparent);box-shadow:0 0 7px #65dfff,0 5px 18px #706cff5e;opacity:.42;pointer-events:none;animation:beautySpectrumBeam 6.2s cubic-bezier(.45,0,.55,1) infinite; }
+.beauty-page .spectrum-ring { position:absolute;inset:28px;border:1px solid #856fff50;border-radius:50%;box-shadow:inset 0 0 18px #695aff0e,0 0 18px #695aff0d; }
+.beauty-page .spectrum-ring:after { content:"";position:absolute;inset:14px;border:1px dashed #9f87ff40;border-radius:50%; }
+.beauty-page .spectrum-ring.ring-two { inset:54px;border-color:#d59de05c;box-shadow:0 0 18px #8c68ff2b; }
+.beauty-page .spectrum-ring.ring-two:after { display:none; }
+.beauty-page .ring-one { animation:beautySpectrumSpin 24s linear infinite; }
+.beauty-page .ring-two { animation:beautySpectrumReverse 19s linear infinite; }
+.beauty-page .spectrum-scan { position:absolute;inset:16px;border-radius:50%;opacity:.95;mix-blend-mode:screen;background:conic-gradient(from 0deg,transparent 0 276deg,#62dcff08 290deg,#7e70ff66 323deg,#efa0da25 348deg,transparent 360deg);-webkit-mask:radial-gradient(circle,transparent 0 25%,#000 28% 73%,transparent 75%);mask:radial-gradient(circle,transparent 0 25%,#000 28% 73%,transparent 75%);animation:beautySpectrumSpin 9.6s linear infinite; }
+.beauty-page .spectrum-orbit { position:absolute;border:0;border-radius:50%;box-shadow:none; }
+.beauty-page .spectrum-orbit:before { content:"";position:absolute;inset:0;border-radius:inherit;background:conic-gradient(from 25deg,transparent 0 9%,#72e3ffb8 14%,#8b77ff80 31%,transparent 38% 59%,#ee9edb8f 69%,transparent 79%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 1.6px),#000 calc(100% - 1px));mask:radial-gradient(farthest-side,transparent calc(100% - 1.6px),#000 calc(100% - 1px));filter:drop-shadow(0 0 4px #806fff66); }
+.beauty-page .spectrum-orbit i { position:absolute;width:8px;height:8px;border:2px solid #0b0c20;border-radius:50%;background:#6ddfff;box-shadow:0 0 7px #60dcff,0 0 15px #60dcff8c; }
+.beauty-page .spectrum-orbit i:nth-child(2) { background:#efa6dc;box-shadow:0 0 7px #ef9ed7,0 0 15px #ef9ed780; }
+.beauty-page .orbit-one { inset:34px 6px;animation:beautyOrbitOne 22s linear infinite; }
+.beauty-page .orbit-one i:first-child { left:7px;top:47%; }
+.beauty-page .orbit-one i:nth-child(2) { right:11px;top:20%; }
+.beauty-page .orbit-two { inset:13px 42px;animation:beautyOrbitTwo 17s linear infinite; }
+.beauty-page .orbit-two i:first-child { left:45%;top:-4px; }
+.beauty-page .orbit-two i:nth-child(2) { right:0;bottom:20%;background:#ffd16c;box-shadow:0 0 7px #ffd16c,0 0 15px #ffcc5c75; }
+.beauty-page .orbit-three { inset:45px 17px;animation:beautyOrbitThree 14s linear infinite; }
+.beauty-page .orbit-three i { right:9px;bottom:7px;background:#a997ff;box-shadow:0 0 7px #9f8cff,0 0 15px #9f8cff82; }
+.beauty-page .spectrum-core { position:absolute;left:50%;top:50%;width:64px;height:64px;display:grid;place-content:center;text-align:center;border:1px solid #aebcff3d;border-radius:50%;background:transparent;box-shadow:0 0 0 1px #aebcff14,0 0 18px #6f86ff24;transform:translate(-50%,-50%);overflow:hidden;animation:beautyCorePulse 5.2s cubic-bezier(.45,0,.55,1) infinite; }
+.beauty-page .spectrum-core b,.beauty-page .spectrum-core small { position:relative;z-index:1; }
+.beauty-page .spectrum-core b { color:#f7f8ff;font-size:10.5px;letter-spacing:.15em;text-shadow:0 0 12px #b6c5ff73; }
+.beauty-page .spectrum-core small { margin-top:3px;color:#aebbd6;font-size:6px;letter-spacing:.05em; }
+.beauty-page .spectrum-reticle { position:absolute;left:50%;top:50%;width:82px;height:82px;transform:translate(-50%,-50%);animation:beautyReticlePulse 5.2s ease-in-out infinite; }
+.beauty-page .spectrum-reticle i { position:absolute;width:11px;height:11px;color:#72ddff88; }
+.beauty-page .spectrum-reticle i:nth-child(1) { left:0;top:0;border-left:1px solid;border-top:1px solid; }
+.beauty-page .spectrum-reticle i:nth-child(2) { right:0;top:0;border-right:1px solid;border-top:1px solid; }
+.beauty-page .spectrum-reticle i:nth-child(3) { right:0;bottom:0;border-right:1px solid;border-bottom:1px solid; }
+.beauty-page .spectrum-reticle i:nth-child(4) { left:0;bottom:0;border-left:1px solid;border-bottom:1px solid; }
+.beauty-page .spectrum-reticle:before { content:"";position:absolute;inset:7px;border:1px solid #72ddff99;border-radius:50%;box-shadow:0 0 12px #6bdbff52;animation:beautyDetectionPing 5.2s ease-out infinite; }
+
+/* The original skin composer sits outside its scroll content. */
+.beauty-page .beauty-composer { position:absolute;z-index:9;left:0;right:0;bottom:0;padding:10px 17px max(16px,env(safe-area-inset-bottom));background:linear-gradient(transparent,#07091bf0 12%,#07091b); }
+.beauty-page .beauty-composer-box { padding:10px 13px 9px;border:1px solid #6c739633;border-radius:20px;background:#0c0f22e8;box-shadow:0 12px 35px #0008;backdrop-filter:blur(18px); }
+.beauty-page .beauty-composer-box input { display:block;width:100%;padding:5px 3px 14px;border:0;border-bottom:1px solid #ffffff12;border-radius:0;outline:0;background:transparent;color:#dfe2f3;font-size:12px; }
+.beauty-page .beauty-composer-box input::placeholder { color:#687190; }
+.beauty-page .beauty-composer-actions { display:flex;align-items:center;gap:8px;margin-top:9px; }
+.beauty-page .beauty-composer-actions button { position:relative;border:1px solid #ffffff0b;border-radius:99px;background:#ffffff08;padding:7px 10px;color:#c8cad6;font-size:11px; }
+.beauty-page .beauty-composer-actions button:before { content:"";position:absolute;inset:-6px 0; }
+.beauty-page .beauty-composer-actions .beauty-composer-send { margin-left:auto;width:35px;height:35px;padding:0;background:linear-gradient(135deg,#666cf7,#8a62ef);box-shadow:0 5px 16px #6f5cff38;color:white; }
+.beauty-page .beauty-composer>small { display:block;text-align:center;color:#505773;font-size:9px;margin-top:9px;letter-spacing:.04em; }
+.beauty-page:has(.beauty-entry[hidden]) .beauty-composer { display:none; }
+
+@keyframes beautySpectrumSpin { to { transform:rotate(360deg); } }
+@keyframes beautySpectrumReverse { to { transform:rotate(-360deg); } }
+@keyframes beautyOrbitOne { from { transform:rotate(-18deg); } to { transform:rotate(342deg); } }
+@keyframes beautyOrbitTwo { from { transform:rotate(54deg); } to { transform:rotate(-306deg); } }
+@keyframes beautyOrbitThree { from { transform:rotate(118deg); } to { transform:rotate(478deg); } }
+@keyframes beautyCorePulse { 0%,100% { transform:translate(-50%,-50%) scale(.97);filter:brightness(.92); } 50% { transform:translate(-50%,-50%) scale(1.02);filter:brightness(1.12); } }
+@keyframes beautyReticlePulse { 0%,100% { opacity:.45;transform:translate(-50%,-50%) scale(.94); } 50% { opacity:1;transform:translate(-50%,-50%) scale(1.03); } }
+@keyframes beautySpectrumTwinkle { 0%,100% { opacity:.35; } 50% { opacity:.95; } }
+@keyframes beautySpectrumBeam { 0% { opacity:0;transform:translateY(5px) scaleX(.7); } 14% { opacity:.9; } 78% { opacity:.75; } 100% { opacity:0;transform:translateY(126px) scaleX(1); } }
+@keyframes beautyDetectionPing { 0% { opacity:.9;transform:scale(.66); } 72%,100% { opacity:0;transform:scale(1.65); } }
+
+@media(max-width:380px) {
+  .beauty-page .skin-spectrum { right:-12px;top:2px;width:158px;height:158px; }
+  .beauty-page .skin-hero-main { min-height:164px; }
+  .beauty-page .skin-hero-copy { width:66%; }
+  .beauty-page .skin-hero h1 { font-size:28px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .beauty-page .skin-spectrum:before,.beauty-page .skin-spectrum:after,.beauty-page .spectrum-scan,.beauty-page .ring-one,.beauty-page .ring-two,.beauty-page .spectrum-orbit,.beauty-page .spectrum-core,.beauty-page .spectrum-reticle,.beauty-page .spectrum-reticle:before { animation:none; }
+  .beauty-page .skin-spectrum:after { display:none; }
+  .beauty-page .spectrum-reticle:before { opacity:.38;transform:none; }
+  .beauty-page .skin-hero .primary-cta { transition:none; }
+}

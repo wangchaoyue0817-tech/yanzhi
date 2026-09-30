@@ -104,7 +104,7 @@ test('entry, progress, nested sheet, and upload have accessible initial states',
   assert.ok(byId.has(sheet['aria-labelledby']));
   assert.ok(Object.hasOwn(byId.get('beautyOverlay'), 'hidden'));
   for (const id of ['beautyScanning', 'beautyReport']) assert.ok(Object.hasOwn(byId.get(id), 'hidden'));
-  for (const id of ['beautyBack', 'beautyScenes']) {
+  for (const id of ['beautyMenu', 'beautyComposerSend']) {
     assert.equal(byId.get(id).tag, 'button');
     assert.ok(byId.get(id)['aria-label'], `icon-only control #${id} needs an accessible name`);
   }
@@ -164,4 +164,87 @@ test('the shipped portrait and product atlases contain complete usable image dat
   }
   assert.ok(referencedAssets.has('assets/beauty-products-v2.png'));
   for (const path of referencedAssets) assert.ok(existsSync(new URL(path, publicRoot)), `missing runtime asset: ${path}`);
+});
+
+function uploadPresetHarness() {
+  const nodes = new Map();
+  const node = id => {
+    if (!nodes.has(id)) nodes.set(id, { hidden: true, value: '', addEventListener() {} });
+    return nodes.get(id);
+  };
+  const calls = [];
+  let resolveFixture;
+  const ready = new Promise(resolve => { resolveFixture = resolve; });
+  const renderSheet = body => {
+    const busyAttributes = { 'aria-busy': 'true' };
+    const parentElement = { setAttribute(name, value) { busyAttributes[name] = value; } };
+    for (const element of elements(body).filter(element => element.id)) {
+      nodes.set(element.id, {
+        hidden: Object.hasOwn(element, 'hidden'),
+        disabled: Object.hasOwn(element, 'disabled'),
+        src: element.src ?? '',
+        textContent: '',
+        parentElement,
+        busyAttributes,
+      });
+    }
+  };
+  const api = runInNewContext(controller.replace(/^import .*;$/gm, '') + `
+    openSheet = (_title, body) => { overlayGeneration++; renderSheet(body); };
+    fixture = index => { fixtureCalls.push(index); return fixtureReady; };
+    ({ start: uploadSheet, invalidate: () => { overlayGeneration++; } });
+  `, {
+    document: { getElementById: node, addEventListener() {} },
+    matchMedia: () => ({ matches: false, addEventListener() {} }),
+    window: {}, location: { search: '' }, URLSearchParams,
+    renderSheet, fixtureCalls: calls, fixtureReady: ready,
+  });
+  return { api, node, nodes, calls, resolveFixture };
+}
+
+test('the upload preset stays disabled until its actual fixture photo is ready', async () => {
+  const harness = uploadPresetHarness();
+  const pending = harness.api.start();
+  const photo = harness.node('beautyPresetPhoto');
+  const start = harness.node('beautyPresetStart');
+  assert.deepEqual(harness.calls, [3], 'preview and preset analysis use the same spotlight fixture');
+  assert.equal(start.disabled, true, 'analysis cannot start while a different placeholder is visible');
+  assert.equal(photo.hidden, true);
+  assert.equal(photo.src, '', 'no legacy portrait is used as the pending preview');
+  assert.equal(photo.busyAttributes['aria-busy'], 'true');
+
+  const before = 'data:image/png;base64,selected-spotlight-before';
+  harness.resolveFixture({ before, after: 'data:image/png;base64,selected-spotlight-after' });
+  await pending;
+  assert.equal(photo.src, before, 'only the actual before portrait becomes the preview');
+  assert.equal(photo.hidden, false);
+  assert.equal(photo.busyAttributes['aria-busy'], 'false');
+  assert.equal(start.disabled, false);
+  assert.equal(start.textContent, '解析这张照片 ↗');
+});
+
+test('a dismissed upload preset cannot write into a later sheet when its fixture resolves', async () => {
+  for (const nextState of ['closed', 'replaced']) {
+    const harness = uploadPresetHarness();
+    const pending = harness.api.start();
+    const originalPhoto = harness.node('beautyPresetPhoto');
+    const originalStart = harness.node('beautyPresetStart');
+    harness.api.invalidate();
+    const nextPhoto = { src: 'next-sheet-photo', hidden: true, parentElement: { setAttribute() { throw new Error('stale parent write'); } } };
+    const nextStart = { disabled: true, textContent: 'next-sheet-action' };
+    if (nextState === 'replaced') {
+      harness.nodes.set('beautyPresetPhoto', nextPhoto);
+      harness.nodes.set('beautyPresetStart', nextStart);
+    }
+    harness.resolveFixture({ before: 'stale-fixture-photo', after: 'stale-fixture-after' });
+    await pending;
+    assert.equal(originalPhoto.src, '', `${nextState}: detached preview is untouched`);
+    assert.equal(originalPhoto.hidden, true);
+    assert.equal(originalStart.disabled, true);
+    assert.equal(originalPhoto.busyAttributes['aria-busy'], 'true');
+    assert.equal(nextPhoto.src, 'next-sheet-photo', `${nextState}: new sheet is untouched`);
+    assert.equal(nextPhoto.hidden, true);
+    assert.equal(nextStart.disabled, true);
+    assert.equal(nextStart.textContent, 'next-sheet-action');
+  }
 });

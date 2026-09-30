@@ -6,7 +6,7 @@ const skills = order.map(label => ALL.find(s => s.label === label));
 // Empty values deliberately leave a card unlabelled. Replace with live campaign data when integrating.
 const skillBadges = {
  '鉴腕表':'', '鉴潮服':'NEW', '鉴包袋':'限免', '鉴鞋靴':'活动', '鉴美妆':'',
- '鉴皮肤':'NEW', '鉴颜值':'', '鉴穿搭':'', '鉴配饰':'限免', '鉴酒水':'活动', '鉴餐品':'',
+ '鉴皮肤':'NEW', '鉴颜值':'NEW', '鉴穿搭':'', '鉴配饰':'限免', '鉴酒水':'活动', '鉴餐品':'',
  '测人格':'NEW', '鉴卡牌':'NEW', '鉴木作手串':'', '鉴藏币':'活动', '鉴玉石':'',
  '鉴瓷器':'限免', '鉴邮票':'NEW', '估价格':'限免', 'OCR文字提取':'', '瑕疵检测':'活动'
 };
@@ -20,12 +20,13 @@ let skillDrag=null, cancelSkillGesture=()=>{};
 const skillBatchSize=5;
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,3400);}
 function suspend(ms=14000){state.holdUntil=Date.now()+ms;}
-function blocked(){return state.paused||reduceMotion.matches||document.hidden||state.tab!=='ai'||state.busy||state.pointer||$('skillPopup').classList.contains('show')||!$('menuPanel').hidden||!$('conversationPanel').hidden||document.activeElement===$('inputField');}
+function blocked(){return state.paused||reduceMotion.matches||document.hidden||state.tab!=='ai'||state.busy||state.pointer||$('app').classList.contains('is-beauty')||$('skillPopup').classList.contains('show')||!$('menuPanel').hidden||!$('conversationPanel').hidden||document.activeElement===$('inputField');}
 function offset(i,center=state.center){let d=((i-center)%skills.length+skills.length)%skills.length;if(d>skills.length/2)d-=skills.length;return d;}
 function createCards(){
  $('skillGrid').innerHTML=skills.map((s,i)=>{
   const badge=skillBadges[s.label],badgeId=`skillBadge-${i}`;
-  return `<button class="skill-card" type="button" data-index="${i}" aria-label="去鉴定：${s.label}"${badge?` aria-describedby="${badgeId}"`:''}>${badge?`<span class="skill-badge skill-badge--${badgeTones[badge]}" id="${badgeId}">${badge}</span>`:''}<span class="skill-card-icon">${icon(s.label)}</span><span class="skill-card-label${s.label.length>4?' long':''}">${s.label}</span><span class="skill-action">去鉴定</span></button>`;
+  const beauty=s.label==='鉴颜值';
+  return `<button class="skill-card" type="button" data-index="${i}" aria-label="${beauty?'体验 AI 鉴颜值演示':`去鉴定：${s.label}`}"${badge?` aria-describedby="${badgeId}"`:''}>${badge?`<span class="skill-badge skill-badge--${badgeTones[badge]}" id="${badgeId}">${badge}</span>`:''}<span class="skill-card-icon">${icon(s.label)}</span><span class="skill-card-label${s.label.length>4?' long':''}">${s.label}</span><span class="skill-action">${beauty?'去体验':'去鉴定'}</span></button>`;
  }).join('');
  positionCards(true);
 }
@@ -39,7 +40,7 @@ function positionCards(immediate=false){
   el.classList.toggle('center',isCenter);el.dataset.light=isCenter?'gold':(d<0?'blue':(d<1.5?'cyan':'violet')); el.classList.toggle('selected',state.selected===skills[i].label);
   el.style.transform=`translateX(calc(-50% + ${d*step}px)) translateY(${a*7}px) rotate(${d*3.4}deg) scale(${1-a*.08})`;
   el.style.opacity=visible?(1-a*.025)*(dragging?Math.min(1,3-a):1):0;el.style.zIndex=Math.round(10-a);el.style.pointerEvents=visible?'auto':'none';el.tabIndex=visible?0:-1;el.setAttribute('aria-hidden',String(!visible));el.setAttribute('aria-pressed',String(state.selected===skills[i].label));
-  el.querySelector('.skill-action').textContent='去鉴定';
+  el.querySelector('.skill-action').textContent=skills[i].label==='鉴颜值'?'去体验':'去鉴定';
  });
  $('skillMeter').style.transform=`translateX(${state.center/(skills.length-1)*34}px)`;
  if(immediate&&!dragging) requestAnimationFrame(()=>requestAnimationFrame(()=>{if(skillDrag?.axis!=='x')document.querySelectorAll('#skillGrid .skill-card').forEach(el=>el.style.transition='');}));
@@ -55,7 +56,7 @@ function updateSkillBtn(){
  else{btn.className='toolbar-btn';btn.innerHTML=initialSkillBtn;}
  $('inputTip').textContent=(HOT.find(s=>s.label===state.selected)||{}).tip||'本服务由AI提供，请注意甄别';
 }
-function selectSkill(label){if(state.tab!=='ai')setTab('ai');state.selected=label;state.center=skills.findIndex(s=>s.label===label);positionCards();updateSkillBtn();renderPopup();closePopup();suspend(20000);toast(`已开启${label}，可上传照片或输入问题`);}
+function selectSkill(label){if(state.tab!=='ai')setTab('ai');state.selected=label;state.center=skills.findIndex(s=>s.label===label);positionCards();updateSkillBtn();renderPopup();closePopup();suspend(20000);if(label==='鉴颜值'&&window.beautyExperience){window.beautyExperience.open();return;}toast(`已开启${label}，可上传照片或输入问题`);}
 function openPopup(){state.focusReturn=document.activeElement;$('menuPanel').hidden=true;renderPopup();$('skillPopup').classList.add('show');$('sheetMask').classList.add('show');$('popupClose').focus();}
 function closePopup(){const wasOpen=$('skillPopup').classList.contains('show')||$('agreeSheet').classList.contains('show');$('skillPopup').classList.remove('show');$('sheetMask').classList.remove('show');$('agreeSheet').classList.remove('show');if(wasOpen&&state.focusReturn?.isConnected)state.focusReturn.focus();if(wasOpen)suspend();}
 function setTab(tab,{updateHistory=true}={}){

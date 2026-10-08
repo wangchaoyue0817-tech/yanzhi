@@ -15,6 +15,8 @@ let selectedScore = 90;
 let copyVariant = 0;
 let stopCelebration = () => {};
 let currentReport = null;
+let reader = { open:false, visited:false, tab:'overview', area:'hair', coverTop:0, positions:{} };
+let readerSequence=0, readerToken='', readerBackPending=false, swipeStart=null;
 let photos = null;
 let uploadedUrl = '';
 let returnFocus = null;
@@ -115,6 +117,7 @@ function clearUpload() {
   uploadedUrl = '';
 }
 function resetEntry() {
+  clearReader();
   copyVariant = 0;
   cancelPresentation();
   closeSheet(false);
@@ -154,6 +157,7 @@ function close() {
   if (returnFocus?.isConnected) returnFocus.focus({preventScroll:true});
 }
 async function start(score = selectedScore, scan = true) {
+  clearReader();
   closeSheet(false);
   cancelPresentation();
   const token = generation;
@@ -233,13 +237,78 @@ function radar(dimensions) {
 }
 function areaHTML(area,index) {
   const parts = photos.parts[area.id];
-  return '<article class="beauty-area beauty-reveal" data-area="'+area.id+'" data-reveal><header class="beauty-area-heading"><span>0'+(index+1)+'</span><h3>'+esc(area.title)+'</h3><i aria-hidden="true">'+star+'</i></header>'+
-    '<div class="beauty-area-pair"><figure><img loading="lazy" src="'+parts.before+'" alt="'+esc(area.title)+'调整前"><figcaption>原来 · '+esc(area.beforeLabel || '自然状态')+'</figcaption></figure><figure><img loading="lazy" src="'+parts.after+'" alt="'+esc(area.title)+'调整后"><figcaption>之后 · '+esc(area.afterLabel || '精致妆发')+'</figcaption></figure></div>'+
+  return '<article class="beauty-area is-visible" id="beautyArea-'+area.id+'" role="tabpanel" aria-labelledby="beautyAreaTab-'+area.id+'" data-area="'+area.id+'" '+(area.id===reader.area?'':'hidden')+'><header class="beauty-area-heading"><span>0'+(index+1)+'</span><h3>'+esc(area.title)+'</h3><i aria-hidden="true">'+star+'</i></header>'+
+    '<div class="beauty-area-pair"><figure><img draggable="false" loading="lazy" src="'+parts.before+'" alt="'+esc(area.title)+'调整前"><figcaption>原来 · '+esc(area.beforeLabel || '自然状态')+'</figcaption></figure><figure><img draggable="false" loading="lazy" src="'+parts.after+'" alt="'+esc(area.title)+'调整后"><figcaption>之后 · '+esc(area.afterLabel || '精致妆发')+'</figcaption></figure></div>'+
     '<div class="beauty-advice-inline"><p class="beauty-area-summary">'+esc(area.summary || area.after)+'</p><ol class="beauty-inline-steps">'+area.steps.map(step=>'<li>'+esc(step)+'</li>').join('')+'</ol></div>'+
     area.productIds.map(id => productCard(PRODUCTS.find(product => product.id === id))).join('')+'</article>';
 }
+const areaNames={hair:'发型',brows:'眉形',eyes:'眼妆',skin:'底妆',lips:'唇妆',style:'整体风格'};
+function priorityArea(report){return {natural:'brows',fresh:'eyes',radiant:'hair',spotlight:'hair',icon:'style'}[report.tier.id] || 'hair';}
+function coverCopy(copy){const end=copy.search(/[。！？]/);return end<0?copy:copy.slice(0,end+1);}
+function previewCard(report){
+  return '<button type="button" class="beauty-preview-card" id="beautyOpenReport" data-action="open-report" aria-controls="beautyDetail"><span class="beauty-preview-photo"><img draggable="false" src="'+photos.after+'" alt="变美后的你，点击查看完整对比"></span><span class="beauty-preview-copy"><small>你的下一幕</small><strong>'+(report.score>=85?'看看你的封面状态':'看看更出彩的我')+'</strong><span class="beauty-preview-score">'+report.score+' <i aria-hidden="true">→</i> <b>预计 '+report.afterScore+' 分</b></span><span>从'+esc(areaNames[reader.area])+'开始，发现更多可能</span></span><i aria-hidden="true">↗</i></button>';
+}
+function readerNav(){
+  return '<div class="beauty-reader-nav"><header class="beauty-reader-toolbar"><button type="button" data-action="report-back" aria-label="返回颜值结果">‹</button><h2>你的变美报告</h2><button type="button" data-action="poster" aria-label="分享颜值海报">分享</button></header><div class="beauty-reader-tabs" role="tablist" aria-label="报告章节">'+[['overview','更出彩的你','beautyOverview'],['advice','变美思路','beautyAdvice']].map(([id,label,panel])=>'<button type="button" id="beautyTab-'+id+'" role="tab" aria-selected="'+(id==='overview')+'" aria-controls="'+panel+'" tabindex="'+(id==='overview'?'0':'-1')+'" data-report-tab="'+id+'">'+label+'</button>').join('')+'</div></div>';
+}
+function areaTabs(report){
+  return '<div class="beauty-area-tabs" role="tablist" aria-label="选择变美部位">'+report.areas.map(area=>'<button type="button" id="beautyAreaTab-'+area.id+'" role="tab" aria-controls="beautyArea-'+area.id+'" aria-selected="'+(area.id===reader.area)+'" tabindex="'+(area.id===reader.area?'0':'-1')+'" data-area-tab="'+area.id+'"><b>'+esc(areaNames[area.id])+'</b>'+(area.id===priorityArea(report)?'<small>建议先看</small>':'')+'</button>').join('')+'</div>';
+}
+function readerPositionKey(){return reader.tab==='overview'?'overview':'advice:'+reader.area;}
+function clearReader(){
+  if(typeof history!=='undefined' && history.state?.beautyReader){const next={...history.state};delete next.beautyReader;history.replaceState(next,'');}
+  reader={open:false,visited:false,tab:'overview',area:'hair',coverTop:0,positions:{}};
+  readerToken='';readerBackPending=false;swipeStart=null;
+  page.classList.remove('is-reading');
+}
+function openReader(withHistory=true){
+  if(!currentReport || reader.open || readerBackPending)return;
+  reader.coverTop=scroll.scrollTop;reader.open=true;reader.visited=true;
+  $('beautyReport').classList.add('has-read-details');
+  stopCelebration();
+  $('beautyCover').hidden=true;$('beautyDetail').hidden=false;page.classList.add('is-reading');
+  scroll.scrollTop=reader.positions[readerPositionKey()] || 0;
+  $('beautyTab-'+reader.tab).focus({preventScroll:true});
+  if(withHistory && typeof history!=='undefined')history.pushState({...history.state,beautyReader:readerToken},'');
+}
+function closeReader(fromHistory=false){
+  if(!reader.open)return;
+  if(!fromHistory && typeof history!=='undefined' && history.state?.beautyReader===readerToken){
+    if(!readerBackPending){readerBackPending=true;history.back();}return;
+  }
+  reader.positions[readerPositionKey()]=scroll.scrollTop;reader.open=false;swipeStart=null;
+  closeSheet(false);$('beautyDetail').hidden=true;$('beautyCover').hidden=false;page.classList.remove('is-reading');
+  scroll.scrollTop=reader.coverTop;$('beautyOpenReport').focus({preventScroll:true});
+}
+function selectChapter(tab,{focus=true,reset=false}={}){
+  if(!reader.open || !['overview','advice'].includes(tab))return;
+  reader.positions[readerPositionKey()]=scroll.scrollTop;
+  reader.tab=tab;
+  for(const id of ['overview','advice']){
+    const active=id===tab,control=$('beautyTab-'+id);
+    control.setAttribute('aria-selected',String(active));control.tabIndex=active?0:-1;
+    $(id==='overview'?'beautyOverview':'beautyAdvice').hidden=!active;
+  }
+  scroll.scrollTop=reset?0:reader.positions[readerPositionKey()] || 0;
+  $('beautyReaderProgress').textContent=(tab==='overview'?'01':'02')+' / 02 · 左右滑动切换章节';
+  if(focus)$('beautyTab-'+tab).focus({preventScroll:true});
+}
+function selectArea(id,{focus=true}={}){
+  if(!reader.open || reader.tab!=='advice' || !currentReport.areas.some(area=>area.id===id))return;
+  reader.positions[readerPositionKey()]=scroll.scrollTop;reader.area=id;
+  for(const area of currentReport.areas){
+    const active=area.id===id,control=$('beautyAreaTab-'+area.id);
+    control.setAttribute('aria-selected',String(active));control.tabIndex=active?0:-1;
+    $('beautyArea-'+area.id).hidden=!active;
+  }
+  scroll.scrollTop=reader.positions[readerPositionKey()] || 0;
+  if(focus)$('beautyAreaTab-'+id).focus({preventScroll:true});
+}
 function showReport(report,readyPhotos,{celebrate=true}={}) {
   if (page.hidden) return;
+  clearReader();
+  readerToken='beauty-'+(++readerSequence);
+  reader.area=priorityArea(report);
   currentReport = report;
   photos = readyPhotos;
   posterCache = null;
@@ -252,30 +321,32 @@ function showReport(report,readyPhotos,{celebrate=true}={}) {
   const container = $('beautyReport');
   container.hidden = false;
   container.dataset.tier = report.tier.id;
-  container.classList.remove('has-scrolled');
+  container.classList.remove('has-scrolled','has-read-details');
   container.innerHTML =
-    '<div class="beauty-report-intro"><span>你的专属颜值档案</span><small>BEAUTY / '+ranks[tierIndex]+'</small></div>'+
+    '<div id="beautyCover"><div class="beauty-report-intro"><span>你的专属颜值档案</span><small>BEAUTY / '+ranks[tierIndex]+'</small></div>'+
     '<section class="beauty-result-hero" aria-label="当前颜值 '+report.score+' 分，'+report.tier.name+'">'+
       '<div class="beauty-hero-grid" aria-hidden="true"></div><div class="beauty-aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="beauty-reveal-halo" aria-hidden="true"></div>'+
       '<div class="beauty-sparkles" aria-hidden="true">'+sparks+'</div><div class="beauty-coronation" aria-label="'+report.tier.name+'等级徽章">'+(tierIndex===4?crown:star)+'</div>'+
-      '<div class="beauty-portrait-stage"><div class="beauty-portrait-orbits" aria-hidden="true"><i></i><i></i><i></i></div><div class="beauty-portrait-window"><img class="beauty-hero-photo" src="'+photos.before+'" alt="你的当前照片"></div><span class="beauty-portrait-seal">'+honorCaption+'</span></div>'+
+      '<div class="beauty-portrait-stage"><div class="beauty-portrait-orbits" aria-hidden="true"><i></i><i></i><i></i></div><div class="beauty-portrait-window"><img draggable="false" class="beauty-hero-photo" src="'+photos.before+'" alt="你的当前照片"></div><span class="beauty-portrait-seal">'+honorCaption+'</span></div>'+
       '<div class="beauty-hero-content"><div class="beauty-title-group"><h1 tabindex="-1">'+esc(report.title)+'</h1></div><div class="beauty-score-row"><span class="beauty-score-caption">综合<br>颜值</span><div class="beauty-score-value"><strong data-count="'+report.score+'">'+report.score+'</strong><small>/ 100</small></div>'+star+'</div>'+
       '<div class="beauty-percentile"><span>超过 <b data-count="'+report.percentile+'">'+report.percentile+'</b><b>%</b> 的人</span><i aria-hidden="true"><span style="width:'+report.percentile+'%"></span></i></div></div>'+
-      '<p class="beauty-result-copy">'+resultCopy(report.copy)+'</p>'+
+      '<p class="beauty-result-copy"><strong class="beauty-copy-lead">'+esc(coverCopy(report.copy))+'</strong></p>'+
       '<div class="beauty-hero-bottom-glow" aria-hidden="true"></div></section>'+
-    '<section class="beauty-section beauty-overview beauty-reveal" id="beautyOverview" data-reveal>'+heading('01','更出彩的你','从现在，到更上镜')+
+    previewCard(report)+
+    '<button type="button" class="beauty-cover-share" data-action="poster">'+star+'分享我的颜值海报</button></div>'+
+    '<div id="beautyDetail" class="beauty-reader" hidden>'+readerNav()+
+    '<section class="beauty-section beauty-overview is-visible" id="beautyOverview" role="tabpanel" aria-labelledby="beautyTab-overview">'+heading('01','更出彩的你','从现在，到更上镜')+
       '<div class="beauty-comparison"><div class="beauty-compare-grid">'+
-      '<figure class="beauty-compare-before"><div class="beauty-compare-photo"><img id="beautyBefore" src="'+photos.before+'" alt="现在的照片"><span>现在的你</span></div></figure>'+
-      '<figure class="beauty-compare-after"><div class="beauty-compare-photo"><img id="beautyAfter" src="'+photos.after+'" alt="变美后的照片"><span>'+star+'变美后的你</span></div></figure></div>'+
+      '<figure class="beauty-compare-before"><div class="beauty-compare-photo"><img draggable="false" id="beautyBefore" src="'+photos.before+'" alt="现在的照片"><span>现在的你</span></div></figure>'+
+      '<figure class="beauty-compare-after"><div class="beauty-compare-photo"><img draggable="false" id="beautyAfter" src="'+photos.after+'" alt="变美后的照片"><span>'+star+'变美后的你</span></div></figure></div>'+
       '<div class="beauty-compare-transition" aria-label="预计增加 '+(report.afterScore-report.score)+' 分"><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></i><span>预计增加 <b>'+(report.afterScore-report.score)+'</b> 分</span></div>'+
       '<div class="beauty-compare-scores"><div><div class="beauty-compare-score"><strong>'+report.score+'<small>分</small></strong><span>'+report.tier.name+'</span></div><p>超过 <b>'+report.percentile+'%</b> 的人</p></div>'+
       '<div><div class="beauty-compare-score"><strong>'+report.afterScore+'<small>分</small></strong><span>'+report.afterTier.name+'</span></div><p>超过 <b>'+report.afterPercentile+'%</b> 的人</p></div></div></div>'+
       '<div class="beauty-features-heading"><h3>五官表现</h3><span>你的优势，逐一看清</span></div>'+
       '<div class="beauty-radar-wrap">'+radar(report.dimensions)+'<div class="beauty-dimensions">'+report.dimensions.map((d,index) => '<div class="beauty-dimension" data-dimension="'+index+'"><span>'+esc(d.label)+'</span><b>'+d.score+'</b><i><span style="width:'+d.score+'%"></span></i></div>').join('')+'</div></div>'+
-      '<div class="beauty-insights"><div class="beauty-insight beauty-insight-strength"><small><i aria-hidden="true">'+star+'</i>你的优势</small><p>'+esc(report.strength)+'</p></div><div class="beauty-insight beauty-insight-focus"><small><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 18 6-6m-3-5 3-3m4 4 3-3m-4 9 6-6M5 21l-2-2 9-9 2 2Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>优先调整</small><p>'+esc(report.focus)+'</p></div></div></section>'+
-    '<section class="beauty-section beauty-areas">'+heading('02','你的变美思路','照着做，就很好看')+report.areas.map(areaHTML).join('')+'</section>'+
-    '<section class="beauty-share-panel beauty-reveal" data-reveal><div class="beauty-share-orbits" aria-hidden="true"><i></i><i></i></div>'+star+'<h2>这份报告，值得晒一下</h2><p>'+esc(report.title)+' · '+report.score+' 分</p>'+
-      '<button type="button" class="beauty-primary" id="beautyPoster" data-action="poster">'+'生成我的变美海报</button></section>';
+      '<div class="beauty-insights"><div class="beauty-insight beauty-insight-strength"><small><i aria-hidden="true">'+star+'</i>你的优势</small><p>'+esc(report.strength)+'</p></div><div class="beauty-insight beauty-insight-focus"><small><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 18 6-6m-3-5 3-3m4 4 3-3m-4 9 6-6M5 21l-2-2 9-9 2 2Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>优先调整</small><p>'+esc(report.focus)+'</p></div></div><p class="beauty-reader-copy">'+resultCopy(report.copy)+'</p><button type="button" class="beauty-next-chapter" data-action="read-advice"><span><strong>从'+esc(areaNames[reader.area])+'开始，看看具体怎么做</strong><small>前后变化 · 三步建议 · 适合你的单品</small></span><i aria-hidden="true">→</i></button></section>'+
+    '<section class="beauty-advice-panel" id="beautyAdvice" role="tabpanel" aria-labelledby="beautyTab-advice" hidden><div class="beauty-advice-intro"><h2>你的变美思路</h2><p>选一个部位，照着做就很好看。</p></div>'+areaTabs(report)+report.areas.map(areaHTML).join('')+'</section>'+
+    '<p class="beauty-reader-progress" id="beautyReaderProgress" aria-live="polite">01 / 02 · 左右滑动切换章节</p></div>' ;
   scroll.scrollTop = 0;
   animateReport(celebrate);
   container.querySelector('h1').focus({preventScroll:true});
@@ -297,28 +368,9 @@ function countTo(el,value) {
   frames.add(id);
 }
 function animateReport(celebrate=true) {
-  observer?.disconnect();
-  const reveals=[...$('beautyReport').querySelectorAll('[data-reveal]')];
-  if (motion.matches) reveals.forEach(el => { el.classList.add('is-visible'); inert(el,false); });
-  else {
-    observer=new IntersectionObserver(entries => {
-      let delay=0;
-      for (const entry of entries) if(entry.isIntersecting) {
-        const el=entry.target;
-        observer.unobserve(el);
-        later(()=>{el.classList.add('is-visible');inert(el,false);},delay);
-        delay+=160;
-      }
-    },{root:scroll,threshold:.025,rootMargin:'0px 0px -8px 0px'});
-    reveals.forEach(el => {
-      // Keep the veiled next chapter visible even when only its edge fits the viewport.
-      if(el.id==='beautyOverview'){el.classList.add('is-visible');inert(el,false);}
-      else {inert(el,true);observer.observe(el);}
-    });
-  }
   $('beautyReport').querySelectorAll('[data-count]').forEach(el => countTo(el,Number(el.dataset.count)));
   if(celebrate && !motion.matches) later(()=>{
-    if(page.hidden || !currentReport || scroll.scrollTop>60)return;
+    if(page.hidden || reader.visited || !currentReport || scroll.scrollTop>60)return;
     stopCelebration=startBeautyCelebration({host:$('beautyReport').querySelector('.beauty-result-hero'),score:currentReport.score,reducedMotion:motion.matches});
   },1200);
 }
@@ -360,7 +412,7 @@ function menuSheet() {
 }
 async function uploadSheet() {
   const prompt=$('beautyPrompt').value.trim();
-  openSheet('开启你的颜值解析','<p class="beauty-sheet-description">'+(prompt?'想尝试：'+esc(prompt)+'<br>':'')+'选择清晰正面照，让五官自然呈现。</p><button type="button" class="beauty-primary" data-action="choose-photo">从相册选择照片</button><div class="beauty-upload-preset"><div class="beauty-preset-image" aria-busy="true">'+star+'<img id="beautyPresetPhoto" alt="已选正面照片" hidden></div><div><strong>从这张照片开始</strong><small>发现妆发带来的改变</small><button type="button" id="beautyPresetStart" data-action="use-photo" disabled>正在读取照片</button></div></div>','upload');
+  openSheet('开启你的颜值解析','<p class="beauty-sheet-description">'+(prompt?'想尝试：'+esc(prompt)+'<br>':'')+'选择清晰正面照，让五官自然呈现。</p><button type="button" class="beauty-primary" data-action="choose-photo">从相册选择照片</button><div class="beauty-upload-preset"><div class="beauty-preset-image" aria-busy="true">'+star+'<img draggable="false" id="beautyPresetPhoto" alt="已选正面照片" hidden></div><div><strong>从这张照片开始</strong><small>发现妆发带来的改变</small><button type="button" id="beautyPresetStart" data-action="use-photo" disabled>正在读取照片</button></div></div>','upload');
   const token=overlayGeneration;
   try{
     const pair=await fixture(3);
@@ -407,7 +459,7 @@ async function posterSheet() {
     const {blob}=await task;
     if(token!==overlayGeneration || currentReport!==report || page.hidden) return;
     posterPreviewUrl=URL.createObjectURL(blob);
-    $('beautySheetBody').innerHTML='<img class="beauty-poster-image" src="'+posterPreviewUrl+'" alt="'+esc(report.title)+' · '+report.score+' 分分享海报">'+
+    $('beautySheetBody').innerHTML='<img draggable="false" class="beauty-poster-image" src="'+posterPreviewUrl+'" alt="'+esc(report.title)+' · '+report.score+' 分分享海报">'+
       '<button type="button" class="beauty-primary" data-action="download">下载海报，分享高光</button><p class="beauty-poster-status" id="beautyPosterStatus" role="status">已为你生成专属海报</p>';
   }catch(error){
     if(posterCache===task)posterCache=null;
@@ -432,6 +484,8 @@ page.addEventListener('click',event=>{
   const target=event.target.closest('button');
   if(!target)return;
   if(target.hasAttribute('data-beauty-close'))return closeSheet();
+  if(target.dataset.reportTab)return selectChapter(target.dataset.reportTab);
+  if(target.dataset.areaTab)return selectArea(target.dataset.areaTab);
   if(target.dataset.score){copyVariant=0;clearUpload();return start(Number(target.dataset.score),false);}
   const productId=target.dataset.productDetail||target.dataset.productBuy;
   if(productId){
@@ -439,6 +493,12 @@ page.addEventListener('click',event=>{
     if(product)return target.dataset.productBuy?orderSheet(product):detailSheet(product);
   }
   switch(target.dataset.action){
+    case 'open-report':return openReader();
+    case 'report-back':return closeReader();
+    case 'read-advice':
+      selectChapter('advice');
+      selectArea(priorityArea(currentReport),{focus:false});
+      scroll.scrollTop=0;return;
     case 'home':return close();
     case 'new':clearUpload();return resetEntry();
     case 'scenes':return sceneSheet();
@@ -482,7 +542,6 @@ page.addEventListener('submit',event=>{
 });
 scroll.addEventListener('scroll',()=>{
   const moved=scroll.scrollTop>40;
-  if(moved)$('beautyReport').classList.add('has-scrolled');
   if(moved)stopCelebration();
 },{passive:true});
 $('beautyMenu').addEventListener('click',menuSheet);
@@ -506,20 +565,24 @@ document.addEventListener('keydown',event=>{
   if(event.key==='Escape'){
     event.preventDefault();
     if(!$('beautyOverlay').hidden)closeSheet();
+    else if(reader.open)closeReader();
     else if(!$('beautyScanning').hidden)resetEntry();
     else close();
     return;
   }
-  if(event.key!=='Tab')return;
-  // Reveal every section before keyboard traversal so offscreen controls stay in order.
-  if($('beautyOverlay').hidden && !$('beautyReport').hidden){
-    $('beautyReport').classList.add('has-scrolled');
-    observer?.disconnect();
-    $('beautyReport').querySelectorAll('[data-reveal]').forEach(el=>{
-      el.classList.add('is-visible');
-      inert(el,false);
-    });
+  if(reader.open && $('beautyOverlay').hidden && ['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){
+    const target=event.target;
+    const chapter=target?.dataset?.reportTab,area=target?.dataset?.areaTab;
+    if(chapter || area){
+      event.preventDefault();
+      const ids=chapter?['overview','advice']:currentReport.areas.map(item=>item.id);
+      const index=ids.indexOf(chapter || area);
+      const next=event.key==='Home'?0:event.key==='End'?ids.length-1:(index+(event.key==='ArrowRight'?1:-1)+ids.length)%ids.length;
+      if(chapter)selectChapter(ids[next]);else selectArea(ids[next]);
+      return;
+    }
   }
+  if(event.key!=='Tab')return;
   const root=$('beautyOverlay').hidden?page:$('beautySheet');
   const controls=[...root.querySelectorAll('button:not([disabled]),input:not([disabled]):not([type=file]),textarea')].filter(el=>!el.closest('[hidden],[inert]')&&el.getClientRects().length);
   if(!controls.length)return;
@@ -528,8 +591,38 @@ document.addEventListener('keydown',event=>{
   else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
 });
 motion.addEventListener('change',()=>{
-  if(!page.hidden&&!$('beautyReport').hidden&&currentReport){cancelPresentation();animateReport();}
+  if(!page.hidden&&!$('beautyReport').hidden&&currentReport){cancelPresentation();$('beautyReport').querySelectorAll('[data-count]').forEach(el=>{el.textContent=el.dataset.count;});}
 });
+// One horizontal gesture layer for chapters; area selection remains tap-only.
+page.addEventListener('pointerdown',event=>{
+  swipeStart=null;
+  if(!reader.open || !$('beautyOverlay').hidden || event.isPrimary===false || (event.pointerType==='mouse' && event.button!==0))return;
+  if(!event.target.closest('#beautyDetail') || event.target.closest('button,input,textarea,a'))return;
+  const bounds=page.getBoundingClientRect();
+  if(event.clientX-bounds.left<24 || bounds.right-event.clientX<24)return;
+  swipeStart={id:event.pointerId,x:event.clientX,y:event.clientY,time:Date.now(),scrollTop:scroll.scrollTop};
+});
+page.addEventListener('pointercancel',()=>{swipeStart=null;});
+page.addEventListener('pointerup',event=>{
+  const start=swipeStart;swipeStart=null;
+  if(!start || event.pointerId!==start.id || !reader.open || !$('beautyOverlay').hidden)return;
+  const dx=event.clientX-start.x,dy=event.clientY-start.y;
+  if(Math.abs(dx)<64 || Math.abs(dx)<Math.abs(dy)*1.6 || Math.abs(scroll.scrollTop-start.scrollTop)>20 || Date.now()-start.time>900)return;
+  if(dx<0 && reader.tab==='overview')selectChapter('advice',{focus:false});
+  else if(dx>0 && reader.tab==='advice')selectChapter('overview',{focus:false});
+});
+window.addEventListener?.('popstate',event=>{
+  if(page.hidden || !currentReport)return;
+  if(reader.open || readerBackPending || event.state?.beautyReader===readerToken){
+    event.stopImmediatePropagation?.();readerBackPending=false;
+    if(reader.open && !$('beautyOverlay').hidden && event.state?.beautyReader!==readerToken){
+      closeSheet();
+      history.pushState({...event.state,beautyReader:readerToken},'');
+      return;
+    }
+    if(event.state?.beautyReader===readerToken)openReader(false);else closeReader(true);
+  }
+},{capture:true});
 window.beautyExperience={open,close};
 // The query opens only the development scene selector; it never changes exported posters.
 if(new URLSearchParams(location.search).get('beauty')==='scenes'){open();sceneSheet();}

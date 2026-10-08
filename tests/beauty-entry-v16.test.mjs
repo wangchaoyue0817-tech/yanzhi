@@ -53,8 +53,8 @@ test('the composer exposes the four controller interfaces outside the scroll con
 
 test('entry resources load after the base styles and keep the source slow animation cadence with a motion opt-out', () => {
   const styles = [...html.matchAll(/href="(beauty[^\"]+\.css\?v=\d+)"/g)].map(match => match[1]);
-  assert.deepEqual(styles, ['beauty-analysis.css?v=16', 'beauty-entry-v16.css?v=16', 'beauty-report-v16.css?v=19', 'beauty-report-v17.css?v=19', 'beauty-celebration.css?v=17']);
-  assert.ok(html.includes('type="module" src="beauty-analysis.js?v=19"'));
+  assert.deepEqual(styles, ['beauty-analysis.css?v=16', 'beauty-entry-v16.css?v=16', 'beauty-report-v16.css?v=19', 'beauty-report-v17.css?v=19', 'beauty-celebration.css?v=17', 'beauty-report-v20.css?v=20']);
+  assert.ok(html.includes('type="module" src="beauty-analysis.js?v=20"'));
   for (const [name, seconds] of [['beautyOrbitOne', 22], ['beautyOrbitTwo', 17], ['beautyOrbitThree', 14], ['beautyCorePulse', 5.2], ['beautySpectrumBeam', 6.2]]) {
     assert.ok(css.includes(`animation:${name} ${seconds}s`), `${name} should use the supplied source's final cadence`);
     assert.ok(css.includes(`@keyframes ${name}`));

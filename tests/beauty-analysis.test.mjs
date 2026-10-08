@@ -26,14 +26,13 @@ const staticElements = elements(html);
 const dynamicElements = elements(controller);
 const byId = new Map(staticElements.filter(element => element.id).map(element => [element.id, element]));
 
-test('keyboard navigation reveals offscreen report controls and retains the dialog focus loop', () => {
+test('keyboard navigation retains the visible dialog focus loop without exposing hidden report chapters', () => {
   const handlers = {};
   const nodes = new Map();
   const node = id => {
     if (!nodes.has(id)) nodes.set(id, {hidden:true, addEventListener(){}, classList:{values:new Set(),add(value){this.values.add(value);}}});
     return nodes.get(id);
   };
-  const reveals = [0,1].map(() => ({inert:true, classList:{values:new Set(), add(value){this.values.add(value);}}}));
   const document = { getElementById:node, addEventListener:(name, handler)=>{handlers[name]=handler;} };
   runInNewContext(controller.replace(/^import .*;$/gm,''), {
     document, matchMedia:()=>({matches:false,addEventListener(){}}), window:{},
@@ -43,15 +42,12 @@ test('keyboard navigation reveals offscreen report controls and retains the dial
   const last = {...first};
   node('beautyPage').hidden=false;
   node('beautyReport').hidden=false;
-  node('beautyReport').querySelectorAll=()=>reveals;
   node('beautyPage').querySelectorAll=()=>[first,last];
   let prevented=false;
   const event={key:'Tab',shiftKey:false,preventDefault(){prevented=true;}};
   document.activeElement=first;
   handlers.keydown(event);
-  assert.ok(reveals.every(el=>!el.inert && el.classList.values.has('is-visible')));
-  assert.ok(node('beautyReport').classList.values.has('has-scrolled'), 'keyboard traversal clears the preview veil');
-  assert.equal(prevented,false, 'forward traversal can reach the revealed report controls');
+  assert.equal(prevented,false, 'forward traversal can reach visible controls');
   document.activeElement=last;
   handlers.keydown(event);
   assert.equal(document.activeElement,first);
@@ -65,7 +61,7 @@ test('the browser receives the feature as a module with resolvable named depende
   const entry = staticElements.find(element => element.tag === 'script' && element.src?.split('?')[0] === 'beauty-analysis.js');
   assert.ok(entry, 'feature entry script must be included by the homepage');
   assert.equal(entry.type, 'module', 'named imports require browser module loading');
-  assert.equal(entry.src, 'beauty-analysis.js?v=19');
+  assert.equal(entry.src, 'beauty-analysis.js?v=20');
   for (const filename of ['beauty-model.js', 'beauty-poster.js']) {
     assert.ok(controller.includes(`from './${filename}?v=18'`), `${filename} must bypass the preceding version's cache`);
   }
@@ -86,14 +82,17 @@ test('the browser receives the feature as a module with resolvable named depende
 test('controller ID references are backed by a unique static element or a rendered component', () => {
   const staticIds = staticElements.filter(element => element.id).map(element => element.id);
   assert.equal(new Set(staticIds).size, staticIds.length, 'duplicate static IDs can route events to the wrong screen');
-  const definedIds = new Set([...staticIds, ...dynamicElements.filter(element => element.id).map(element => element.id)]);
+  const harness = reportHarness({ reducedMotion: true });
+  harness.api.show(createReport(90), reportPhotos());
+  const renderedElements = elements(harness.node('beautyReport').innerHTML);
+  const definedIds = new Set([...staticIds, ...dynamicElements.filter(element => element.id).map(element => element.id), ...renderedElements.filter(element => element.id).map(element => element.id)]);
   const referencedIds = [...controller.matchAll(/\$\(['"]([^'"]+)['"]\)/g)].map(match => match[1]);
   assert.ok(referencedIds.length > 0);
   for (const id of new Set(referencedIds)) assert.ok(definedIds.has(id), `controller references missing element #${id}`);
 
-  for (const element of [...staticElements, ...dynamicElements]) {
+  for (const element of [...staticElements, ...dynamicElements, ...renderedElements]) {
     for (const attribute of ['aria-labelledby', 'aria-describedby', 'for']) {
-      if (!element[attribute] || element[attribute].includes('$')) continue;
+      if (!element[attribute] || element[attribute].includes('$') || element[attribute].includes("'")) continue;
       for (const id of element[attribute].split(/\s+/)) assert.ok(definedIds.has(id), `${attribute} points to missing #${id}`);
     }
   }
@@ -348,7 +347,7 @@ function renderedCopy(markup) {
   return markupText(markup.match(/<p class="beauty-result-copy">([\s\S]*?)<\/p>/)?.[1] ?? '');
 }
 
-test('v19 renders one combined overview and the complete inline advice without secondary advice or comparison controls', () => {
+test('v20 keeps a short result cover and mounts complete report chapters behind one preview entry', () => {
   const harness = reportHarness({ reducedMotion: true });
   const report = createReport(90, 2);
   const photos = reportPhotos();
@@ -357,8 +356,13 @@ test('v19 renders one combined overview and the complete inline advice without s
   assert.equal(harness.node('beautyReport').hidden, false);
   assert.equal(harness.node('beautyReport').dataset.tier, report.tier.id);
   assert.ok(rendered.includes(`<h1 tabindex="-1">${report.title}</h1>`));
-  assert.equal(renderedCopy(rendered), report.copy);
-  const overview = rendered.slice(rendered.indexOf('id="beautyOverview"'), rendered.indexOf('class="beauty-section beauty-areas"'));
+  assert.equal(renderedCopy(rendered), report.copy.match(/^.*?[。！？]/u)?.[0] ?? report.copy);
+  const cover = rendered.slice(0, rendered.indexOf('<div id="beautyDetail"'));
+  assert.doesNotMatch(cover, /beauty-comparison|beauty-radar-wrap|beauty-area-pair|beauty-product-compact/);
+  assert.match(cover, /data-action="open-report"/);
+  assert.match(cover, /data-action="poster"/);
+  assert.match(rendered, /id="beautyDetail" class="beauty-reader" hidden/);
+  const overview = rendered.slice(rendered.indexOf('id="beautyOverview"'), rendered.indexOf('class="beauty-advice-panel"'));
   assert.equal((rendered.match(/id="beautyOverview"/g) || []).length, 1);
   assert.ok(overview.includes('更出彩的你'));
   assert.ok(overview.includes('beauty-compare-grid'));
@@ -391,12 +395,14 @@ test('result copy emphasizes the opening sentence without losing text or permitt
       const report = createReport(tier.sampleScore, variant);
       harness.api.show(report, reportPhotos());
       const markup = harness.node('beautyReport').innerHTML;
-      const lead = markup.match(/<strong class="beauty-copy-lead">([\s\S]*?)<\/strong>/)?.[1];
-      const body = markup.match(/<span class="beauty-copy-body">([\s\S]*?)<\/span>/)?.[1];
+      const detailCopy = markup.match(/<p class="beauty-reader-copy">([\s\S]*?)<\/p>/)?.[1];
+      const lead = detailCopy.match(/<strong class="beauty-copy-lead">([\s\S]*?)<\/strong>/)?.[1];
+      const body = detailCopy.match(/<span class="beauty-copy-body">([\s\S]*?)<\/span>/)?.[1];
       const sentenceEnd = report.copy.search(/[。！？]/) + 1;
       assert.equal(markupText(lead), report.copy.slice(0, sentenceEnd));
       assert.equal(markupText(body), report.copy.slice(sentenceEnd));
-      assert.equal(renderedCopy(markup), report.copy, `${tier.id} copy ${variant} is preserved`);
+      assert.equal(markupText(detailCopy), report.copy, `${tier.id} detail copy ${variant} is preserved`);
+      assert.equal(renderedCopy(markup), report.copy.slice(0, sentenceEnd), 'cover only shows the opening sentence');
     }
   }
   const escaped = '<img src=x onerror="bad()">&这一眼。<script>bad()</script>别漏掉"引号"。';
@@ -535,92 +541,45 @@ test('all six recommendation cards have one detail action, paired prices and no 
   assert.equal(ids.size, PRODUCTS.length);
 });
 
-test('the report ends at its share action without the removed restart, slogan or extra caption', () => {
+test('the result cover exposes sharing without the removed restart, slogan or extra caption', () => {
   const harness = reportHarness({ reducedMotion: true });
   harness.api.show(createReport(52), reportPhotos());
   const markup = harness.node('beautyReport').innerHTML;
   assert.doesNotMatch(markup, /换张照片，发现另一面的你|图灵鉴X · 每一种美，都有自己的表达|照片 · 得分 · 六部位变美攻略|beauty-report-footer|data-action="restart"/);
-  const share = markup.slice(markup.indexOf('<section class="beauty-share-panel'));
-  assert.ok(share.includes('这份报告，值得晒一下'));
-  assert.ok(share.includes('data-action="poster"'));
-  assert.doesNotMatch(share, /<small/);
-  assert.ok(share.endsWith('</button></section>'));
+  const cover = markup.slice(0, markup.indexOf('<div id="beautyDetail"'));
+  assert.match(cover, /class="beauty-cover-share" data-action="poster"/);
+  assert.ok(cover.endsWith('</button></div>'));
+  assert.equal((cover.match(/data-action="open-report"/g) || []).length, 1);
+  assert.equal((cover.match(/data-action="poster"/g) || []).length, 1);
 });
 
-test('scrolling clears the preview veil once and dismisses celebration without an extra guide control', () => {
+test('scrolling dismisses celebration without an extra guide control or lazy report reveal', () => {
   for (const reducedMotion of [false, true]) {
     const harness = reportHarness({ reducedMotion });
     const report = createReport(97);
-    const container = harness.node('beautyReport');
     const scroll = harness.node('beautyScroll');
     harness.api.show(report, reportPhotos());
-    const rendered = container.innerHTML;
-    assert.doesNotMatch(rendered, /beauty-scroll-cue|beauty-guide-copy|data-action="explore"/);
+    const rendered = harness.node('beautyReport').innerHTML;
+    assert.doesNotMatch(rendered, /beauty-scroll-cue|beauty-guide-copy|data-action="explore"|data-reveal/);
     assert.ok(!rendered.includes(report.scrollHint));
     assert.doesNotMatch(controller, /function exploreReport\(|case 'explore':/);
-    assert.equal(container.classList.contains('has-scrolled'), false, 'each result begins with a veiled preview');
+    assert.equal(harness.effects.observers.length, 0, 'chapters switch directly instead of hiding a long scroll report');
     harness.runDelay(1200);
     scroll.scrollTop = 40;
     scroll.handlers.get('scroll')();
-    assert.equal(container.classList.contains('has-scrolled'), false);
     assert.equal(harness.effects.stopped, 0);
     scroll.scrollTop = 41;
     scroll.handlers.get('scroll')();
-    assert.ok(container.classList.contains('has-scrolled'));
     assert.equal(harness.effects.stopped, reducedMotion ? 0 : 1);
-    scroll.scrollTop = 0;
-    scroll.handlers.get('scroll')();
-    assert.ok(container.classList.contains('has-scrolled'), 'returning to the top never conceals already read content');
-    harness.api.show(createReport(52), reportPhotos());
-    assert.equal(container.classList.contains('has-scrolled'), false, 'a fresh report restores the preview treatment');
   }
 });
 
-test('the overview edge is visible immediately while later sections retain their staggered viewport reveal', () => {
-  const harness = reportHarness();
-  const overview = harness.node('beautyOverview');
-  const area = harness.node('beautyAreaHair');
-  const share = harness.node('beautySharePanel');
-  overview.inert = true;
-  harness.node('beautyReport').querySelectorAll = selector => selector === '[data-reveal]' ? [overview, area, share] : [];
-  harness.api.show(createReport(90), reportPhotos());
-  const observer = harness.effects.observers.at(-1);
-  assert.ok(overview.classList.contains('is-visible'), 'even a tiny first edge does not wait for intersection ratio');
-  assert.equal(overview.inert, false);
-  assert.deepEqual(observer.observed, [area, share], 'the overview is excluded from the lazy reveal observer');
-  assert.equal(observer.options.root, harness.node('beautyScroll'));
-  assert.equal(harness.node('beautyReport').classList.contains('has-scrolled'), false, 'the visible overview still starts under its visual veil');
-  for (const section of [area, share]) {
-    assert.equal(section.classList.contains('is-visible'), false);
-    assert.equal(section.inert, true);
-  }
-  observer.callback([{ target: area, isIntersecting: false }]);
-  harness.runDelay(0);
-  assert.equal(area.classList.contains('is-visible'), false, 'an offscreen section is not exposed prematurely');
-  observer.callback([{ target: area, isIntersecting: true }, { target: share, isIntersecting: true }]);
-  assert.deepEqual(observer.unobserved, [area, share]);
-  harness.runDelay(0);
-  assert.ok(area.classList.contains('is-visible'));
-  assert.equal(area.inert, false);
-  assert.equal(share.classList.contains('is-visible'), false);
-  assert.equal(share.inert, true, 'the next section waits for its stagger');
-  harness.runDelay(160);
-  assert.ok(share.classList.contains('is-visible'));
-  assert.equal(share.inert, false);
-});
-
-test('reduced motion immediately exposes the overview and every following section without an observer', () => {
+test('reduced motion creates no reveal observer or pending celebration delay', () => {
   const harness = reportHarness({ reducedMotion: true });
-  const sections = ['beautyOverview', 'beautyAreaHair', 'beautySharePanel'].map(id => harness.node(id));
-  sections.forEach(section => { section.inert = true; });
-  harness.node('beautyReport').querySelectorAll = selector => selector === '[data-reveal]' ? sections : [];
   harness.api.show(createReport(52), reportPhotos());
   assert.equal(harness.effects.observers.length, 0);
-  for (const section of sections) {
-    assert.ok(section.classList.contains('is-visible'));
-    assert.equal(section.inert, false);
-  }
-  assert.equal(harness.timers.size, 0, 'no reveal or celebration delay is left pending');
+  assert.equal(harness.timers.size, 0);
+  assert.equal(harness.frames.size, 0);
 });
 
 test('changing the copy wraps through all five choices, preserves report facts and photos, and cancels stale presentation and poster data', () => {
@@ -632,7 +591,6 @@ test('changing the copy wraps through all five choices, preserves report facts a
   assert.equal(harness.effects.celebrations.length, 1);
   harness.api.setPosterCache(Promise.resolve({ blob: {} }));
   harness.api.setPreviewURL('blob:previous-copy-poster');
-  const oldObserver = harness.effects.observers.at(-1);
   const oldGeneration = harness.api.state().generation;
   harness.api.addPendingFrame(88);
   harness.frames.set(88, () => { throw new Error('stale count frame executed'); });
@@ -649,13 +607,12 @@ test('changing the copy wraps through all five choices, preserves report facts a
   assert.equal(changed.posterCache, null);
   assert.deepEqual(harness.effects.revoked, ['blob:previous-copy-poster']);
   assert.equal(harness.effects.stopped, 1);
-  assert.equal(oldObserver.disconnected, true);
   assert.ok(changed.generation > oldGeneration);
   assert.equal(changed.frameCount, 0);
   assert.equal(harness.frames.size, 0);
   assert.equal([...harness.timers.values()].filter(timer => timer.delay === 1200).length, 0, 'changing copy does not replay fireworks');
   assert.equal(harness.node('beautyOverlay').hidden, true);
-  assert.equal(renderedCopy(harness.node('beautyReport').innerHTML), changed.currentReport.copy);
+  assert.equal(renderedCopy(harness.node('beautyReport').innerHTML), changed.currentReport.copy.match(/^.*?[。！？]/u)?.[0] ?? changed.currentReport.copy);
   for (let variant = 1; variant <= 4; variant++) {
     harness.click('copy-next');
     assert.equal(harness.api.state().currentReport.copyVariant, variant);

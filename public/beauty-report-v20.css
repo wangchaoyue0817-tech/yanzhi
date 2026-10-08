@@ -1,0 +1,166 @@
+/* v20 · a complete result cover, followed by two deliberately paced chapters. */
+.beauty-report [hidden] { display:none!important; }
+.beauty-report img { user-select:none;-webkit-user-select:none;-webkit-user-drag:none; }
+.beauty-page.is-reading .beauty-header { display:none; }
+.beauty-page.is-reading .beauty-report { padding:0 16px calc(24px + env(safe-area-inset-bottom,0px));min-height:100%; }
+
+/* Keep the reveal and its portrait hierarchy, without placing the full report underneath. */
+#beautyCover .beauty-report-intro { margin:0 2px 9px; }
+#beautyCover .beauty-result-hero { padding:14px 17px 12px;border-radius:24px; }
+#beautyCover .beauty-coronation { width:27px;height:25px; }
+.beauty-report[data-tier=spotlight] #beautyCover .beauty-coronation { width:32px;height:32px;padding:5px;border-radius:10px;margin:0 0 -4px; }
+.beauty-report[data-tier=icon] #beautyCover .beauty-coronation { width:70px;height:43px;margin:-5px 0 -9px; }
+#beautyCover .beauty-portrait-stage { width:149px;height:149px;margin:5px auto 9px; }
+#beautyCover .beauty-portrait-window { width:128px;height:146px; }
+#beautyCover .beauty-portrait-orbits { inset:-5px -33px; }
+#beautyCover .beauty-portrait-seal { padding:5px 12px;font-size:10px;letter-spacing:1px; }
+#beautyCover .beauty-title-group { padding:4px 0 0; }
+#beautyCover .beauty-title-group h1 { font-size:24px;line-height:1.4;letter-spacing:.5px; }
+#beautyCover .beauty-score-row { gap:8px;margin:0; }
+#beautyCover .beauty-score-value strong { font-size:73px;line-height:1.07; }
+#beautyCover .beauty-score-value small { margin-bottom:9px; }
+#beautyCover .beauty-score-row>svg { width:18px;height:18px; }
+#beautyCover .beauty-percentile { padding:6px 14px;margin-top:3px; }
+#beautyCover .beauty-percentile b { font-size:18px; }
+#beautyCover .beauty-result-copy { margin:12px 0 0;padding:10px 4px 0; }
+#beautyCover .beauty-copy-lead { margin:0;font-size:13px;line-height:1.7;font-weight:500;color:#ded6ec;letter-spacing:.1px; }
+#beautyCover .beauty-copy-body { display:none; }
+/* Returning from a chapter keeps the finished result intact; ambient light may continue. */
+.beauty-report.has-read-details #beautyCover :is(.beauty-result-hero,.beauty-coronation,.beauty-portrait-stage,.beauty-portrait-window,.beauty-hero-photo,.beauty-title-group,.beauty-result-copy) { animation:none;opacity:1;transform:none; }
+.beauty-report.has-read-details #beautyCover .beauty-reveal-halo { display:none;animation:none; }
+
+/* The image and expected lift make the next chapter tangible before opening it. */
+.beauty-preview-card {
+ position:relative;isolation:isolate;overflow:hidden;display:grid;grid-template-columns:64px minmax(0,1fr) 30px;align-items:center;gap:12px;
+ width:100%;min-height:106px;margin:13px 0 0;padding:11px 12px;border:1px solid transparent;border-radius:19px;
+ background:radial-gradient(ellipse at 82% 12%,#b580eb2b,transparent 65%),linear-gradient(120deg,#232442,#211b37) padding-box,linear-gradient(110deg,#aaa7ed66,#c3a0dd91 65%,#e5c69870) border-box;
+ box-shadow:inset 0 1px #f5e7ff12,0 8px 25px #04061748;color:#f4edff;text-align:left;transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;
+}
+.beauty-preview-card:before { content:"";position:absolute;z-index:-1;right:-30px;top:-55px;width:148px;height:148px;border:1px solid #dbb1f226;border-radius:50%;box-shadow:0 0 0 13px #b689d50a,0 0 0 38px #b689d506;pointer-events:none; }
+.beauty-preview-card:hover { box-shadow:inset 0 1px #f5e7ff20,0 8px 25px #9064c521; }
+.beauty-preview-card:active { transform:scale(.985); }
+.beauty-preview-photo { position:relative;align-self:stretch;min-height:80px;overflow:hidden;border:1px solid #d6b4d170;border-radius:12px;background:#353044; }
+.beauty-preview-photo img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 25%; }
+.beauty-preview-photo:after { content:"";position:absolute;inset:0;box-shadow:inset 0 -13px 18px -10px #2b1f4aa1;pointer-events:none; }
+.beauty-preview-copy { min-width:0;display:grid;gap:4px; }
+.beauty-preview-copy>small { font-size:10px;color:#b9a9d6;letter-spacing:1px;line-height:1.5; }
+.beauty-preview-copy>strong { display:block;font-size:16px;font-weight:600;line-height:1.5;letter-spacing:.1px;text-wrap:balance; }
+.beauty-preview-copy>span:last-child { font-size:11px;line-height:1.5;color:#b6a6ca; }
+.beauty-preview-score { display:flex;align-items:baseline;gap:5px;flex-wrap:wrap;color:#bdb1d0;font-size:11px;line-height:1.6;font-variant-numeric:tabular-nums; }
+.beauty-preview-score>i { font-style:normal;color:#9e8bb9; }
+.beauty-preview-score b,.beauty-preview-score strong { color:#f0d6af;font-size:16px;font-weight:600; }
+.beauty-preview-score span { color:#ddc0ee; }
+.beauty-preview-card>i { display:grid;place-items:center;width:30px;height:30px;align-self:center;border:1px solid #cfb1ed40;border-radius:50%;background:#b08bd21c;color:#edddff;font-style:normal; }
+.beauty-preview-card>i svg { width:17px;height:17px; }
+.beauty-report[data-tier=natural] .beauty-preview-card { background:linear-gradient(120deg,#192339,#202038) padding-box,linear-gradient(110deg,#8da4ca69,#a39bd455) border-box; }
+.beauty-report[data-tier=icon] .beauty-preview-card { background:radial-gradient(ellipse at 88% 0,#d9a07026,transparent 60%),linear-gradient(120deg,#302440,#251d38) padding-box,linear-gradient(110deg,#d0b2f37d,#ead2a2a1 65%,#c49df095) border-box;box-shadow:inset 0 1px #fff1,0 5px 23px #a271c018; }
+.beauty-cover-share { display:flex;align-items:center;justify-content:center;gap:7px;width:max-content;max-width:100%;min-height:44px;margin:6px auto 0;padding:9px 20px;border:0;background:none;color:#b5a8cb;font-size:12px!important;line-height:1.5; }
+.beauty-cover-share svg { width:15px;height:15px;color:#c1afe0; }
+.beauty-cover-share:hover { color:#f0e0ff; }
+
+/* The two chapters share one scroll surface. The visible tabs remain the primary navigation. */
+.beauty-reader { position:relative;min-width:0;touch-action:pan-y; }
+.beauty-reader-nav { position:sticky;z-index:6;top:0;margin:0 -16px 16px;padding:10px 16px 11px;border-bottom:1px solid #aca0da20;background:linear-gradient(180deg,#0b0d23fa,#0c0e24f5);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 8px 20px #0507192e; }
+.beauty-reader-toolbar { display:grid;grid-template-columns:56px minmax(0,1fr) 56px;align-items:center;gap:6px;min-height:44px;margin-bottom:9px; }
+.beauty-reader-toolbar h2 { font-size:16px;line-height:1.5;font-weight:600;text-align:center;letter-spacing:.5px;color:#f0e9ff; }
+.beauty-reader-toolbar>button { display:flex;align-items:center;justify-content:center;gap:3px;min-width:44px;min-height:44px;padding:8px 0;border:0;background:none;color:#c8bcdf;font-size:12px; }
+.beauty-reader-toolbar>button:first-child { justify-content:flex-start;font-size:28px;font-weight:300;line-height:1; }
+.beauty-reader-toolbar>button:last-child { justify-content:flex-end; }
+.beauty-reader-toolbar svg { width:17px;height:17px;flex:none; }
+.beauty-reader-tabs { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:4px;border:1px solid #a99add26;border-radius:14px;background:#16172c; }
+.beauty-reader-tabs>button { position:relative;display:flex;align-items:center;justify-content:center;gap:7px;min-height:44px;min-width:0;padding:8px;border:1px solid transparent;border-radius:10px;background:transparent;color:#a59bb8;font-size:14px;font-weight:500;line-height:1.5;transition:color .22s,background .22s,border-color .22s,box-shadow .22s; }
+.beauty-reader-tabs>button[aria-selected=true] { background:linear-gradient(112deg,#645ee3,#845acd 70%,#a16bc8);border-color:#d3bdff52;box-shadow:inset 0 1px #ffffff25,0 3px 13px #6f4bab26;color:#fff9ff;font-weight:600; }
+.beauty-reader-tabs>button small { font-size:10px;color:inherit;opacity:.75; }
+.beauty-reader>[role=tabpanel] { touch-action:pan-y;min-width:0;scroll-margin-top:132px;animation:beauty-chapter-arrive .35s cubic-bezier(.2,.7,.2,1) both; }
+.beauty-reader .beauty-section { margin-top:0; }
+.beauty-reader .beauty-overview:after { display:none; }
+.beauty-reader .beauty-reveal { opacity:1;transform:none;filter:none;transition:none; }
+.beauty-reader .beauty-section-heading { margin-bottom:13px; }
+.beauty-reader .beauty-section-heading h2 { font-size:21px; }
+.beauty-reader .beauty-section-heading small { font-size:10px;letter-spacing:.8px; }
+.beauty-reader .beauty-section-heading>span { font-size:11px; }
+.beauty-reader .beauty-compare-photo { aspect-ratio:.94; }
+.beauty-reader .beauty-compare-photo>span { font-size:11px; }
+.beauty-reader .beauty-compare-scores { margin-top:8px; }
+.beauty-reader .beauty-compare-score strong { font-size:28px; }
+.beauty-reader .beauty-compare-scores p { font-size:11px; }
+.beauty-reader .beauty-features-heading { margin-top:13px; }
+.beauty-reader .beauty-features-heading h3 { font-size:14px; }
+.beauty-reader .beauty-radar-wrap { margin:6px 0 12px;padding:8px 0; }
+.beauty-reader .beauty-radar { max-height:170px; }
+.beauty-reader .beauty-dimension { margin-bottom:8px; }
+.beauty-reader .beauty-insights p { font-size:12px; }
+.beauty-reader-copy { margin:15px 1px 0;padding:13px 0 0;border-top:1px solid #afa0d91c;color:#bdb4d0;font-size:12px;line-height:1.85;text-wrap:pretty; }
+.beauty-reader-copy .beauty-copy-lead { margin:0 0 6px;font-size:13px;text-align:left; }
+.beauty-reader-copy .beauty-copy-body { font-size:12px;line-height:1.85;text-align:left; }
+.beauty-next-chapter { display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;min-height:54px;margin-top:17px;padding:12px 14px;border:1px solid #b194e54a;border-radius:12px;background:linear-gradient(110deg,#6d5ac938,#9670bd24);color:#e7d9fc;font-size:13px!important;line-height:1.6;text-align:left; }
+.beauty-next-chapter>span { min-width:0; }
+.beauty-next-chapter>span>strong { display:block;font-size:13px;line-height:1.6;font-weight:550; }
+.beauty-next-chapter>span>small { display:block;margin-top:4px;font-size:10px;line-height:1.6;color:#b5a2cb; }
+.beauty-next-chapter>i { display:grid;place-items:center;flex:none;width:28px;height:28px;border:1px solid #be9aeb31;border-radius:50%;color:#d8b7f2;font-style:normal; }
+.beauty-next-chapter svg { width:16px;height:16px;flex:none; }
+
+/* Six visible choices, one complete beauty idea at a time. */
+.beauty-advice-intro { margin:1px 2px 14px; }
+.beauty-advice-intro h2 { font-size:21px;line-height:1.5;font-weight:600;color:#efe4ff; }
+.beauty-advice-intro p { margin:6px 0 0;font-size:12px;line-height:1.7;color:#afa3c2; }
+.beauty-area-tabs { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 16px; }
+.beauty-area-tabs>button { position:relative;display:flex;align-items:center;justify-content:center;gap:5px;min-width:0;min-height:46px;padding:9px 6px;border:1px solid #a691d52b;border-radius:11px;background:linear-gradient(140deg,#1b1c33,#14192e);color:#b1a5c4;line-height:1.5;transition:background .2s,color .2s,border-color .2s; }
+.beauty-area-tabs>button b { font-size:13px;font-weight:500; }
+.beauty-area-tabs>button small { position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);padding:0 5px;border-radius:4px;white-space:nowrap;background:#30213f;color:#d8b6ec;font-size:8px;line-height:1.6;letter-spacing:.3px; }
+.beauty-area-tabs>button[aria-selected=true] { border-color:#b899e98f;background:linear-gradient(125deg,#47315e,#2c2749);box-shadow:inset 0 1px #d4b1fa17;color:#f2e1ff; }
+.beauty-area-tabs>button[aria-selected=true] b { font-weight:600; }
+.beauty-area-tabs>button[aria-selected=true] small { background:#56406d;color:#f1dafa; }
+.beauty-reader .beauty-area { margin:0;padding:14px 12px 12px;animation:beauty-area-arrive .28s ease-out both; }
+.beauty-reader .beauty-area-heading h3 { font-size:18px; }
+.beauty-reader .beauty-area-pair { gap:8px; }
+.beauty-reader .beauty-area-pair figure { aspect-ratio:1.7; }
+.beauty-reader .beauty-area[data-area=hair] .beauty-area-pair figure,.beauty-reader .beauty-area[data-area=style] .beauty-area-pair figure { aspect-ratio:1.3; }
+.beauty-reader .beauty-area-pair figcaption { font-size:11px; }
+.beauty-reader .beauty-area-summary { font-size:13px;line-height:1.75; }
+.beauty-reader .beauty-inline-steps { gap:7px;margin-bottom:15px; }
+.beauty-reader .beauty-inline-steps li { font-size:12px;line-height:1.8; }
+.beauty-reader .beauty-product-compact .beauty-product-link { padding:10px;gap:8px; }
+.beauty-reader-progress { display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 0 0;color:#8f83a6;font-size:10px;letter-spacing:1.5px;line-height:1.6; }
+.beauty-reader-progress:before,.beauty-reader-progress:after { content:"";width:24px;height:1px;background:linear-gradient(90deg,transparent,#9c82c347); }
+.beauty-reader-progress:after { transform:rotate(180deg); }
+.beauty-reader button:focus-visible,.beauty-preview-card:focus-visible,.beauty-cover-share:focus-visible { outline:2px solid #e3b6ff;outline-offset:3px; }
+
+@keyframes beauty-chapter-arrive { from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none} }
+@keyframes beauty-area-arrive { from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none} }
+@media(max-height:740px) {
+ #beautyCover .beauty-result-hero { padding-top:11px;padding-bottom:11px; }
+ #beautyCover .beauty-portrait-stage { width:127px;height:127px;margin:4px auto 8px; }
+ #beautyCover .beauty-portrait-window { width:111px;height:126px; }
+ #beautyCover .beauty-title-group h1 { font-size:22px; }
+ #beautyCover .beauty-score-value strong { font-size:65px; }
+ #beautyCover .beauty-result-copy { margin-top:10px;padding-top:9px; }
+ .beauty-preview-card { min-height:98px;margin-top:11px; }
+ .beauty-preview-photo { min-height:74px; }
+ .beauty-cover-share { margin-top:4px; }
+}
+@media(max-width:350px) {
+ .beauty-page.is-reading .beauty-report { padding-inline:12px; }
+ .beauty-reader-nav { margin-inline:-12px;padding-inline:12px; }
+ #beautyCover .beauty-result-hero { padding-inline:13px; }
+ #beautyCover .beauty-title-group h1 { font-size:21px;letter-spacing:0; }
+ #beautyCover .beauty-copy-lead { font-size:13px; }
+ .beauty-preview-card { grid-template-columns:53px minmax(0,1fr) 25px;gap:9px;padding:10px; }
+ .beauty-preview-copy>strong { font-size:14px; }
+ .beauty-preview-card>i { width:25px;height:25px; }
+ .beauty-preview-score { gap:3px;font-size:10px; }
+ .beauty-preview-score b,.beauty-preview-score strong { font-size:14px; }
+ .beauty-reader-toolbar h2 { font-size:15px; }
+ .beauty-reader-tabs>button { font-size:13px; }
+ .beauty-reader .beauty-section-heading>span { max-width:95px;font-size:10px;text-align:right; }
+ .beauty-reader .beauty-insights>.beauty-insight { padding:10px 8px; }
+ .beauty-reader .beauty-insights p { font-size:12px; }
+ .beauty-area-tabs { gap:8px 6px; }
+ .beauty-reader .beauty-area { padding:13px 10px 11px; }
+ .beauty-reader .beauty-product-compact .beauty-product-link { padding:9px;gap:7px; }
+}
+@media(prefers-reduced-motion:reduce) {
+ .beauty-reader>[role=tabpanel],.beauty-reader .beauty-area { animation:none;opacity:1;transform:none; }
+ .beauty-preview-card,.beauty-reader-tabs>button,.beauty-area-tabs>button { transition:none; }
+ .beauty-preview-card:active { transform:none; }
+}

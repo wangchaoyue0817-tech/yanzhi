@@ -15,8 +15,8 @@ let selectedScore = 90;
 let copyVariant = 0;
 let stopCelebration = () => {};
 let currentReport = null;
-let reader = { open:false, visited:false, tab:'overview', area:'hair', coverTop:0, positions:{} };
-let readerSequence=0, readerToken='', readerBackPending=false, swipeStart=null;
+let reader = { visited:false, tab:'overview', area:'hair', positions:{}, anchorUntil:0 };
+let swipeStart=null, touchStart=null, wheelGesture=null;
 let photos = null;
 let uploadedUrl = '';
 let returnFocus = null;
@@ -237,7 +237,7 @@ function radar(dimensions) {
 }
 function areaHTML(area,index) {
   const parts = photos.parts[area.id];
-  return '<article class="beauty-area is-visible" id="beautyArea-'+area.id+'" role="tabpanel" aria-labelledby="beautyAreaTab-'+area.id+'" data-area="'+area.id+'" '+(area.id===reader.area?'':'hidden')+'><header class="beauty-area-heading"><span>0'+(index+1)+'</span><h3>'+esc(area.title)+'</h3><i aria-hidden="true">'+star+'</i></header>'+
+  return '<article class="beauty-area is-visible" id="beautyArea-'+area.id+'" role="region" aria-labelledby="beautyAreaTab-'+area.id+'" data-area="'+area.id+'"><header class="beauty-area-heading"><span>0'+(index+1)+'</span><h3>'+esc(area.title)+'</h3><i aria-hidden="true">'+star+'</i></header>'+
     '<div class="beauty-area-pair"><figure><img draggable="false" loading="lazy" src="'+parts.before+'" alt="'+esc(area.title)+'调整前"><figcaption>原来 · '+esc(area.beforeLabel || '自然状态')+'</figcaption></figure><figure><img draggable="false" loading="lazy" src="'+parts.after+'" alt="'+esc(area.title)+'调整后"><figcaption>之后 · '+esc(area.afterLabel || '精致妆发')+'</figcaption></figure></div>'+
     '<div class="beauty-advice-inline"><p class="beauty-area-summary">'+esc(area.summary || area.after)+'</p><ol class="beauty-inline-steps">'+area.steps.map(step=>'<li>'+esc(step)+'</li>').join('')+'</ol></div>'+
     area.productIds.map(id => productCard(PRODUCTS.find(product => product.id === id))).join('')+'</article>';
@@ -245,70 +245,85 @@ function areaHTML(area,index) {
 const areaNames={hair:'发型',brows:'眉形',eyes:'眼妆',skin:'底妆',lips:'唇妆',style:'整体风格'};
 function priorityArea(report){return {natural:'brows',fresh:'eyes',radiant:'hair',spotlight:'hair',icon:'style'}[report.tier.id] || 'hair';}
 function coverCopy(copy){const end=copy.search(/[。！？]/);return end<0?copy:copy.slice(0,end+1);}
-function previewCard(report){
-  return '<button type="button" class="beauty-preview-card" id="beautyOpenReport" data-action="open-report" aria-controls="beautyDetail"><span class="beauty-preview-photo"><img draggable="false" src="'+photos.after+'" alt="变美后的你，点击查看完整对比"></span><span class="beauty-preview-copy"><small>你的下一幕</small><strong>'+(report.score>=85?'看看你的封面状态':'看看更出彩的我')+'</strong><span class="beauty-preview-score">'+report.score+' <i aria-hidden="true">→</i> <b>预计 '+report.afterScore+' 分</b></span><span>从'+esc(areaNames[reader.area])+'开始，发现更多可能</span></span><i aria-hidden="true">↗</i></button>';
-}
-function readerNav(){
-  return '<div class="beauty-reader-nav"><header class="beauty-reader-toolbar"><button type="button" data-action="report-back" aria-label="返回颜值结果">‹</button><h2>你的变美报告</h2><button type="button" data-action="poster" aria-label="分享颜值海报">分享</button></header><div class="beauty-reader-tabs" role="tablist" aria-label="报告章节">'+[['overview','更出彩的你','beautyOverview'],['advice','变美思路','beautyAdvice']].map(([id,label,panel])=>'<button type="button" id="beautyTab-'+id+'" role="tab" aria-selected="'+(id==='overview')+'" aria-controls="'+panel+'" tabindex="'+(id==='overview'?'0':'-1')+'" data-report-tab="'+id+'">'+label+'</button>').join('')+'</div></div>';
+function readerNav(report){
+  return '<div class="beauty-reader-nav"><div class="beauty-reader-tabs" role="tablist" aria-label="报告章节">'+[['overview','我的颜值报告','beautyOverview'],['advice','我的变美思路','beautyAdvice']].map(([id,label,panel])=>'<button type="button" id="beautyTab-'+id+'" role="tab" aria-selected="'+(id==='overview')+'" aria-controls="'+panel+'" tabindex="'+(id==='overview'?'0':'-1')+'" data-report-tab="'+id+'">'+label+'</button>').join('')+'</div>'+areaTabs(report)+'</div>';
 }
 function areaTabs(report){
-  return '<div class="beauty-area-tabs" role="tablist" aria-label="选择变美部位">'+report.areas.map(area=>'<button type="button" id="beautyAreaTab-'+area.id+'" role="tab" aria-controls="beautyArea-'+area.id+'" aria-selected="'+(area.id===reader.area)+'" tabindex="'+(area.id===reader.area?'0':'-1')+'" data-area-tab="'+area.id+'"><b>'+esc(areaNames[area.id])+'</b>'+(area.id===priorityArea(report)?'<small>建议先看</small>':'')+'</button>').join('')+'</div>';
+  return '<nav class="beauty-area-tabs" id="beautyAreaNavigation" aria-label="变美部位定位" hidden>'+report.areas.map(area=>'<button type="button" id="beautyAreaTab-'+area.id+'" aria-controls="beautyArea-'+area.id+'" aria-current="'+(area.id===reader.area)+'" tabindex="'+(area.id===reader.area?'0':'-1')+'" data-area-tab="'+area.id+'"><b>'+esc(areaNames[area.id])+'</b></button>').join('')+'</nav>';
 }
-function readerPositionKey(){return reader.tab==='overview'?'overview':'advice:'+reader.area;}
+function reportReady(){return !!currentReport && !page.hidden && !$('beautyReport').hidden;}
+function contentTop(el){return el.getBoundingClientRect().top-scroll.getBoundingClientRect().top+scroll.scrollTop;}
+function readerTop(){return contentTop($('beautyDetail'));}
+function readerNavHeight(){return $('beautyDetail').querySelector('.beauty-reader-nav').getBoundingClientRect().height;}
+function atReadingBottom(){return scroll.scrollHeight-scroll.clientHeight-scroll.scrollTop<=4;}
 function clearReader(){
-  if(typeof history!=='undefined' && history.state?.beautyReader){const next={...history.state};delete next.beautyReader;history.replaceState(next,'');}
-  reader={open:false,visited:false,tab:'overview',area:'hair',coverTop:0,positions:{}};
-  readerToken='';readerBackPending=false;swipeStart=null;
+  reader={visited:false,tab:'overview',area:'hair',positions:{},anchorUntil:0};
+  swipeStart=null;touchStart=null;wheelGesture=null;
   page.classList.remove('is-reading');
 }
-function openReader(withHistory=true){
-  if(!currentReport || reader.open || readerBackPending)return;
-  reader.coverTop=scroll.scrollTop;reader.open=true;reader.visited=true;
-  $('beautyReport').classList.add('has-read-details');
-  stopCelebration();
-  $('beautyCover').hidden=true;$('beautyDetail').hidden=false;page.classList.add('is-reading');
-  scroll.scrollTop=reader.positions[readerPositionKey()] || 0;
-  $('beautyTab-'+reader.tab).focus({preventScroll:true});
-  if(withHistory && typeof history!=='undefined')history.pushState({...history.state,beautyReader:readerToken},'');
-}
-function closeReader(fromHistory=false){
-  if(!reader.open)return;
-  if(!fromHistory && typeof history!=='undefined' && history.state?.beautyReader===readerToken){
-    if(!readerBackPending){readerBackPending=true;history.back();}return;
+function markArea(id,{focus=false}={}){
+  reader.area=id;
+  for(const area of currentReport.areas){
+    const active=area.id===id,control=$('beautyAreaTab-'+area.id);
+    control.setAttribute('aria-current',String(active));control.tabIndex=active?0:-1;
   }
-  reader.positions[readerPositionKey()]=scroll.scrollTop;reader.open=false;swipeStart=null;
-  closeSheet(false);$('beautyDetail').hidden=true;$('beautyCover').hidden=false;page.classList.remove('is-reading');
-  scroll.scrollTop=reader.coverTop;$('beautyOpenReport').focus({preventScroll:true});
+  const control=$('beautyAreaTab-'+id),nav=$('beautyAreaNavigation');
+  const buttonBox=control.getBoundingClientRect(),navBox=nav.getBoundingClientRect();
+  if(buttonBox.left<navBox.left || buttonBox.right>navBox.right){
+    nav.scrollTo({left:Math.max(0,nav.scrollLeft+(buttonBox.left-navBox.left)-(navBox.width-buttonBox.width)/2),behavior:motion.matches?'auto':'smooth'});
+  }
+  if(focus)control.focus({preventScroll:true});
+}
+function syncReading(){
+  if(!reportReady())return;
+  const top=readerTop();
+  $('beautyDetail').style.setProperty('--beauty-preview-opacity',String(Math.max(0,1-scroll.scrollTop/Math.max(80,top*.65))));
+  if(scroll.scrollTop>40){
+    stopCelebration();reader.visited=true;$('beautyReport').classList.add('has-read-details');
+  }
+  reader.positions[reader.tab]=Math.max(0,scroll.scrollTop-top);
+  if(reader.tab!=='advice' || !$('beautyOverlay').hidden)return;
+  const anchor=$('beautyArea-'+reader.area);
+  const target=contentTop(anchor)-readerNavHeight()-12;
+  if(Date.now()<reader.anchorUntil && Math.abs(scroll.scrollTop-target)>3)return;
+  reader.anchorUntil=0;
+  const readingLine=scroll.getBoundingClientRect().top+readerNavHeight()+60;
+  let active=currentReport.areas[0].id;
+  for(const area of currentReport.areas){if($('beautyArea-'+area.id).getBoundingClientRect().top<=readingLine)active=area.id;}
+  if(atReadingBottom())active=currentReport.areas.at(-1).id;
+  if(active!==reader.area)markArea(active);
 }
 function selectChapter(tab,{focus=true,reset=false}={}){
-  if(!reader.open || !['overview','advice'].includes(tab))return;
-  reader.positions[readerPositionKey()]=scroll.scrollTop;
-  reader.tab=tab;
+  if(!reportReady() || !['overview','advice'].includes(tab))return;
+  if(reader.tab===tab){if(focus)$('beautyTab-'+tab).focus({preventScroll:true});return;}
+  reader.positions[reader.tab]=Math.max(0,scroll.scrollTop-readerTop());
+  reader.tab=tab;reader.anchorUntil=0;wheelGesture=null;touchStart=null;
   for(const id of ['overview','advice']){
     const active=id===tab,control=$('beautyTab-'+id);
     control.setAttribute('aria-selected',String(active));control.tabIndex=active?0:-1;
     $(id==='overview'?'beautyOverview':'beautyAdvice').hidden=!active;
   }
-  scroll.scrollTop=reset?0:reader.positions[readerPositionKey()] || 0;
-  $('beautyReaderProgress').textContent=(tab==='overview'?'01':'02')+' / 02 · 左右滑动切换章节';
+  $('beautyAreaNavigation').hidden=tab!=='advice';
+  scroll.scrollTo({top:readerTop()+(reset?0:reader.positions[tab] || 0),behavior:'instant'});
+  $('beautyReaderProgress').textContent=(tab==='overview'?'01':'02')+' / 02 · 左右滑动切换栏目';
+  syncReading();
   if(focus)$('beautyTab-'+tab).focus({preventScroll:true});
 }
 function selectArea(id,{focus=true}={}){
-  if(!reader.open || reader.tab!=='advice' || !currentReport.areas.some(area=>area.id===id))return;
-  reader.positions[readerPositionKey()]=scroll.scrollTop;reader.area=id;
-  for(const area of currentReport.areas){
-    const active=area.id===id,control=$('beautyAreaTab-'+area.id);
-    control.setAttribute('aria-selected',String(active));control.tabIndex=active?0:-1;
-    $('beautyArea-'+area.id).hidden=!active;
-  }
-  scroll.scrollTop=reader.positions[readerPositionKey()] || 0;
-  if(focus)$('beautyAreaTab-'+id).focus({preventScroll:true});
+  if(!reportReady() || reader.tab!=='advice' || !currentReport.areas.some(area=>area.id===id))return;
+  markArea(id,{focus});
+  reader.anchorUntil=motion.matches?0:Date.now()+700;
+  const top=contentTop($('beautyArea-'+id))-readerNavHeight()-12;
+  scroll.scrollTo({top:Math.max(readerTop(),top),behavior:motion.matches?'auto':'smooth'});
+}
+function advanceChapter(){
+  if(!reportReady() || !$('beautyOverlay').hidden || reader.tab!=='overview')return;
+  selectChapter('advice',{focus:false,reset:true});
 }
 function showReport(report,readyPhotos,{celebrate=true}={}) {
   if (page.hidden) return;
   clearReader();
-  readerToken='beauty-'+(++readerSequence);
-  reader.area=priorityArea(report);
+  reader.area=report.areas[0].id;
   currentReport = report;
   photos = readyPhotos;
   posterCache = null;
@@ -332,9 +347,8 @@ function showReport(report,readyPhotos,{celebrate=true}={}) {
       '<div class="beauty-percentile"><span>超过 <b data-count="'+report.percentile+'">'+report.percentile+'</b><b>%</b> 的人</span><i aria-hidden="true"><span style="width:'+report.percentile+'%"></span></i></div></div>'+
       '<p class="beauty-result-copy"><strong class="beauty-copy-lead">'+esc(coverCopy(report.copy))+'</strong></p>'+
       '<div class="beauty-hero-bottom-glow" aria-hidden="true"></div></section>'+
-    previewCard(report)+
-    '<button type="button" class="beauty-cover-share" data-action="poster">'+star+'分享我的颜值海报</button></div>'+
-    '<div id="beautyDetail" class="beauty-reader" hidden>'+readerNav()+
+    '<button type="button" class="beauty-primary beauty-cover-share" data-action="poster">'+star+'查看我的颜值海报</button></div>'+
+    '<div id="beautyDetail" class="beauty-reader">'+readerNav(report)+
     '<section class="beauty-section beauty-overview is-visible" id="beautyOverview" role="tabpanel" aria-labelledby="beautyTab-overview">'+heading('01','更出彩的你','从现在，到更上镜')+
       '<div class="beauty-comparison"><div class="beauty-compare-grid">'+
       '<figure class="beauty-compare-before"><div class="beauty-compare-photo"><img draggable="false" id="beautyBefore" src="'+photos.before+'" alt="现在的照片"><span>现在的你</span></div></figure>'+
@@ -344,9 +358,9 @@ function showReport(report,readyPhotos,{celebrate=true}={}) {
       '<div><div class="beauty-compare-score"><strong>'+report.afterScore+'<small>分</small></strong><span>'+report.afterTier.name+'</span></div><p>超过 <b>'+report.afterPercentile+'%</b> 的人</p></div></div></div>'+
       '<div class="beauty-features-heading"><h3>五官表现</h3><span>你的优势，逐一看清</span></div>'+
       '<div class="beauty-radar-wrap">'+radar(report.dimensions)+'<div class="beauty-dimensions">'+report.dimensions.map((d,index) => '<div class="beauty-dimension" data-dimension="'+index+'"><span>'+esc(d.label)+'</span><b>'+d.score+'</b><i><span style="width:'+d.score+'%"></span></i></div>').join('')+'</div></div>'+
-      '<div class="beauty-insights"><div class="beauty-insight beauty-insight-strength"><small><i aria-hidden="true">'+star+'</i>你的优势</small><p>'+esc(report.strength)+'</p></div><div class="beauty-insight beauty-insight-focus"><small><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 18 6-6m-3-5 3-3m4 4 3-3m-4 9 6-6M5 21l-2-2 9-9 2 2Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>优先调整</small><p>'+esc(report.focus)+'</p></div></div><p class="beauty-reader-copy">'+resultCopy(report.copy)+'</p><button type="button" class="beauty-next-chapter" data-action="read-advice"><span><strong>从'+esc(areaNames[reader.area])+'开始，看看具体怎么做</strong><small>前后变化 · 三步建议 · 适合你的单品</small></span><i aria-hidden="true">→</i></button></section>'+
-    '<section class="beauty-advice-panel" id="beautyAdvice" role="tabpanel" aria-labelledby="beautyTab-advice" hidden><div class="beauty-advice-intro"><h2>你的变美思路</h2><p>选一个部位，照着做就很好看。</p></div>'+areaTabs(report)+report.areas.map(areaHTML).join('')+'</section>'+
-    '<p class="beauty-reader-progress" id="beautyReaderProgress" aria-live="polite">01 / 02 · 左右滑动切换章节</p></div>' ;
+      '<div class="beauty-insights"><div class="beauty-insight beauty-insight-strength"><small><i aria-hidden="true">'+star+'</i>你的优势</small><p>'+esc(report.strength)+'</p></div><div class="beauty-insight beauty-insight-focus"><small><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 18 6-6m-3-5 3-3m4 4 3-3m-4 9 6-6M5 21l-2-2 9-9 2 2Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>优先调整</small><p>'+esc(report.focus)+'</p></div></div><p class="beauty-reader-copy">'+resultCopy(report.copy)+'</p><div class="beauty-chapter-end" id="beautyChapterEnd"><span>继续上滑，查看我的变美思路</span><button type="button" data-action="read-advice" aria-label="查看我的变美思路">↓</button></div></section>'+
+    '<section class="beauty-advice-panel" id="beautyAdvice" role="tabpanel" aria-labelledby="beautyTab-advice" hidden><div class="beauty-advice-intro"><h2>我的变美思路</h2><p>从发型到妆容，找到适合你的改变。</p></div>'+report.areas.map(areaHTML).join('')+'<p class="beauty-advice-end">六个变美方向，找到属于你的表达。</p></section>'+
+    '<p class="beauty-reader-progress" id="beautyReaderProgress" aria-live="polite">01 / 02 · 左右滑动切换栏目</p></div>' ;
   scroll.scrollTop = 0;
   animateReport(celebrate);
   container.querySelector('h1').focus({preventScroll:true});
@@ -384,6 +398,7 @@ function cycleCopy() {
   toast('换了一条，看看这句怎么样');
 }
 function openSheet(title,body,kind) {
+  wheelGesture=null;touchStart=null;swipeStart=null;
   if ($('beautyOverlay').hidden) sheetFocus=document.activeElement;
   overlayGeneration++;
   modalKind=kind;
@@ -493,12 +508,7 @@ page.addEventListener('click',event=>{
     if(product)return target.dataset.productBuy?orderSheet(product):detailSheet(product);
   }
   switch(target.dataset.action){
-    case 'open-report':return openReader();
-    case 'report-back':return closeReader();
-    case 'read-advice':
-      selectChapter('advice');
-      selectArea(priorityArea(currentReport),{focus:false});
-      scroll.scrollTop=0;return;
+    case 'read-advice':return selectChapter('advice',{reset:true});
     case 'home':return close();
     case 'new':clearUpload();return resetEntry();
     case 'scenes':return sceneSheet();
@@ -540,10 +550,7 @@ page.addEventListener('submit',event=>{
     openSheet('订单详情','<div class="beauty-order-success">'+star+'<h3>下单成功</h3><p>'+esc(order.product.name)+' × '+quantity+'<br>订单金额 ¥'+quantity*order.product.price+'</p><p>收货人 '+esc(name.slice(0,1))+'**<br>'+mobile.slice(0,3)+'****'+mobile.slice(-4)+'</p><button type="button" class="beauty-primary" data-action="continue">继续查看我的变美方案</button></div>','success');
   }
 });
-scroll.addEventListener('scroll',()=>{
-  const moved=scroll.scrollTop>40;
-  if(moved)stopCelebration();
-},{passive:true});
+scroll.addEventListener('scroll',syncReading,{passive:true});
 $('beautyMenu').addEventListener('click',menuSheet);
 $('beautyUpload').addEventListener('click',uploadSheet);
 $('beautyComposerUpload').addEventListener('click',uploadSheet);
@@ -565,12 +572,11 @@ document.addEventListener('keydown',event=>{
   if(event.key==='Escape'){
     event.preventDefault();
     if(!$('beautyOverlay').hidden)closeSheet();
-    else if(reader.open)closeReader();
     else if(!$('beautyScanning').hidden)resetEntry();
     else close();
     return;
   }
-  if(reader.open && $('beautyOverlay').hidden && ['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){
+  if(reportReady() && $('beautyOverlay').hidden && ['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){
     const target=event.target;
     const chapter=target?.dataset?.reportTab,area=target?.dataset?.areaTab;
     if(chapter || area){
@@ -584,7 +590,7 @@ document.addEventListener('keydown',event=>{
   }
   if(event.key!=='Tab')return;
   const root=$('beautyOverlay').hidden?page:$('beautySheet');
-  const controls=[...root.querySelectorAll('button:not([disabled]),input:not([disabled]):not([type=file]),textarea')].filter(el=>!el.closest('[hidden],[inert]')&&el.getClientRects().length);
+  const controls=[...root.querySelectorAll('button:not([disabled]),input:not([disabled]):not([type=file]),textarea')].filter(el=>el.tabIndex>=0&&!el.closest('[hidden],[inert]')&&el.getClientRects().length);
   if(!controls.length)return;
   const first=controls[0],last=controls.at(-1);
   if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
@@ -593,11 +599,11 @@ document.addEventListener('keydown',event=>{
 motion.addEventListener('change',()=>{
   if(!page.hidden&&!$('beautyReport').hidden&&currentReport){cancelPresentation();$('beautyReport').querySelectorAll('[data-count]').forEach(el=>{el.textContent=el.dataset.count;});}
 });
-// One horizontal gesture layer for chapters; area selection remains tap-only.
+// Main chapters own horizontal gestures. The six area links track normal vertical reading.
 page.addEventListener('pointerdown',event=>{
   swipeStart=null;
-  if(!reader.open || !$('beautyOverlay').hidden || event.isPrimary===false || (event.pointerType==='mouse' && event.button!==0))return;
-  if(!event.target.closest('#beautyDetail') || event.target.closest('button,input,textarea,a'))return;
+  if(!reportReady() || !$('beautyOverlay').hidden || event.isPrimary===false || (event.pointerType==='mouse' && event.button!==0))return;
+  if(!event.target.closest('#beautyDetail') || event.target.closest('button,input,textarea,a,.beauty-area-tabs'))return;
   const bounds=page.getBoundingClientRect();
   if(event.clientX-bounds.left<24 || bounds.right-event.clientX<24)return;
   swipeStart={id:event.pointerId,x:event.clientX,y:event.clientY,time:Date.now(),scrollTop:scroll.scrollTop};
@@ -605,24 +611,39 @@ page.addEventListener('pointerdown',event=>{
 page.addEventListener('pointercancel',()=>{swipeStart=null;});
 page.addEventListener('pointerup',event=>{
   const start=swipeStart;swipeStart=null;
-  if(!start || event.pointerId!==start.id || !reader.open || !$('beautyOverlay').hidden)return;
+  if(!start || event.pointerId!==start.id || !reportReady() || !$('beautyOverlay').hidden)return;
   const dx=event.clientX-start.x,dy=event.clientY-start.y;
   if(Math.abs(dx)<64 || Math.abs(dx)<Math.abs(dy)*1.6 || Math.abs(scroll.scrollTop-start.scrollTop)>20 || Date.now()-start.time>900)return;
   if(dx<0 && reader.tab==='overview')selectChapter('advice',{focus:false});
   else if(dx>0 && reader.tab==='advice')selectChapter('overview',{focus:false});
 });
-window.addEventListener?.('popstate',event=>{
-  if(page.hidden || !currentReport)return;
-  if(reader.open || readerBackPending || event.state?.beautyReader===readerToken){
-    event.stopImmediatePropagation?.();readerBackPending=false;
-    if(reader.open && !$('beautyOverlay').hidden && event.state?.beautyReader!==readerToken){
-      closeSheet();
-      history.pushState({...event.state,beautyReader:readerToken},'');
-      return;
-    }
-    if(event.state?.beautyReader===readerToken)openReader(false);else closeReader(true);
+// A fresh gesture must begin at the end; reaching it in the current gesture never advances.
+scroll.addEventListener('wheel',event=>{
+  if(!reportReady() || !$('beautyOverlay').hidden)return;
+  reader.anchorUntil=0;
+  const now=Date.now(),delta=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?scroll.clientHeight:1);
+  if(Math.abs(event.deltaX)>Math.abs(event.deltaY) || delta<=0){wheelGesture=null;return;}
+  if(!wheelGesture || now-wheelGesture.time>180)wheelGesture={time:now,fromBottom:atReadingBottom(),distance:0,tab:reader.tab};
+  wheelGesture.time=now;wheelGesture.distance+=delta;
+  if(wheelGesture.fromBottom && wheelGesture.tab==='overview' && reader.tab==='overview' && atReadingBottom() && wheelGesture.distance>=72){
+    wheelGesture.fromBottom=false;event.preventDefault();advanceChapter();
   }
-},{capture:true});
+},{passive:false});
+scroll.addEventListener('touchstart',event=>{
+  touchStart=null;
+  if(!reportReady() || !$('beautyOverlay').hidden || event.touches.length!==1)return;
+  reader.anchorUntil=0;
+  const touch=event.touches[0];
+  touchStart={x:touch.clientX,y:touch.clientY,time:Date.now(),fromBottom:atReadingBottom(),tab:reader.tab};
+},{passive:true});
+scroll.addEventListener('touchcancel',()=>{touchStart=null;},{passive:true});
+scroll.addEventListener('touchend',event=>{
+  const start=touchStart;touchStart=null;
+  if(!start || !event.changedTouches.length || event.touches.length || !reportReady() || !$('beautyOverlay').hidden)return;
+  const touch=event.changedTouches[0],dx=touch.clientX-start.x,dy=touch.clientY-start.y;
+  if(start.fromBottom && start.tab==='overview' && reader.tab==='overview' && atReadingBottom() && dy<=-60 && Math.abs(dy)>Math.abs(dx)*1.5 && Date.now()-start.time<=1500)advanceChapter();
+},{passive:true});
+window.addEventListener?.('resize',()=>{if(reportReady())syncReading();});
 window.beautyExperience={open,close};
 // The query opens only the development scene selector; it never changes exported posters.
 if(new URLSearchParams(location.search).get('beauty')==='scenes'){open();sceneSheet();}

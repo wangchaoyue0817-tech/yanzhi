@@ -38,7 +38,7 @@ test('keyboard navigation retains the visible dialog focus loop without exposing
     document, matchMedia:()=>({matches:false,addEventListener(){}}), window:{},
     location:{search:''}, URLSearchParams,
   });
-  const first = {closest:()=>null, getClientRects:()=>[{}], focus(){document.activeElement=this;}};
+  const first = {tabIndex:0,closest:()=>null, getClientRects:()=>[{}], focus(){document.activeElement=this;}};
   const last = {...first};
   node('beautyPage').hidden=false;
   node('beautyReport').hidden=false;
@@ -61,7 +61,7 @@ test('the browser receives the feature as a module with resolvable named depende
   const entry = staticElements.find(element => element.tag === 'script' && element.src?.split('?')[0] === 'beauty-analysis.js');
   assert.ok(entry, 'feature entry script must be included by the homepage');
   assert.equal(entry.type, 'module', 'named imports require browser module loading');
-  assert.equal(entry.src, 'beauty-analysis.js?v=20');
+  assert.equal(entry.src, 'beauty-analysis.js?v=21');
   for (const filename of ['beauty-model.js', 'beauty-poster.js']) {
     assert.ok(controller.includes(`from './${filename}?v=18'`), `${filename} must bypass the preceding version's cache`);
   }
@@ -272,7 +272,7 @@ function reportHarness({ reducedMotion = false } = {}) {
       const handlers = new Map();
       nodes.set(id, {
         id, hidden: true, value: '', innerHTML: '', textContent: '', scrollTop: 0,
-        dataset: {}, style: {}, inert: false, isConnected: true, handlers,
+        dataset: {}, style: {setProperty(name,value){this[name]=value;}}, inert: false, isConnected: true, handlers,
         classList: {
           add(...values) { values.forEach(value => classes.add(value)); },
           remove(...values) { values.forEach(value => classes.delete(value)); },
@@ -347,7 +347,7 @@ function renderedCopy(markup) {
   return markupText(markup.match(/<p class="beauty-result-copy">([\s\S]*?)<\/p>/)?.[1] ?? '');
 }
 
-test('v20 keeps a short result cover and mounts complete report chapters behind one preview entry', () => {
+test('v21 keeps a short result cover and mounts complete report chapters directly below it', () => {
   const harness = reportHarness({ reducedMotion: true });
   const report = createReport(90, 2);
   const photos = reportPhotos();
@@ -359,9 +359,10 @@ test('v20 keeps a short result cover and mounts complete report chapters behind 
   assert.equal(renderedCopy(rendered), report.copy.match(/^.*?[。！？]/u)?.[0] ?? report.copy);
   const cover = rendered.slice(0, rendered.indexOf('<div id="beautyDetail"'));
   assert.doesNotMatch(cover, /beauty-comparison|beauty-radar-wrap|beauty-area-pair|beauty-product-compact/);
-  assert.match(cover, /data-action="open-report"/);
+  assert.doesNotMatch(cover, /data-action="open-report"|beauty-preview-card|你的下一幕/);
   assert.match(cover, /data-action="poster"/);
-  assert.match(rendered, /id="beautyDetail" class="beauty-reader" hidden/);
+  assert.match(rendered, /id="beautyDetail" class="beauty-reader"(?:>|\s+(?!hidden)[^>]*>)/);
+  assert.doesNotMatch(rendered, /id="beautyDetail"[^>]*\bhidden/);
   const overview = rendered.slice(rendered.indexOf('id="beautyOverview"'), rendered.indexOf('class="beauty-advice-panel"'));
   assert.equal((rendered.match(/id="beautyOverview"/g) || []).length, 1);
   assert.ok(overview.includes('更出彩的你'));
@@ -547,9 +548,9 @@ test('the result cover exposes sharing without the removed restart, slogan or ex
   const markup = harness.node('beautyReport').innerHTML;
   assert.doesNotMatch(markup, /换张照片，发现另一面的你|图灵鉴X · 每一种美，都有自己的表达|照片 · 得分 · 六部位变美攻略|beauty-report-footer|data-action="restart"/);
   const cover = markup.slice(0, markup.indexOf('<div id="beautyDetail"'));
-  assert.match(cover, /class="beauty-cover-share" data-action="poster"/);
-  assert.ok(cover.endsWith('</button></div>'));
-  assert.equal((cover.match(/data-action="open-report"/g) || []).length, 1);
+  assert.match(cover, /class="beauty-primary beauty-cover-share" data-action="poster"/);
+  assert.match(cover, /查看我的颜值海报/);
+  assert.equal((cover.match(/data-action="open-report"/g) || []).length, 0);
   assert.equal((cover.match(/data-action="poster"/g) || []).length, 1);
 });
 

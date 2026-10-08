@@ -10,6 +10,7 @@ const read = path => readFileSync(new URL(path, publicRoot), 'utf8');
 const html = read('index.html');
 const controller = read('beauty-analysis.js');
 const css = read('beauty-analysis.css');
+const reportCss = read('beauty-report-v17.css');
 
 function attributes(source) {
   return Object.fromEntries([...source.matchAll(/([\w:-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g)]
@@ -63,6 +64,10 @@ test('the browser receives the feature as a module with resolvable named depende
   const entry = staticElements.find(element => element.tag === 'script' && element.src?.split('?')[0] === 'beauty-analysis.js');
   assert.ok(entry, 'feature entry script must be included by the homepage');
   assert.equal(entry.type, 'module', 'named imports require browser module loading');
+  assert.equal(entry.src, 'beauty-analysis.js?v=18');
+  for (const filename of ['beauty-model.js', 'beauty-poster.js']) {
+    assert.ok(controller.includes(`from './${filename}?v=18'`), `${filename} must bypass the preceding version's cache`);
+  }
   assert.ok(staticElements.some(element => element.tag === 'link' && element.rel === 'stylesheet' && element.href?.split('?')[0] === 'beauty-analysis.css'));
 
   const imports = [...controller.matchAll(/import\s*\{([^}]+)\}\s*from\s*['"]([^'"]+)['"]/g)];
@@ -289,7 +294,7 @@ function reportHarness({ reducedMotion = false } = {}) {
   document = { getElementById: node, querySelector: selector => node(selector), addEventListener() {}, activeElement: null };
   const api = runInNewContext(controller.replace(/^import .*;$/gm, '') + `
     ({
-      show: showReport, explore: exploreReport, cycle: cycleCopy, reset: resetEntry,
+      show: showReport, explore: exploreReport, cycle: cycleCopy, reset: resetEntry, formatCopy: resultCopy,
       cancel: cancelPresentation, poster: posterSheet, closeSheet, scenes: sceneSheet,
       setPosterCache(value) { posterCache = value; },
       setPreviewURL(value) { posterPreviewUrl = value; },
@@ -334,7 +339,15 @@ const reportPhotos = () => ({
   parts: Object.fromEntries(['hair', 'brows', 'eyes', 'skin', 'lips', 'style'].map(id => [id, { before: `${id}-before`, after: `${id}-after` }])),
 });
 
-test('v17 renders one combined overview and the complete inline advice without secondary advice or comparison controls', () => {
+function markupText(markup) {
+  return markup.replace(/<[^>]*>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+}
+
+function renderedCopy(markup) {
+  return markupText(markup.match(/<p class="beauty-result-copy">([\s\S]*?)<\/p>/)?.[1] ?? '');
+}
+
+test('v18 renders one combined overview and the complete inline advice without secondary advice or comparison controls', () => {
   const harness = reportHarness({ reducedMotion: true });
   const report = createReport(90, 2);
   const photos = reportPhotos();
@@ -343,7 +356,7 @@ test('v17 renders one combined overview and the complete inline advice without s
   assert.equal(harness.node('beautyReport').hidden, false);
   assert.equal(harness.node('beautyReport').dataset.tier, report.tier.id);
   assert.ok(rendered.includes(`<h1 tabindex="-1">${report.title}</h1>`));
-  assert.ok(rendered.includes(report.copy));
+  assert.equal(renderedCopy(rendered), report.copy);
   const overview = rendered.slice(rendered.indexOf('id="beautyOverview"'), rendered.indexOf('class="beauty-section beauty-areas"'));
   assert.equal((rendered.match(/id="beautyOverview"/g) || []).length, 1);
   assert.ok(overview.includes('更出彩的你'));
@@ -353,7 +366,7 @@ test('v17 renders one combined overview and the complete inline advice without s
   assert.ok(overview.includes('beauty-radar-wrap'));
   assert.ok(overview.includes('五官表现'));
   assert.ok(overview.includes(`超过 ${report.afterPercentile}% 的人`));
-  assert.equal((overview.match(/class="beauty-dimension"/g) || []).length, 5);
+  assert.equal((overview.match(/class="beauty-dimension" data-dimension=/g) || []).length, 5);
   assert.doesNotMatch(rendered, /放大对比|详细建议|data-area-detail|data-action="compare"/);
   assert.doesNotMatch(controller, /function areaSheet\(|function comparisonSheet\(|case 'compare':/);
   const adviceLists = [...rendered.matchAll(/<ol class="beauty-inline-steps">([\s\S]*?)<\/ol>/g)];
@@ -365,9 +378,147 @@ test('v17 renders one combined overview and the complete inline advice without s
     assert.ok(rendered.includes(`src="${photos.parts[report.areas[index].id].after}"`));
   }
   assert.equal((rendered.match(/class="beauty-product beauty-product-compact"/g) || []).length, 6);
-  assert.equal((rendered.match(/class="beauty-product-purchase"/g) || []).length, 6);
-  assert.equal((rendered.match(/data-product-buy=/g) || []).length, 6);
+  assert.doesNotMatch(rendered, /beauty-product-purchase|data-product-buy=/);
+  assert.equal((rendered.match(/data-product-detail=/g) || []).length, 6);
   assert.equal((rendered.match(/class="beauty-product-reason"/g) || []).length, 6);
+});
+
+test('result copy emphasizes the opening sentence without losing text or permitting HTML injection', () => {
+  const harness = reportHarness({ reducedMotion: true });
+  for (const tier of TIERS) {
+    for (let variant = 0; variant < 5; variant++) {
+      const report = createReport(tier.sampleScore, variant);
+      harness.api.show(report, reportPhotos());
+      const markup = harness.node('beautyReport').innerHTML;
+      const lead = markup.match(/<strong class="beauty-copy-lead">([\s\S]*?)<\/strong>/)?.[1];
+      const body = markup.match(/<span class="beauty-copy-body">([\s\S]*?)<\/span>/)?.[1];
+      const sentenceEnd = report.copy.search(/[。！？]/) + 1;
+      assert.equal(markupText(lead), report.copy.slice(0, sentenceEnd));
+      assert.equal(markupText(body), report.copy.slice(sentenceEnd));
+      assert.equal(renderedCopy(markup), report.copy, `${tier.id} copy ${variant} is preserved`);
+    }
+  }
+  const escaped = '<img src=x onerror="bad()">&这一眼。<script>bad()</script>别漏掉"引号"。';
+  const formatted = harness.api.formatCopy(escaped);
+  assert.doesNotMatch(formatted, /<img|<script/);
+  assert.ok(formatted.includes('&lt;img'));
+  assert.ok(formatted.includes('&amp;'));
+  assert.ok(formatted.includes('&quot;'));
+  assert.equal(markupText(formatted), escaped);
+  for (const copy of ['', '没有句号的完整评价', '只有一个句子。']) {
+    const result = harness.api.formatCopy(copy);
+    assert.doesNotMatch(result, /beauty-copy-lead/);
+    assert.equal(markupText(result), copy);
+  }
+});
+
+test('the improvement row uses the expected score difference, including zero at the maximum score', () => {
+  const harness = reportHarness({ reducedMotion: true });
+  for (const score of [0, 52, 68, 80, 90, 97, 100]) {
+    const report = createReport(score);
+    harness.api.show(report, reportPhotos());
+    const markup = harness.node('beautyReport').innerHTML;
+    const row = markup.match(/<div class="beauty-lift-line"><span>([\s\S]*?)<\/span>/)?.[1];
+    assert.equal(markupText(row), `预计增加 ${report.afterScore - report.score} 分`);
+    assert.doesNotMatch(row, /妆发调整后|\+/);
+  }
+});
+
+test('five facial dimensions use an SVG gradient radar and five distinct gradient tracks', () => {
+  const harness = reportHarness({ reducedMotion: true });
+  const report = createReport(52);
+  harness.api.show(report, reportPhotos());
+  const markup = harness.node('beautyReport').innerHTML;
+  const radar = markup.match(/<svg class="beauty-radar"[\s\S]*?<\/svg>/)?.[0];
+  assert.match(radar, /role="img" aria-label="五官表现五维图"/);
+  for (const gradient of ['beautyRadarFill', 'beautyRadarStroke']) {
+    const definition = radar.match(new RegExp(`<linearGradient id="${gradient}"[^>]*>([\\s\\S]*?)<\\/linearGradient>`))?.[1];
+    assert.ok(definition, `${gradient} exists as an SVG definition`);
+    const stops = elements(definition).filter(element => element.tag === 'stop');
+    assert.ok(stops.length >= 3);
+    assert.ok(new Set(stops.map(stop => stop['stop-color'])).size >= 3);
+    assert.ok(reportCss.includes(`url(#${gradient})`), `${gradient} is actually painted`);
+  }
+  assert.match(radar, /<radialGradient id="beautyRadarAura">/);
+  assert.match(radar, /fill="url\(#beautyRadarAura\)"/);
+  const radarNodes = elements(radar).filter(element => element.class === 'beauty-radar-node');
+  assert.equal(radarNodes.length, 5);
+  assert.equal(new Set(radarNodes.map(node => node.style)).size, 5);
+  const dimensions = [...markup.matchAll(/<div class="beauty-dimension" data-dimension="(\d)"><span>([^<]+)<\/span><b>(\d+)<\/b><i><span style="width:(\d+)%"><\/span><\/i><\/div>/g)];
+  assert.equal(dimensions.length, 5);
+  dimensions.forEach(([, index, label, score, width], position) => {
+    assert.equal(Number(index), position);
+    assert.equal(label, report.dimensions[position].label);
+    assert.equal(Number(score), report.dimensions[position].score);
+    assert.equal(width, score);
+  });
+  const gradientBlocks = [
+    reportCss.match(/\.beauty-dimension\{([^}]+)\}/)?.[1],
+    ...[1, 2, 3, 4].map(index => reportCss.match(new RegExp(`\\.beauty-dimension\\[data-dimension="${index}"\\]\\{([^}]+)\\}`))?.[1]),
+  ];
+  const palettes = gradientBlocks.map(block => {
+    assert.ok(block, 'every dimension has a palette');
+    const from = block.match(/--dimension-from:(#[0-9a-f]{6})/i)?.[1];
+    const to = block.match(/--dimension-to:(#[0-9a-f]{6})/i)?.[1];
+    assert.ok(from && to);
+    assert.notEqual(from, to);
+    return `${from}/${to}`;
+  });
+  assert.equal(new Set(palettes).size, 5);
+  assert.ok(reportCss.includes('background:linear-gradient(90deg,var(--dimension-from),var(--dimension-to))'));
+});
+
+test('strength and focus retain their analysis in separately styled cards with decorative icons', () => {
+  const harness = reportHarness({ reducedMotion: true });
+  for (const tier of TIERS) {
+    const report = createReport(tier.sampleScore);
+    harness.api.show(report, reportPhotos());
+    const markup = harness.node('beautyReport').innerHTML;
+    for (const [type, heading, value] of [['strength', '你的优势', report.strength], ['focus', '优先调整', report.focus]]) {
+      const card = markup.match(new RegExp(`<div class="beauty-insight beauty-insight-${type}">([\\s\\S]*?)<\\/div>`))?.[1];
+      assert.ok(card);
+      assert.match(card, /<small><i aria-hidden="true"><svg/);
+      assert.ok(card.includes(`</i>${heading}</small>`));
+      assert.equal(markupText(card.match(/<p>([\s\S]*?)<\/p>/)?.[1]), value);
+    }
+  }
+});
+
+test('all six recommendation cards have one detail action, paired prices and no purchase action', () => {
+  const harness = reportHarness({ reducedMotion: true });
+  harness.api.show(createReport(90), reportPhotos());
+  const markup = harness.node('beautyReport').innerHTML;
+  const cards = [...markup.matchAll(/<article class="beauty-product beauty-product-compact">([\s\S]*?)<\/article>/g)];
+  assert.equal(cards.length, 6);
+  const ids = new Set();
+  for (const [, card] of cards) {
+    const controls = elements(card).filter(element => element.tag === 'button');
+    assert.equal(controls.length, 1);
+    const detail = controls[0];
+    const product = PRODUCTS.find(item => item.id === detail['data-product-detail']);
+    assert.ok(product);
+    ids.add(product.id);
+    assert.equal(detail['aria-label'], `查看${product.name}详情`);
+    assert.doesNotMatch(card, /data-product-buy|购买|beauty-product-purchase/);
+    assert.ok(card.includes(`aria-label="现价${product.price}元"`));
+    assert.ok(card.includes(`<del aria-label="原价${product.originalPrice}元">¥${product.originalPrice}</del>`));
+    assert.ok(card.includes(product.shortReason));
+    assert.ok(card.includes('推荐理由'));
+    product.shortFeatures.forEach(feature => assert.ok(card.includes(feature)));
+  }
+  assert.equal(ids.size, PRODUCTS.length);
+});
+
+test('the report ends at its share action without the removed restart, slogan or extra caption', () => {
+  const harness = reportHarness({ reducedMotion: true });
+  harness.api.show(createReport(52), reportPhotos());
+  const markup = harness.node('beautyReport').innerHTML;
+  assert.doesNotMatch(markup, /换张照片，发现另一面的你|图灵鉴X · 每一种美，都有自己的表达|照片 · 得分 · 六部位变美攻略|beauty-report-footer|data-action="restart"/);
+  const share = markup.slice(markup.indexOf('<section class="beauty-share-panel'));
+  assert.ok(share.includes('这份报告，值得晒一下'));
+  assert.ok(share.includes('data-action="poster"'));
+  assert.doesNotMatch(share, /<small/);
+  assert.ok(share.endsWith('</button></section>'));
 });
 
 test('the first-screen cue opens and focuses the overview, and scrolling dismisses the cue and celebration', () => {
@@ -378,6 +529,12 @@ test('the first-screen cue opens and focuses the overview, and scrolling dismiss
     const rendered = harness.node('beautyReport').innerHTML;
     assert.ok(rendered.includes('class="beauty-scroll-cue" data-action="explore" aria-controls="beautyOverview"'));
     assert.ok(rendered.includes(report.scrollHint));
+    const cue = rendered.match(/<button type="button" class="beauty-scroll-cue"[^>]*>([\s\S]*?)<\/button>/)?.[1];
+    assert.ok(cue);
+    assert.ok(cue.includes(`<span class="beauty-guide-copy"><strong>${report.scrollHint}</strong>`));
+    assert.ok(cue.includes('<small>前后对比 · 五官表现 · 变美思路</small>'));
+    assert.match(cue, /<i aria-hidden="true"><svg[\s\S]*<path/);
+
     const overview = harness.node('beautyOverview');
     const scroll = harness.node('beautyScroll');
     overview.inert = true;
@@ -429,7 +586,7 @@ test('changing the copy wraps through all five choices, preserves report facts a
   assert.equal(harness.frames.size, 0);
   assert.equal([...harness.timers.values()].filter(timer => timer.delay === 1200).length, 0, 'changing copy does not replay fireworks');
   assert.equal(harness.node('beautyOverlay').hidden, true);
-  assert.ok(harness.node('beautyReport').innerHTML.includes(changed.currentReport.copy));
+  assert.equal(renderedCopy(harness.node('beautyReport').innerHTML), changed.currentReport.copy);
   for (let variant = 1; variant <= 4; variant++) {
     harness.click('copy-next');
     assert.equal(harness.api.state().currentReport.copyVariant, variant);

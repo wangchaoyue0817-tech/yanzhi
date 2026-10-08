@@ -1,5 +1,5 @@
-const WIDTH = 1080;
-const MIN_HEIGHT = 3200;
+const WIDTH = 1600;
+const MIN_HEIGHT = 1880;
 const FONT = '"PingFang SC", "SF Pro Display", "Helvetica Neue", Arial, sans-serif';
 const THEMES = [
   { name: '自然本色', accent: '#B2C7EE', light: '#E2ECFF', glow: '#5C78AA', heading: '看见，自然的你' },
@@ -38,7 +38,7 @@ const DEFAULT_PALETTE = [
 const cleanText = (value, fallback = '') => typeof value === 'string' && value.trim() ? value.trim() : fallback;
 const cleanList = values => Array.isArray(values) ? values.map(value => cleanText(value)).filter(Boolean) : [];
 
-/** Validate numeric data; preserve complete copy and advice for the expandable print layout. */
+/** Validate source data without mutating it; editorial layout chooses concise advice below. */
 export function normalizeBeautyPosterReport(report) {
   if (!report || typeof report !== 'object') throw new TypeError('缺少颜值报告');
   const numeric = (key, label) => {
@@ -79,7 +79,7 @@ export function normalizeBeautyPosterReport(report) {
       const steps = cleanList(area.steps);
       return { id, title: cleanText(area.title, title), summary: cleanText(area.summary, summary),
         beforeLabel: cleanText(area.beforeLabel, '原来'), afterLabel: cleanText(area.afterLabel, '调整后'),
-        steps: steps.length ? steps : [step],
+        steps: steps.length ? steps : [step], actions: cleanList(area.actions),
       };
     }),
   };
@@ -357,57 +357,54 @@ function ring(ctx, x, y, rx, ry, rotation, colors, strength = 1) {
 
 function artworkFrame(ctx, report, height) {
   const {level, theme} = report;
-  border(ctx, 28, 28, 1024, height - 56, 29, gradient(ctx,0,0,1080,height,['#79C8ED55',theme.accent+'88','#746FF027',theme.accent+'55']), level >= 3 ? 1.8 : 1);
+  border(ctx, 24, 24, WIDTH - 48, height - 48, 28, gradient(ctx,0,0,WIDTH,height,['#79C8ED55',theme.accent+'88','#746FF027',theme.accent+'55']), level >= 3 ? 1.8 : 1);
   if (level >= 3) {
-    border(ctx, 37, 37, 1006, height - 74, 23, '#D9C39822');
-    for (const [x,y,sx,sy] of [[48,48,1,1],[1032,48,-1,1],[48,height-48,1,-1],[1032,height-48,-1,-1]]) {
-      line(ctx,x,y,x+sx*70,y,theme.accent,1.5);
-      line(ctx,x,y,x,y+sy*70,theme.accent,1.5);
-      polygon(ctx,[[x+sx*12,y+sy*3],[x+sx*20,y+sy*12],[x+sx*12,y+sy*21],[x+sx*4,y+sy*12]],theme.accent+'99');
+    for (const [x,y,sx,sy] of [[40,40,1,1],[WIDTH-40,40,-1,1],[40,height-40,1,-1],[WIDTH-40,height-40,-1,-1]]) {
+      line(ctx,x,y,x+sx*65,y,theme.accent,1.5);
+      line(ctx,x,y,x,y+sy*65,theme.accent,1.5);
+      sparkle(ctx,x+sx*13,y+sy*13,5,theme.accent);
     }
   }
 }
 
-function measurePoster(ctx, report) {
-  const title = textLines(ctx, report.title, 920, 66, 600);
-  const copy = textLines(ctx, report.copy, 912, 29);
-  const titleY = 319;
-  const scoreY = titleY + (title.length - 1) * 82 + 147;
-  const copyY = scoreY + 96;
-  const pairY = copyY + copy.length * 44 + 25;
-  const pairHeight = 635;
-  const metricsY = pairY + pairHeight + 55;
-  const dimensionLines = report.dimensions.map(value => textLines(ctx, value.label, 160, 25));
-  const dimensionsHeight = 99 + Math.max(...dimensionLines.map(value => value.length)) * 33;
-  const areasY = metricsY + dimensionsHeight + 100;
-  const areas = report.areas.map(area => {
-    const heading = textLines(ctx, area.title, 370, 31, 600);
-    const beforeLabel = textLines(ctx, area.beforeLabel, 190, 23);
-    const afterLabel = textLines(ctx, area.afterLabel, 190, 23);
-    const summary = textLines(ctx, area.summary, 410, 28);
-    const steps = area.steps.map(value => textLines(ctx, value, 380, 28));
-    const imageY = 70 + (heading.length - 1) * 40;
-    const summaryY = imageY + 147 + Math.max(beforeLabel.length, afterLabel.length) * 30 + 30;
-    const stepY = summaryY + summary.length * 38 + 17;
-    const height = stepY + steps.reduce((sum, lines) => sum + lines.length * 37 + 10, 0) + 12;
-    return { heading, beforeLabel, afterLabel, summary, steps, imageY, summaryY, stepY, height };
-  });
-  const rowHeights = [0, 1, 2].map(row => Math.max(areas[row * 2].height, areas[row * 2 + 1].height));
-  const styleY = areasY + rowHeights.reduce((sum, height) => sum + height + 22, 0) + 53;
-  const styleLines = textLines(ctx, report.styleSummary, 910, 29);
-  const keywordLines = textLines(ctx, report.keywords.join('  ·  '), 910, 29, 600);
-  const paletteY = styleY + 45 + keywordLines.length * 40 + 22 + styleLines.length * 41 + 25;
-  const paletteRows = Math.ceil(report.palette.length / 5);
-  const paletteLabels = report.palette.map(value => textLines(ctx, value.label, 160, 24));
-  const paletteRowHeight = 85 + Math.max(...paletteLabels.map(value => value.length)) * 31;
-  const height = Math.max(MIN_HEIGHT, Math.ceil(paletteY + paletteRows * paletteRowHeight + 144));
-  return { title, copy, titleY, scoreY, copyY, pairY, pairHeight, metricsY, dimensionLines, dimensionsHeight, areasY, areas, rowHeights, styleY, styleLines, keywordLines, paletteY, paletteLabels, paletteRowHeight, height };
+// The report retains complete instructions. The share card deliberately selects
+// two usable actions, so it reads like a makeup editorial instead of a transcript.
+function conciseActions(area) {
+  if (area.actions.length) return area.actions.slice(0, 2);
+  return area.steps.slice(0, 2).map(step => step.split(/[，。；！]/u).filter(Boolean)[0] || step);
 }
 
-function sectionHeading(ctx, number, title, y, theme) {
-  text(ctx, number, 68, y, 24, theme.accent, 600);
-  text(ctx, title, 116, y, 34, '#EEEAFB', 600);
-  line(ctx, 650, y - 11, 1012, y - 11, gradient(ctx,650,0,1012,0,[theme.accent+'55','#8174BB00']));
+function measurePoster(ctx, report) {
+  const title = textLines(ctx, report.title, 416, 46, 600);
+  const copy = textLines(ctx, report.copy, 416, 27);
+  const titleY = 320;
+  const scoreY = titleY + (title.length - 1) * 59 + 113;
+  const copyY = scoreY + 137;
+  const keywordLines = textLines(ctx, report.keywords.join(' · '), 416, 25, 600);
+  const keywordY = copyY + copy.length * 40 + 20;
+  const mainBottom = Math.max(807, keywordY + keywordLines.length * 37 + 20);
+  const metricsY = mainBottom + 44;
+  const dimensionLines = report.dimensions.map(value => textLines(ctx, value.label, 162, 24));
+  const metricsHeight = 79 + Math.max(...dimensionLines.map(value => value.length)) * 29;
+  const areasY = metricsY + metricsHeight + 54;
+  const areas = report.areas.map(area => {
+    const heading = textLines(ctx, area.title, 363, 30, 600);
+    const summary = textLines(ctx, area.summary, 428, 26, 600);
+    const actions = [textLines(ctx, conciseActions(area).join(' · '), 406, 26)];
+    const imageY = 62 + (heading.length - 1) * 38;
+    const summaryY = imageY + 154;
+    const actionY = summaryY + summary.length * 36 + 10;
+    const height = Math.max(308, actionY + actions.reduce((sum, value) => sum + value.length * 35, 0) + 15);
+    return {heading, summary, actions, imageY, summaryY, actionY, height};
+  });
+  const rowHeights = [0, 1].map(row => Math.max(...areas.slice(row * 3, row * 3 + 3).map(value => value.height)));
+  const styleY = areasY + rowHeights[0] + rowHeights[1] + 38;
+  const styleLines = textLines(ctx, report.styleSummary, 750, 26);
+  const paletteLabels = report.palette.map(value => textLines(ctx, value.label, 136, 22));
+  const paletteRowHeight = 67 + Math.max(...paletteLabels.map(value => value.length)) * 28;
+  const styleHeight = Math.max(55 + styleLines.length * 37, Math.ceil(report.palette.length / 4) * paletteRowHeight);
+  const height = Math.max(MIN_HEIGHT, Math.ceil(styleY + styleHeight + 32));
+  return {title,copy,titleY,scoreY,copyY,keywordLines,keywordY,mainBottom,metricsY,dimensionLines,areasY,areas,rowHeights,styleY,styleLines,paletteLabels,paletteRowHeight,height};
 }
 
 function imageRegion(ctx, source, x, y, width, height, radius) {
@@ -425,116 +422,116 @@ function imageRegion(ctx, source, x, y, width, height, radius) {
 
 function drawPoster(ctx, before, after, parts, report, layout) {
   const {theme, level, artwork} = report;
-  const {height, pairY, pairHeight} = layout;
-  ctx.fillStyle = gradient(ctx,0,0,WIDTH,height,['#10132D','#060918','#0A0D22']);
-  ctx.fillRect(0, 0, WIDTH, height);
-  glow(ctx, 530, 480, 790, theme.glow, .17 + level * .04);
-  glow(ctx, 65, height - 220, 530, '#4348AF', .2);
-  aurora(ctx, report);
-  for(let i=0;i<artwork.stars;i++) {
-    const x = i%2===0 ? 64+(i*67%168) : 848+(i*47%168);
-    const y = 150+(i*113%475);
-    sparkle(ctx,x,y,i%9===0?9:i%3===0?4:1.4,i%3===0?theme.light:'#A5BDFC',i%9===0?.95:.5);
-  }
+  const {height} = layout;
+  ctx.fillStyle = gradient(ctx,0,0,WIDTH,height,['#10132D','#070A18','#10122C']);
+  ctx.fillRect(0,0,WIDTH,height);
+  glow(ctx,1330,340,560,theme.glow,.19+level*.035);
+  glow(ctx,200,height-240,580,'#4943A5',.16);
+  ctx.save(); ctx.translate(1100,76); ctx.scale(.39,.52); aurora(ctx,report); ctx.restore();
   const ringColors = level>=3 ? ['#AB84F7','#FFF0C9','#D99854','#95DFF5','#9985F5'] : ['#7770ED',theme.light,'#76CFEF','#8570CF'];
-  if(artwork.rings>=1) ring(ctx,540,346,396,137,-.22,ringColors,level===1?.18:.3);
-  if(artwork.rings>=2) ring(ctx,540,346,419,146,.2,ringColors,level===4?.42:.32);
-  if(artwork.rings>=3) ring(ctx,540,346,443,165,-.02,['#7EB8FD','#FFECB3','#CCA0ED','#64DBEB'],.38);
-  // The decorative stage is deliberately behind the score; prose has a quiet reading surface.
-  ctx.fillStyle = gradient(ctx,0,350,0,layout.copyY+80,['#090C2100','#090C21CC','#090C21']);
-  ctx.fillRect(64,350,952,layout.copyY-270);
-  artworkFrame(ctx, report, height);
-  sparkle(ctx,82,86,14,theme.accent);
-  text(ctx,'鉴X',109,98,35,'#F1F0FF',600);
-  text(ctx,'AI 颜值报告',997,96,25,'#C7CBDD',500,'right');
-  line(ctx,77,120,1003,120,'#A9A6D322');
-  text(ctx,artwork.edition,540,162,20,theme.accent,500,'center');
-  ornament(ctx,540,234,artwork,theme);
-  drawLines(ctx,layout.title,540,layout.titleY,66,gradient(ctx,140,270,940,360,artwork.metal),82,600,'center');
-  const scoreText = format(report.score);
-  const metal = gradient(ctx,330,layout.scoreY-130,760,layout.scoreY,artwork.metal);
-  ctx.save(); ctx.shadowColor=level>=3?'#CC9B54':'#806EDB'; ctx.shadowBlur=level===4?27:level===3?19:5;
-  text(ctx,scoreText,540,layout.scoreY,145,metal,600,'center'); ctx.restore();
-  text(ctx,`当前颜值 / 100  ·  ${report.tierName}`,540,layout.scoreY+37,25,'#CED0E2',500,'center');
-  text(ctx,`超过 ${format(report.percentile)}% 的人`,540,layout.scoreY+76,29,theme.light,600,'center');
-  drawLines(ctx,layout.copy,84,layout.copyY+29,29,'#C5C9DD',44);
+  ctx.save(); ctx.translate(1312,231); ctx.scale(.48,.52);
+  if(artwork.rings>=1) ring(ctx,0,0,396,137,-.22,ringColors,level===1?.16:.25);
+  if(artwork.rings>=2) ring(ctx,0,0,419,146,.2,ringColors,level===4?.4:.3);
+  if(artwork.rings>=3) ring(ctx,0,0,443,165,-.02,['#7EB8FD','#FFECB3','#CCA0ED','#64DBEB'],.36);
+  ctx.restore();
+  for(let i=0;i<artwork.stars;i++) {
+    const x=1100+(i*67%408), y=163+(i*113%112);
+    sparkle(ctx,x,y,i%13===0?5:1.5,i%3===0?theme.light:'#A5BDFC',i%13===0?.85:.4);
+  }
+  artworkFrame(ctx,report,height);
+  sparkle(ctx,77,78,11,theme.accent);
+  text(ctx,'鉴X',101,90,35,'#F1F0FF',600);
+  text(ctx,'我的变美灵感档案',213,87,25,'#AEB7D1');
+  text(ctx,'AI 颜值报告',1537,88,25,'#CCD0E3',500,'right');
+  line(ctx,60,115,1540,115,'#A9A6D329');
 
-  const photoWidth=461, photoHeight=510;
-  for (const [index, image, score, percentile, tierName] of [
+  const photoY=145, photoWidth=480, photoHeight=562;
+  for(const [index,image,score,percentile,tierName] of [
     [0,before,report.score,report.percentile,report.tierName],
     [1,after,report.afterScore,report.afterPercentile,report.afterTierName],
   ]) {
-    const x=68+index*482;
-    portrait(ctx,image,x,pairY,photoWidth,photoHeight,22,.2);
-    ctx.save(); roundedPath(ctx,x,pairY,photoWidth,photoHeight,22); ctx.clip();
-    ctx.fillStyle=gradient(ctx,0,pairY+335,0,pairY+510,['#06091800','#070A1899','#080B21']);
-    ctx.fillRect(x,pairY+335,photoWidth,175); ctx.restore();
-    border(ctx,x,pairY,photoWidth,photoHeight,22,gradient(ctx,x,pairY,x+photoWidth,pairY+photoHeight,[theme.light+'B3',theme.accent+'33','#978BCE66']),level>=3?2:1);
-    roundedPath(ctx,x+18,pairY+18,index?144:132,43,12); ctx.fillStyle='#0A0D21C9'; ctx.fill();
-    text(ctx,index?'AFTER':'BEFORE',x+32,pairY+48,24,index?theme.light:'#DBE0F1',600);
-    text(ctx,index?'更出彩的你':'现在的你',x+23,pairY+470,30,'#F7F4FF',600);
-    text(ctx,format(score),x+23,pairY+574,57,index?theme.light:'#F0E8FC',600);
-    ctx.font=`600 57px ${FONT}`;
-    text(ctx,'/ 100',x+34+ctx.measureText(format(score)).width,pairY+572,23,'#929DBB');
-    text(ctx,tierName,x+photoWidth-20,pairY+570,25,'#BFC6DC',500,'right');
-    text(ctx,`超过 ${format(percentile)}% 的人`,x+23,pairY+615,27,'#C7CEE3');
+    const x=60+index*500;
+    portrait(ctx,image,x,photoY,photoWidth,photoHeight,20,.18);
+    ctx.save(); roundedPath(ctx,x,photoY,photoWidth,photoHeight,20);ctx.clip();
+    ctx.fillStyle=gradient(ctx,0,photoY+400,0,photoY+photoHeight,['#070A1800','#070A1899','#070A18ED']);
+    ctx.fillRect(x,photoY+400,photoWidth,photoHeight-400);ctx.restore();
+    border(ctx,x,photoY,photoWidth,photoHeight,20,gradient(ctx,x,photoY,x+photoWidth,photoY+photoHeight,[theme.light+'99',theme.accent+'33','#978BCE66']),level>=3?2:1);
+    roundedPath(ctx,x+18,photoY+18,index?160:153,42,11);ctx.fillStyle='#090B20C7';ctx.fill();
+    text(ctx,index?'AFTER':'BEFORE',x+33,photoY+48,24,index?theme.light:'#E4E8F6',600);
+    text(ctx,index?'妆发调整后':'现在的你',x+26,photoY+526,31,'#F8F4FF',600);
+    text(ctx,format(score),x+8,photoY+635,62,index?theme.light:'#F1ECFD',600);
+    ctx.font=`600 62px ${FONT}`;
+    text(ctx,'/ 100',x+23+ctx.measureText(format(score)).width,photoY+632,25,'#A7B0CC');
+    text(ctx,tierName,x+photoWidth-8,photoY+628,25,'#CCD0E1',500,'right');
+    text(ctx,`超过 ${format(percentile)}% 的人`,x+9,photoY+674,27,'#CBD1E3');
   }
   const difference=Math.round((report.afterScore-report.score)*10)/10;
-  const differenceText=`${difference>=0?'+':''}${format(difference)}`;
-  const pillY=pairY+photoHeight-32;
-  glow(ctx,540,pillY+30,58,theme.glow,.52);
-  roundedPath(ctx,470,pillY,140,63,31); ctx.fillStyle=gradient(ctx,470,pillY,610,pillY+63,['#54438C','#302447']); ctx.fill();
-  border(ctx,470,pillY,140,63,31,theme.accent+'B0',1.8);
-  text(ctx,differenceText,540,pillY+43,35,theme.light,600,'center');
+  const differenceText=`预计增加${format(difference)}分`;
+  roundedPath(ctx,429,676,242,53,26);ctx.fillStyle=gradient(ctx,429,676,671,729,['#554181','#27263E']);ctx.fill();
+  border(ctx,429,676,242,53,26,theme.accent+'AA',1.6);
+  text(ctx,differenceText,550,711,26,theme.light,600,'center');
 
-  text(ctx,'五官表现',68,layout.metricsY-3,29,'#EEEAFB',600);
+  const railX=1092, railCenter=1300;
+  text(ctx,artwork.edition,railCenter,166,19,theme.accent,500,'center');
+  ctx.save();ctx.translate(railCenter,238);ctx.scale(.74,.74);ornament(ctx,0,0,artwork,theme);ctx.restore();
+  drawLines(ctx,layout.title,railCenter,layout.titleY,46,gradient(ctx,railX,layout.titleY-50,1510,layout.titleY+40,artwork.metal),59,600,'center');
+  const metal=gradient(ctx,railX,layout.scoreY-100,1508,layout.scoreY,artwork.metal);
+  ctx.save();ctx.shadowColor=level>=3?'#CC9B54':'#806EDB';ctx.shadowBlur=level===4?23:level===3?16:4;
+  text(ctx,format(report.score),railCenter,layout.scoreY,110,metal,600,'center');ctx.restore();
+  text(ctx,`当前颜值 / 100 · ${report.tierName}`,railCenter,layout.scoreY+37,23,'#CCD0E1',500,'center');
+  text(ctx,`超过 ${format(report.percentile)}% 的人`,railCenter,layout.scoreY+80,29,theme.light,600,'center');
+  line(ctx,railX,layout.copyY-32,1508,layout.copyY-32,gradient(ctx,railX,0,1508,0,[theme.accent+'55',theme.accent+'0C']));
+  drawLines(ctx,layout.copy,railX,layout.copyY,27,'#C8CDE0',40);
+  drawLines(ctx,layout.keywordLines,railX,layout.keywordY,25,theme.light,37,600);
+
+  line(ctx,60,layout.metricsY-18,1540,layout.metricsY-18,'#A9A6D326');
+  text(ctx,'五官表现',65,layout.metricsY+36,29,'#EEEAFB',600);
+  text(ctx,'五个角度，看见你',65,layout.metricsY+75,24,'#AEB8D0');
+  const dimensionColors=[['#696FFF','#A9CEFF'],['#9173EF','#E9B3F1'],['#568ACF','#83E2D4'],['#AB72CB','#E1AFE7'],['#CF9B63','#F6D89B']];
   report.dimensions.forEach((dimension,index)=>{
-    const x=68+index*192;
-    text(ctx,format(dimension.score),x+78,layout.metricsY+61,41,theme.light,600,'center');
-    roundedPath(ctx,x+4,layout.metricsY+78,156,4,2); ctx.fillStyle='#A6A4D328'; ctx.fill();
-    if(dimension.score>0) {roundedPath(ctx,x+4,layout.metricsY+78,156*dimension.score/100,4,2); ctx.fillStyle=gradient(ctx,x,0,x+156,0,['#7875E9',theme.accent]); ctx.fill();}
-    drawLines(ctx,layout.dimensionLines[index],x+78,layout.metricsY+117,25,'#AFB8D1',33,500,'center');
+    const x=360+index*237;
+    text(ctx,format(dimension.score),x+88,layout.metricsY+36,40,dimensionColors[index][1],600,'center');
+    roundedPath(ctx,x+3,layout.metricsY+51,174,6,3);ctx.fillStyle='#A6A4D326';ctx.fill();
+    if(dimension.score>0){roundedPath(ctx,x+3,layout.metricsY+51,174*dimension.score/100,6,3);ctx.fillStyle=gradient(ctx,x,0,x+174,0,dimensionColors[index]);ctx.fill();}
+    drawLines(ctx,layout.dimensionLines[index],x+88,layout.metricsY+91,24,'#B4BDD3',29,500,'center');
   });
-  sectionHeading(ctx,'01','你的变美思路',layout.areasY-30,theme);
+  text(ctx,'你的变美思路',60,layout.areasY-22,32,'#F0ECFC',600);
+  text(ctx,'六个细节，把风格落到实处',1540,layout.areasY-22,24,'#AEB8D0',500,'right');
   let rowY=layout.areasY;
   report.areas.forEach((area,index)=>{
-    if(index>0 && index%2===0) rowY+=layout.rowHeights[index/2-1]+22;
-    const x=68+(index%2)*482;
-    const info=layout.areas[index];
-    const cardHeight=layout.rowHeights[Math.floor(index/2)];
-    roundedPath(ctx,x,rowY,461,cardHeight,23); ctx.fillStyle=gradient(ctx,x,rowY,x+461,rowY+cardHeight,['#1A1B37','#10182A']); ctx.fill();
-    border(ctx,x,rowY,461,cardHeight,23,theme.accent+'2F');
-    text(ctx,String(index+1).padStart(2,'0'),x+22,rowY+43,20,theme.accent,600);
-    drawLines(ctx,info.heading,x+67,rowY+46,31,'#F1EDFC',40,600);
+    if(index===3)rowY+=layout.rowHeights[0]+18;
+    const x=60+(index%3)*500, info=layout.areas[index], cardHeight=layout.rowHeights[Math.floor(index/3)];
+    roundedPath(ctx,x,rowY,480,cardHeight,20);ctx.fillStyle=gradient(ctx,x,rowY,x+480,rowY+cardHeight,['#1B1C34','#101728']);ctx.fill();
+    border(ctx,x,rowY,480,cardHeight,20,theme.accent+'2F');
+    text(ctx,String(index+1).padStart(2,'0'),x+23,rowY+41,21,theme.accent,600);
+    drawLines(ctx,info.heading,x+70,rowY+43,30,'#F1EDFC',38,600);
     const imageY=rowY+info.imageY;
-    imageRegion(ctx,parts[area.id].before,x+22,imageY,201,145,12);
-    imageRegion(ctx,parts[area.id].after,x+238,imageY,201,145,12);
-    drawLines(ctx,info.beforeLabel,x+122,imageY+173,23,'#AAB4D0',30,500,'center');
-    drawLines(ctx,info.afterLabel,x+338,imageY+173,23,theme.light,30,500,'center');
-    drawLines(ctx,info.summary,x+23,rowY+info.summaryY,28,'#E4DEEF',38,600);
-    let stepY=rowY+info.stepY;
-    info.steps.forEach((step,stepIndex)=>{
-      text(ctx,String(stepIndex+1).padStart(2,'0'),x+23,stepY,19,theme.accent,600);
-      drawLines(ctx,step,x+60,stepY,28,'#B4BDD4',37);
-      stepY+=step.length*37+10;
+    imageRegion(ctx,parts[area.id].before,x+22,imageY,210,113,11);
+    imageRegion(ctx,parts[area.id].after,x+248,imageY,210,113,11);
+    for (const [label,labelX] of [['原来',x+30],['调整后',x+256]]) {
+      roundedPath(ctx,labelX,imageY+8,label==='原来'?58:78,29,7);ctx.fillStyle='#090C20B8';ctx.fill();
+      text(ctx,label,labelX+9,imageY+29,20,label==='原来'?'#E0E5F2':theme.light,500);
+    }
+    drawLines(ctx,info.summary,x+25,rowY+info.summaryY,26,'#E7E1F0',36,600);
+    let actionY=rowY+info.actionY;
+    info.actions.forEach(action=>{
+      sparkle(ctx,x+31,actionY-9,3.2,theme.accent);
+      drawLines(ctx,action,x+49,actionY,26,'#BEC6DC',35);
+      actionY+=action.length*35;
     });
   });
-  sectionHeading(ctx,'02','整体风格与妆容配色',layout.styleY,theme);
-  drawLines(ctx,layout.keywordLines,68,layout.styleY+52,29,theme.light,40,600);
-  const summaryY=layout.styleY+52+layout.keywordLines.length*40+14;
-  drawLines(ctx,layout.styleLines,68,summaryY,29,'#B9C2DA',41);
+  line(ctx,60,layout.styleY-1,1540,layout.styleY-1,'#A9A6D328');
+  text(ctx,'风格与配色',60,layout.styleY+42,29,theme.light,600);
+  drawLines(ctx,layout.styleLines,60,layout.styleY+83,26,'#BDC6DC',37);
   report.palette.forEach((swatch,index)=>{
-    const col=index%5, row=Math.floor(index/5), x=68+col*192, y=layout.paletteY+row*layout.paletteRowHeight;
-    roundedPath(ctx,x+4,y,156,53,14);ctx.fillStyle=swatch.color;ctx.fill();
-    border(ctx,x+4,y,156,53,14,'#FFFFFF26');
-    drawLines(ctx,layout.paletteLabels[index],x+82,y+89,24,'#BAC3DA',31,500,'center');
+    const x=873+(index%4)*169, y=layout.styleY+22+Math.floor(index/4)*layout.paletteRowHeight;
+    roundedPath(ctx,x,y,143,35,12);ctx.fillStyle=swatch.color;ctx.fill();
+    border(ctx,x,y,143,35,12,'#FFFFFF26');
+    drawLines(ctx,layout.paletteLabels[index],x+71,y+66,22,'#C2C9DA',28,500,'center');
   });
-  line(ctx,68,height-112,1012,height-112,gradient(ctx,68,0,1012,0,['#8073BE00',theme.accent+'77','#8073BE00']));
-  sparkle(ctx,73,height-112,6,theme.accent); sparkle(ctx,1007,height-112,6,theme.accent);
-  text(ctx,'把这一页，留给更有自己风格的你。',540,height-66,26,'#B9C1DA',500,'center');
 }
 
-/** Render an export-ready, content-sized PNG without initiating a download. */
+/** Render a compact editorial PNG; unusually long caller content can expand safely. */
 export async function renderBeautyPoster({report, beforeSrc, afterSrc, parts = {}} = {}) {
   const normalized=normalizeBeautyPosterReport(report);
   if(typeof document==='undefined'||typeof Image==='undefined') throw new Error('请在浏览器中生成海报');

@@ -71,12 +71,12 @@ const PRODUCT_PREVIEWS = {
 };
 
 export const PRODUCTS = freeze([
-  { id: 'brow', name: '轻羽双头眉笔', brand: '映色', shade: '02 灰茶棕', price: 69, reason: '灰茶棕与柔和眉形的方向一致，细笔芯便于补齐眉尾空隙，保留原有毛流。', features: ['0.9mm 细笔芯', '自然灰茶棕', '自带螺旋眉刷'], usage: '先沿毛流补空隙，再用眉刷向眉尾轻梳，让边缘自然散开。', atlasPosition: '0% 0%' },
-  { id: 'eye', name: '暮光四色综合眼影', brand: '映色', shade: '03 杏雾暖棕', price: 159, reason: '低饱和暖棕可以承接眉眼色调，浅色提亮、深色集中眼尾，突出眼部层次。', features: ['低饱和棕调', '哑光与细闪组合', '可少量叠加晕染'], usage: '米杏色铺满眼窝，浅棕加深眼尾，细闪仅点在眼皮中央。', atlasPosition: '50% 0%' },
-  { id: 'base', name: '水光轻透气垫', brand: '映色', shade: 'N21 自然米白', price: 229, reason: '轻薄底妆有助于突出均匀的面部气色，局部叠加即可保留自然皮肤纹理。', features: ['轻透光泽妆效', '可局部叠加', '柔软水滴粉扑'], usage: '取少量从面中向外轻拍，鼻翼与眼下用粉扑尖角按压。', atlasPosition: '100% 0%' },
-  { id: 'lip', name: '柔雾绒光唇膏', brand: '映色', shade: 'R07 玫瑰豆沙', price: 119, reason: '柔和玫瑰豆沙能够衔接眼妆与气色，突出唇形而不抢走眉眼的重点。', features: ['低饱和玫瑰调', '柔雾绒光质地', '薄涂与叠涂两种浓度'], usage: '先薄涂全唇，再在唇中央叠加一层，用指腹轻拍唇缘。', atlasPosition: '0% 100%' },
-  { id: 'hair', name: '空气感蓬松喷雾', brand: '映色', shade: '清透无色', price: 89, reason: '轻盈发根与脸侧发丝能增强发型层次，呼应柔和、自然的轮廓方向。', features: ['细雾喷头', '轻盈蓬松感', '局部塑形更方便'], usage: '按瓶身说明少量喷于发根，提起发束吹整，再用手指拨松。', atlasPosition: '50% 100%' },
-  { id: 'style', name: '月弧细链项链', brand: '映色', shade: '香槟金 · 40–45cm', price: 139, reason: '细窄的香槟金色线条可以呼应面部暖光，将整体风格衔接得更完整。', features: ['简洁弧形吊坠', '可调节链长', '柔和香槟金色'], usage: '搭配纯色或小领口上装，调整链长，让吊坠自然落在锁骨下方。', atlasPosition: '100% 100%' },
+  { id: 'brow', name: '轻羽双头眉笔', brand: '映色', shade: '02 灰茶棕', price: 69, originalPrice: 99, reason: '灰茶棕与柔和眉形的方向一致，细笔芯便于补齐眉尾空隙，保留原有毛流。', features: ['0.9mm 细笔芯', '自然灰茶棕', '自带螺旋眉刷'], usage: '先沿毛流补空隙，再用眉刷向眉尾轻梳，让边缘自然散开。', atlasPosition: '0% 0%' },
+  { id: 'eye', name: '暮光四色综合眼影', brand: '映色', shade: '03 杏雾暖棕', price: 159, originalPrice: 219, reason: '低饱和暖棕可以承接眉眼色调，浅色提亮、深色集中眼尾，突出眼部层次。', features: ['低饱和棕调', '哑光与细闪组合', '可少量叠加晕染'], usage: '米杏色铺满眼窝，浅棕加深眼尾，细闪仅点在眼皮中央。', atlasPosition: '50% 0%' },
+  { id: 'base', name: '水光轻透气垫', brand: '映色', shade: 'N21 自然米白', price: 229, originalPrice: 299, reason: '轻薄底妆有助于突出均匀的面部气色，局部叠加即可保留自然皮肤纹理。', features: ['轻透光泽妆效', '可局部叠加', '柔软水滴粉扑'], usage: '取少量从面中向外轻拍，鼻翼与眼下用粉扑尖角按压。', atlasPosition: '100% 0%' },
+  { id: 'lip', name: '柔雾绒光唇膏', brand: '映色', shade: 'R07 玫瑰豆沙', price: 119, originalPrice: 169, reason: '柔和玫瑰豆沙能够衔接眼妆与气色，突出唇形而不抢走眉眼的重点。', features: ['低饱和玫瑰调', '柔雾绒光质地', '薄涂与叠涂两种浓度'], usage: '先薄涂全唇，再在唇中央叠加一层，用指腹轻拍唇缘。', atlasPosition: '0% 100%' },
+  { id: 'hair', name: '空气感蓬松喷雾', brand: '映色', shade: '清透无色', price: 89, originalPrice: 129, reason: '轻盈发根与脸侧发丝能增强发型层次，呼应柔和、自然的轮廓方向。', features: ['细雾喷头', '轻盈蓬松感', '局部塑形更方便'], usage: '按瓶身说明少量喷于发根，提起发束吹整，再用手指拨松。', atlasPosition: '50% 100%' },
+  { id: 'style', name: '月弧细链项链', brand: '映色', shade: '香槟金 · 40–45cm', price: 139, originalPrice: 199, reason: '细窄的香槟金色线条可以呼应面部暖光，将整体风格衔接得更完整。', features: ['简洁弧形吊坠', '可调节链长', '柔和香槟金色'], usage: '搭配纯色或小领口上装，调整链长，让吊坠自然落在锁骨下方。', atlasPosition: '100% 100%' },
 ].map(product => ({ ...product, ...PRODUCT_PREVIEWS[product.id] })));
 
 const AREA_PREVIEWS = {

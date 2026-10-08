@@ -83,6 +83,22 @@ test('every facial area has actionable advice and valid individually purchasable
   assert.equal(new Set(PRODUCTS.map(product => product.atlasPosition)).size, 6);
 });
 
+test('every product has a stable positive original price above its current price', () => {
+  const originals = { brow: 99, eye: 219, base: 299, lip: 169, hair: 129, style: 199 };
+  for (const product of PRODUCTS) {
+    assert.ok(Number.isSafeInteger(product.originalPrice));
+    assert.ok(product.originalPrice > product.price && product.price > 0);
+    assert.equal(product.originalPrice, originals[product.id]);
+    assert.ok(Object.isFrozen(product));
+    assert.throws(() => { product.originalPrice = 1; }, TypeError);
+  }
+  for (const tier of TIERS) {
+    for (const product of createReport(tier.sampleScore).products) {
+      assert.equal(product.originalPrice, originals[product.id]);
+    }
+  }
+});
+
 test('guidance and honor copy change with the score tier, with clear low and high score priorities', () => {
   const reports = TIERS.map(tier => createReport(tier.sampleScore));
   for (const key of ['copy', 'strength', 'focus']) assert.equal(new Set(reports.map(report => report[key])).size, 5);
@@ -227,6 +243,8 @@ test('a rendered report cannot mutate future reports or shared catalog values', 
   changed.areas[0].productIds.push('invalid');
   changed.areas[0].actions[0] = 'changed';
   changed.products[0].features[0] = 'changed';
+  changed.products[0].originalPrice = 1;
+  changed.products[0].price = 1;
   changed.products[0].shortFeatures[0] = 'changed';
   changed.keywords[0] = 'changed';
   changed.title = 'changed';

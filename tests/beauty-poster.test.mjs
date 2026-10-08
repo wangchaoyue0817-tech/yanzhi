@@ -95,17 +95,17 @@ function withCanvasEnvironment(t, { failedImage = false, nullBlob = false, missi
   return { canvas, images, captions, commands, labels };
 }
 
-test('poster exports a content-sized PNG with both portraits, six illustrated areas and exact data', async t => {
+test('poster exports a compact infographic with both portraits, six illustrated areas and exact data', async t => {
   const environment = withCanvasEnvironment(t);
   const output = await renderBeautyPoster({ report: report(), beforeSrc: '/before.webp', afterSrc: '/after.webp' });
   assert.equal(output.canvas, environment.canvas);
-  assert.equal(output.canvas.width, 1080);
-  assert.ok(output.canvas.height >= 3200);
+  assert.equal(output.canvas.width, 1600);
+  assert.ok(output.canvas.height >= 1880);
   assert.equal(output.blob.type, 'image/png');
   assert.deepEqual(environment.images.slice(0, 2), ['/before.webp', '/after.webp']);
   assert.equal(environment.images.filter(value => value === '/before.webp').length, 7);
   assert.equal(environment.images.filter(value => value === '/after.webp').length, 7);
-  for (const caption of ['90', '97', '超过 96% 的人', '超过 99.6% 的人', '+7', '高光主角', '惊艳焦点', '轻盈眉眼']) {
+  for (const caption of ['90', '97', '超过 96% 的人', '超过 99.6% 的人', '预计增加7分', '高光主角', '惊艳焦点', '轻盈眉眼']) {
     assert.ok(environment.captions.join('').includes(caption), caption);
   }
 });
@@ -122,7 +122,7 @@ test('five rendered tiers keep both photos and data while increasing the actual 
       assert.equal(rings.length, ringCount * 2, 'each orbital ring has its main stroke and an engraved companion');
       ellipseCounts.push(rings.length);
       for (const label of environment.labels) {
-        assert.ok(label.x >= 28 && label.x <= 1052 && label.y >= 28 && label.y <= environment.canvas.height - 28, `${label.value} stays inside export frame`);
+        assert.ok(label.x >= 28 && label.x <= 1572 && label.y >= 28 && label.y <= environment.canvas.height - 28, `${label.value} stays inside export frame`);
         assert.match(label.font, /^[1-9]00 \d+px /, 'font weights remain portable between browser and Canvas engines');
       }
       const crownCurves = environment.commands.filter(command => command.name === 'bezierCurveTo');
@@ -139,7 +139,7 @@ test('poster preserves zero, full scores, and unchanged improvement without inve
       await renderBeautyPoster({report: {...report(score), percentile: score, afterScore: score, afterPercentile: score}, beforeSrc:'/before.webp', afterSrc:'/after.webp'});
       assert.equal(environment.captions.filter(value => value === String(score)).length, 8, 'hero, two portraits and five dimensions show exact scores');
       assert.equal(environment.captions.filter(value => value === `超过 ${score}% 的人`).length, 3);
-      assert.ok(environment.captions.includes('+0'));
+      assert.ok(environment.captions.includes('预计增加0分'));
     });
   }
 });
@@ -163,7 +163,7 @@ test('normalization retains every title, evaluation, keyword, area step and styl
   assert.notEqual(original.areas[0].steps[0],'changed');
 });
 
-test('complete report renders supplied part images and all six advice blocks, dimensions and palette labels', async t => {
+test('complete report renders supplied part images, concise six-area advice, dimensions and palette labels', async t => {
   const environment=withCanvasEnvironment(t);
   const complete=createReport(97);
   complete.title='女娲毕设';
@@ -173,13 +173,13 @@ test('complete report renders supplied part images and all six advice blocks, di
   const parts=Object.fromEntries(complete.areas.map(area=>[area.id,{before:`/${area.id}-before.webp`,after:`/${area.id}-after.webp`}]));
   const output=await renderBeautyPoster({report:complete,beforeSrc:'/before.webp',afterSrc:'/after.webp',parts});
   const rendered=environment.captions.join('');
-  for(const value of [complete.title,complete.copy,complete.styleSummary,...complete.keywords,...complete.palette.map(value=>value.label),...complete.dimensions.map(value=>value.label),...complete.areas.flatMap(area=>[area.title,area.summary,...area.steps])]) assert.ok(rendered.includes(value),value);
+  for(const value of [complete.title,complete.copy,complete.styleSummary,...complete.keywords,...complete.palette.map(value=>value.label),...complete.dimensions.map(value=>value.label),...complete.areas.flatMap(area=>[area.title,area.summary,...area.actions.slice(0,2)])]) assert.ok(rendered.includes(value),value);
   assert.deepEqual(environment.images,['/before.webp','/after.webp',...complete.areas.flatMap(area=>[`/${area.id}-before.webp`,`/${area.id}-after.webp`])]);
-  assert.ok(output.canvas.height>3200);
+  assert.ok(output.canvas.height/output.canvas.width<=1.2);
   assert.ok(environment.captions.every(value => !/^[，。！？；：、）】]$/u.test(value)), 'Chinese punctuation never occupies a standalone line');
 });
 
-test('layout grows for long content and keeps every text baseline inside the PNG', async t => {
+test('exceptional long headings and evaluation expand safely while standard reports remain compact', async t => {
   const environment=withCanvasEnvironment(t);
   const regular=createReport(90);
   const first=await renderBeautyPoster({report:regular,beforeSrc:'/before.webp',afterSrc:'/after.webp'});
@@ -193,10 +193,45 @@ test('layout grows for long content and keeps every text baseline inside the PNG
   long.areas[0].steps=['详细做法必须显示完整，不应该被裁掉。'.repeat(10),...long.areas[0].steps];
   long.palette=Array.from({length:7},(_,i)=>({color:'#BFA099',label:`第${i+1}种妆容配色名称也可以很长`}));
   const output=await renderBeautyPoster({report:long,beforeSrc:'/before.webp',afterSrc:'/after.webp'});
-  assert.ok(output.canvas.height>firstHeight+1000);
+  assert.ok(output.canvas.height>firstHeight);
   const rendered=environment.captions.join('');
-  for(const value of [long.title,long.copy,long.styleSummary,...long.keywords,long.areas[0].steps[0],...long.palette.map(value=>value.label)]) assert.ok(rendered.includes(value),value);
+  for(const value of [long.title,long.copy,long.styleSummary,...long.keywords,...long.palette.map(value=>value.label)]) assert.ok(rendered.includes(value),value);
   for(const label of environment.labels) assert.ok(label.y>0&&label.y<output.canvas.height-28,`${label.value} stays in frame`);
+});
+
+test('all five standard reports use a fixed 1600 by 1880 three-column editorial layout', async t => {
+  for (const score of [52, 68, 80, 90, 97]) {
+    await t.test(String(score), async t => {
+      const environment = withCanvasEnvironment(t);
+      const source = createReport(score);
+      const output = await renderBeautyPoster({report:source,beforeSrc:'/before.webp',afterSrc:'/after.webp'});
+      assert.equal(output.canvas.width,1600);
+      assert.equal(output.canvas.height,1880);
+      const headings=source.areas.map(area=>environment.labels.find(label=>label.value===area.title&&label.font.includes('30px')));
+      assert.deepEqual(headings.map(label=>label.x),[130,630,1130,130,630,1130]);
+      assert.equal(new Set(headings.slice(0,3).map(label=>label.y)).size,1);
+      assert.equal(new Set(headings.slice(3).map(label=>label.y)).size,1);
+      assert.ok(headings[3].y>headings[0].y);
+      assert.ok(environment.labels.find(label=>label.value===source.title).x>1040,'title sits beside the big photo pair');
+      const fullText=environment.captions.join('');
+      for(const area of source.areas){
+        assert.ok(fullText.includes(area.summary));
+        assert.ok(fullText.includes(area.actions.slice(0,2).join(' · ')));
+      }
+    });
+  }
+});
+
+test('missing short actions fall back to two concrete step clauses and keep full report data intact', async t => {
+  const environment=withCanvasEnvironment(t);
+  const source=createReport(80);
+  delete source.areas[0].actions;
+  source.areas[0].steps=['提起头顶发根，吹出轻盈的弧度。','脸侧留出自然发丝，轻轻向外卷。','第三条留在完整报告。'];
+  await renderBeautyPoster({report:source,beforeSrc:'/before.webp',afterSrc:'/after.webp'});
+  const text=environment.captions.join('');
+  assert.ok(text.includes('提起头顶发根 · 脸侧留出自然发丝'));
+  assert.ok(!text.includes('第三条留在完整报告'));
+  assert.equal(source.areas[0].steps.length,3);
 });
 
 test('fallback crops use the correct face regions when callers omit part photographs', async t => {

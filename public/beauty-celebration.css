@@ -1,0 +1,29 @@
+/* Finite celebration layer; the hero owns its positioning and clipping. */
+.beauty-celebration{position:absolute;inset:0;z-index:8;overflow:hidden;pointer-events:none!important;user-select:none;border-radius:inherit;contain:layout paint;isolation:isolate}
+.beauty-celebration *{position:absolute;display:block;margin:0;padding:0;pointer-events:none!important;font-style:normal}
+.beauty-celebration-scan{left:8%;right:8%;top:16%;height:2px;background:linear-gradient(90deg,transparent,#bed7ff,transparent);box-shadow:0 0 22px 7px #9bafff22;animation:beauty-celebration-scan 1350ms ease-in-out both}
+.beauty-celebration-scan:before{content:"";position:absolute;inset:-22px 0 0;background:linear-gradient(transparent,#abc9ff12)}
+.beauty-celebration-gather,.beauty-celebration-star{left:50%;top:35%;width:var(--size);height:var(--size);background:var(--color);box-shadow:0 0 8px 2px color-mix(in srgb,var(--color) 40%,transparent);border-radius:50%;animation:beauty-celebration-gather 1100ms var(--delay) cubic-bezier(.15,.65,.3,1) both}
+.beauty-celebration-star{border-radius:0;clip-path:polygon(50% 0,61% 37%,100% 50%,61% 63%,50% 100%,39% 63%,0 50%,39% 37%);animation-name:beauty-celebration-star;animation-duration:1350ms}
+.beauty-celebration-halo{left:50%;top:34%;width:260px;height:195px;margin:-97px 0 0 -130px;border:1px solid var(--color);border-radius:50%;box-shadow:0 0 12px color-mix(in srgb,var(--color) 26%,transparent),inset 0 0 15px #b092e414;animation:beauty-celebration-halo 1500ms var(--delay) cubic-bezier(.12,.64,.3,1) both}
+.beauty-celebration-firework{left:var(--x);top:var(--y);width:0;height:0}
+.beauty-celebration-firework:before,.beauty-celebration-firework:after{content:"";position:absolute;left:-15px;top:-15px;width:30px;height:30px;border-radius:50%;background:radial-gradient(circle,#fff8dcbb,var(--color) 16%,transparent 66%);animation:beauty-celebration-core 500ms var(--delay) ease-out both}
+.beauty-celebration-firework:after{left:-28px;top:-28px;width:56px;height:56px;border:1px solid var(--color);background:none;animation:beauty-celebration-ring 850ms var(--delay) ease-out both}
+.beauty-celebration-ray{left:0;top:0;width:2px;height:2px;opacity:0;animation:beauty-celebration-burst 1250ms var(--delay) cubic-bezier(.08,.65,.3,1) both}
+.beauty-celebration-ray:after{content:"";position:absolute;left:0;top:0;width:2px;height:var(--length);border-radius:2px;background:linear-gradient(var(--color),transparent);box-shadow:0 -1px 5px color-mix(in srgb,var(--color) 65%,transparent);transform:rotate(var(--angle));transform-origin:50% 0}
+.beauty-celebration-launch{left:var(--x);top:var(--y);width:1px;height:46px;background:linear-gradient(var(--color),transparent);box-shadow:0 0 6px var(--color);animation:beauty-celebration-launch 290ms var(--delay) ease-out both}
+.beauty-celebration-confetti,.beauty-celebration-rain{left:var(--left);top:51%;width:var(--width);height:var(--height);border-radius:1px;background:linear-gradient(135deg,#fff8,var(--color) 38%,var(--color) 70%,#fff7);opacity:0;box-shadow:0 0 4px #ffe0ff30;animation:beauty-celebration-confetti 1700ms var(--delay) cubic-bezier(.12,.5,.45,1) both}
+.beauty-celebration-rain{top:-3%;animation-name:beauty-celebration-rain;animation-duration:2250ms}
+.beauty-celebration--radiant .beauty-celebration-confetti{width:3px;height:5px;opacity:.8}
+.beauty-celebration--icon .beauty-celebration-ray:after{width:2px;box-shadow:0 -1px 7px var(--color)}
+@keyframes beauty-celebration-scan{0%{opacity:0;transform:translateY(0)}18%{opacity:.65}80%{opacity:.45}100%{opacity:0;transform:translateY(280px)}}
+@keyframes beauty-celebration-gather{0%{opacity:0;transform:translate(var(--x),var(--y)) scale(.3)}18%{opacity:.75}78%{opacity:.6}100%{opacity:0;transform:translate(0,0) scale(.15)}}
+@keyframes beauty-celebration-star{0%{opacity:0;transform:translate(var(--x),70px) scale(.3) rotate(0deg)}20%{opacity:.85}75%{opacity:.7}100%{opacity:0;transform:translate(var(--drift),-140px) scale(.45) rotate(85deg)}}
+@keyframes beauty-celebration-halo{0%{opacity:0;transform:rotate(var(--turn)) scale(.35)}16%{opacity:.65}100%{opacity:0;transform:rotate(var(--turn)) scale(1.7)}}
+@keyframes beauty-celebration-core{0%{opacity:0;transform:scale(.1)}22%{opacity:.8}100%{opacity:0;transform:scale(2.3)}}
+@keyframes beauty-celebration-ring{0%{opacity:0;transform:scale(.1)}12%{opacity:.55}100%{opacity:0;transform:scale(3.8)}}
+@keyframes beauty-celebration-launch{0%{opacity:0;transform:translateY(70px) scaleY(.2)}40%{opacity:.7}100%{opacity:0;transform:translateY(0) scaleY(.7)}}
+@keyframes beauty-celebration-burst{0%{opacity:0;transform:translate(0,0) scale(.2)}8%{opacity:1}66%{opacity:.85;transform:translate(var(--x),var(--y)) scale(1)}100%{opacity:0;transform:translate(var(--end-x),var(--end-y)) scale(.25)}}
+@keyframes beauty-celebration-confetti{0%{opacity:0;transform:translate(0,35px) rotate(0deg) scale(.3)}12%{opacity:.94}38%{opacity:.9;transform:translate(var(--x),var(--y)) rotate(115deg) scale(1)}78%{opacity:.8}100%{opacity:0;transform:translate(var(--end-x),var(--fall)) rotate(var(--turn)) scale(.45)}}
+@keyframes beauty-celebration-rain{0%{opacity:0;transform:translate(0,-25px) rotate(0deg)}12%{opacity:.9}73%{opacity:.85}100%{opacity:0;transform:translate(var(--end-x),590px) rotate(var(--turn)) scale(.5)}}
+@media (prefers-reduced-motion:reduce){.beauty-celebration{display:none!important}.beauty-celebration *,.beauty-celebration *:before,.beauty-celebration *:after{animation:none!important}}

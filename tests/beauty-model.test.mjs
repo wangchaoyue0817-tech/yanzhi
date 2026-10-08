@@ -95,6 +95,76 @@ test('guidance and honor copy change with the score tier, with clear low and hig
   }
 });
 
+test('every score has five distinct approved titles and matching short social copy', () => {
+  const titleLibrary = {
+    natural: ['美貌还在加载', '颜值还有隐藏款', '这局先养成', '下一幕有看头', '这张脸有后手'],
+    fresh: ['越看越上头', '属于耐看那挂', '这脸有点东西', '看着就很顺眼', '耐看是个技术活'],
+    radiant: ['美貌开始营业', '镜头偏爱这张脸', '有点抢镜天赋', '审美点被拿捏', '路过也得多看眼'],
+    spotlight: ['你啥意思，拍杂志呢', '这张建议置顶', '主角位给你了', '爱豆直拍本人', '这脸自带聚光灯'],
+    icon: ['女娲毕设', '美貌超纲了', '这颜值不讲道理', '建议原地出道', '女娲炫技现场'],
+  };
+  const allTitles = new Set();
+  const allCopy = new Set();
+  for (let score = 0; score <= 100; score++) {
+    const reports = Array.from({ length: 5 }, (_, variant) => createReport(score, variant));
+    assert.deepEqual(reports.map(report => report.title), titleLibrary[getTier(score).id]);
+    assert.equal(new Set(reports.map(report => report.copy)).size, 5, `${score}: five distinct descriptions`);
+    assert.equal(new Set(reports.map(report => report.scrollHint)).size, 5, `${score}: five matching hints`);
+    for (const [variant, report] of reports.entries()) {
+      assert.equal(report.copyVariant, variant);
+      assert.equal(report.tier.name, getTier(score).name, `${score}: stable tier name`);
+      assert.ok([...report.title].length <= 10);
+      const hanCount = (report.copy.match(/\p{Script=Han}/gu) || []).length;
+      assert.ok(hanCount >= 50 && hanCount <= 80, `${score}/${variant}: 50–80 Chinese characters`);
+      assert.ok((report.copy.match(/[。！？]/gu) || []).length >= 2, `${score}/${variant}: readable sentences`);
+      assert.ok([...report.scrollHint].length >= 8 && [...report.scrollHint].length <= 18);
+      assert.match(report.scrollHint, /往下看|下滑/);
+      assert.doesNotMatch(`${report.title}${report.copy}`, /演示|示意|模拟|丑|颜值低|老婆|老公|击败|统计|认证|%/);
+      assert.equal(report.score, reports[0].score);
+      assert.equal(report.percentile, reports[0].percentile);
+      assert.equal(report.afterScore, reports[0].afterScore);
+      assert.deepEqual(report.dimensions, reports[0].dimensions);
+      assert.deepEqual(report.areas, reports[0].areas);
+      assert.deepEqual(report.products, reports[0].products);
+      allTitles.add(report.title);
+      allCopy.add(report.copy);
+    }
+  }
+  assert.equal(allTitles.size, 25);
+  assert.equal(allCopy.size, 25);
+});
+
+test('copy variants normalize modulo five without changing the default report or coercing invalid input', () => {
+  assert.deepEqual(createReport(), createReport(90, 0));
+  assert.deepEqual(createReport(97), createReport(97, 0));
+  for (const tier of TIERS) {
+    for (const variant of [5, 6, 9, 10, 102, Number.MAX_SAFE_INTEGER]) {
+      assert.deepEqual(createReport(tier.sampleScore, variant), createReport(tier.sampleScore, variant % 5));
+    }
+  }
+  const invalid = [NaN, Infinity, -Infinity, -1, 1.5, '1', null, true, {}, [], Number.MAX_SAFE_INTEGER + 1];
+  for (const variant of invalid) assert.throws(() => createReport(90, variant), RangeError);
+});
+
+test('poster style summaries and named color palettes are compact, valid, and stable across copy variants', () => {
+  for (let score = 0; score <= 100; score++) {
+    const report = createReport(score);
+    assert.ok(report.styleSummary.trim());
+    assert.ok([...report.styleSummary].length <= 28);
+    assert.ok(report.palette.length >= 3 && report.palette.length <= 5);
+    assert.equal(new Set(report.palette.map(item => item.color)).size, report.palette.length);
+    assert.equal(new Set(report.palette.map(item => item.label)).size, report.palette.length);
+    for (const item of report.palette) {
+      assert.match(item.color, /^#[0-9A-F]{6}$/);
+      assert.ok(item.label.trim());
+      assert.ok([...item.label].length <= 6);
+    }
+    assert.deepEqual(createReport(score, 4).palette, report.palette);
+    assert.equal(createReport(score, 4).styleSummary, report.styleSummary);
+  }
+  assert.equal(new Set(TIERS.map(tier => createReport(tier.sampleScore).styleSummary)).size, 5);
+});
+
 test('compact area previews fit the card limits and retain the complete advice', () => {
   const shortText = (value, limit, label) => {
     assert.equal(typeof value, 'string', label);
@@ -159,7 +229,17 @@ test('a rendered report cannot mutate future reports or shared catalog values', 
   changed.products[0].features[0] = 'changed';
   changed.products[0].shortFeatures[0] = 'changed';
   changed.keywords[0] = 'changed';
+  changed.title = 'changed';
+  changed.copy = 'changed';
+  changed.scrollHint = 'changed';
+  changed.copyVariant = 4;
+  changed.styleSummary = 'changed';
+  changed.palette[0].color = '#000000';
+  changed.palette[0].label = 'changed';
+  changed.palette.push({ color: '#FFFFFF', label: 'changed' });
   assert.deepEqual(createReport(90), original);
+  assert.notEqual(createReport(90, 4).copy, 'changed');
+  assert.notEqual(createReport(90, 4).palette[0].color, '#000000');
   assert.ok(Object.isFrozen(TIERS[0]));
   assert.ok(Object.isFrozen(AREAS[0].steps));
   assert.ok(Object.isFrozen(AREAS[0].actions));

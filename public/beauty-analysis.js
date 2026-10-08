@@ -1,5 +1,6 @@
-import { TIERS, PRODUCTS, createReport } from './beauty-model.js';
-import { renderBeautyPoster } from './beauty-poster.js';
+import { TIERS, PRODUCTS, createReport } from './beauty-model.js?v=17';
+import { renderBeautyPoster } from './beauty-poster.js?v=17';
+import { startBeautyCelebration } from './beauty-celebration.js?v=17';
 
 const $ = id => document.getElementById(id);
 const page = $('beautyPage');
@@ -9,8 +10,10 @@ const esc = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&
 const star = '<svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="m16 3 3.1 9.9L29 16l-9.9 3.1L16 29l-3.1-9.9L3 16l9.9-3.1Z" stroke="currentColor" stroke-width="1.2"/><path d="m16 9 1.7 5.3L23 16l-5.3 1.7L16 23l-1.7-5.3L9 16l5.3-1.7Z" fill="currentColor"/></svg>';
 const crown = '<svg viewBox="0 0 120 84" fill="none" aria-hidden="true"><defs><linearGradient id="beautyCrownMetal" x1="16" y1="10" x2="105" y2="80" gradientUnits="userSpaceOnUse"><stop stop-color="#fff7d6"/><stop offset=".25" stop-color="#e0af5f"/><stop offset=".48" stop-color="#fff4c7"/><stop offset=".75" stop-color="#b486d5"/><stop offset="1" stop-color="#ffe09b"/></linearGradient></defs><path d="m14 29 24 16L60 9l22 36 24-16-12 39H26Z" fill="url(#beautyCrownMetal)" stroke="#ffe9ba" stroke-width="1.2"/><path d="m38 45 22-36-7 48-27 11Zm44 0-22 12 34 11Z" fill="#fff7d5" opacity=".4"/><path d="m60 9 7 48-14 0Z" fill="#7a5689" opacity=".45"/><path d="M28 74h64" stroke="url(#beautyCrownMetal)" stroke-width="5" stroke-linecap="round"/><path d="m60 45 7 9-7 9-7-9Z" fill="#9276d8" stroke="#fff5db"/><circle cx="14" cy="25" r="3" fill="#fff0c3"/><circle cx="60" cy="7" r="3" fill="#fff0c3"/><circle cx="106" cy="25" r="3" fill="#fff0c3"/></svg>';
 const ranks = ['I', 'II', 'III', 'IV', 'V'];
-const regions = { hair:[0,0,1,.7], brows:[.23,.255,.56,.13], eyes:[.22,.30,.56,.17], skin:[.29,.39,.45,.23], lips:[.35,.485,.32,.13], style:[.06,.16,.88,.84] };
+const regions = { hair:[0,0,1,.7], brows:[.28,.23,.25,.14], eyes:[.27,.27,.25,.14], skin:[.29,.34,.45,.20], lips:[.38,.43,.25,.12], style:[.06,.16,.88,.84] };
 let selectedScore = 90;
+let copyVariant = 0;
+let stopCelebration = () => {};
 let currentReport = null;
 let photos = null;
 let uploadedUrl = '';
@@ -41,6 +44,8 @@ function later(fn, delay) {
   return id;
 }
 function cancelPresentation() {
+  stopCelebration();
+  stopCelebration = () => {};
   generation++;
   for (const id of timers) clearTimeout(id);
   timers.clear();
@@ -110,6 +115,7 @@ function clearUpload() {
   uploadedUrl = '';
 }
 function resetEntry() {
+  copyVariant = 0;
   cancelPresentation();
   closeSheet(false);
   currentReport = null;
@@ -155,7 +161,7 @@ async function start(score = selectedScore, scan = true) {
   currentReport = null;
   photos = null;
   posterCache = null;
-  const nextReport = createReport(score);
+  const nextReport = createReport(score, copyVariant);
   $('beautyEntry').hidden = true;
   page.classList.remove('is-entry');
   $('beautyComposer').hidden = true;
@@ -198,10 +204,10 @@ function productImage(product, more = '') {
   return '<span class="beauty-product-image '+more+'" role="img" aria-label="'+esc(product.name)+'" style="--product-position:'+product.atlasPosition+'"></span>';
 }
 function productCard(product) {
-  return '<article class="beauty-product">'+
+  return '<article class="beauty-product beauty-product-compact">'+
     '<button type="button" class="beauty-product-link" data-product-detail="'+product.id+'" aria-label="查看'+esc(product.name)+'详情">'+productImage(product)+'<span class="beauty-product-copy"><small>'+esc(product.brand)+' · '+esc(product.shade)+'</small><strong>'+esc(product.shortName || product.name)+'</strong><span class="beauty-product-features">'+(product.shortFeatures || product.features.slice(0,2)).map(feature=>'<span>'+esc(feature)+'</span>').join('')+'</span></span></button>'+
     '<p class="beauty-product-reason"><b>推荐</b>'+esc(product.shortReason || product.reason)+'</p>'+
-    '<div class="beauty-product-footer"><span class="beauty-price"><small>¥</small>'+product.price+'</span><button type="button" class="beauty-buy" data-product-buy="'+product.id+'" aria-label="购买'+esc(product.name)+'">购买单品 <span aria-hidden="true">↗</span></button></div></article>';
+    '<div class="beauty-product-purchase"><span class="beauty-price"><small>¥</small>'+product.price+'</span><button type="button" class="beauty-buy" data-product-buy="'+product.id+'" aria-label="购买'+esc(product.name)+'">购买 <span aria-hidden="true">↗</span></button></div></article>';
 }
 function radar(dimensions) {
   const point = (index, radius) => {
@@ -220,13 +226,10 @@ function areaHTML(area,index) {
   const parts = photos.parts[area.id];
   return '<article class="beauty-area beauty-reveal" data-area="'+area.id+'" data-reveal><header class="beauty-area-heading"><span>0'+(index+1)+'</span><h3>'+esc(area.title)+'</h3><i aria-hidden="true">'+star+'</i></header>'+
     '<div class="beauty-area-pair"><figure><img loading="lazy" src="'+parts.before+'" alt="'+esc(area.title)+'调整前"><figcaption>原来 · '+esc(area.beforeLabel || '自然状态')+'</figcaption></figure><figure><img loading="lazy" src="'+parts.after+'" alt="'+esc(area.title)+'调整后"><figcaption>之后 · '+esc(area.afterLabel || '精致妆发')+'</figcaption></figure></div>'+
-    '<p class="beauty-area-summary">'+esc(area.summary || area.after)+'</p><div class="beauty-advice-row"><div class="beauty-action-tags">'+(area.actions || []).map(action=>'<span>'+esc(action)+'</span>').join('')+'</div><button type="button" class="beauty-advice-detail" data-area-detail="'+area.id+'">详细建议 <span aria-hidden="true">↗</span></button></div>'+
+    '<div class="beauty-advice-inline"><p class="beauty-area-summary">'+esc(area.summary || area.after)+'</p><ol class="beauty-inline-steps">'+area.steps.map(step=>'<li>'+esc(step)+'</li>').join('')+'</ol></div>'+
     area.productIds.map(id => productCard(PRODUCTS.find(product => product.id === id))).join('')+'</article>';
 }
-function areaSheet(area) {
-  openSheet(area.title+' · 变美建议','<p class="beauty-sheet-description">'+esc(area.reason)+'</p><ol class="beauty-steps">'+area.steps.map(step=>'<li>'+esc(step)+'</li>').join('')+'</ol>','advice');
-}
-function showReport(report,readyPhotos) {
+function showReport(report,readyPhotos,{celebrate=true}={}) {
   if (page.hidden) return;
   currentReport = report;
   photos = readyPhotos;
@@ -240,29 +243,29 @@ function showReport(report,readyPhotos) {
   const container = $('beautyReport');
   container.hidden = false;
   container.dataset.tier = report.tier.id;
+  container.classList.remove('has-scrolled');
   container.innerHTML =
     '<div class="beauty-report-intro"><span>你的专属颜值档案</span><small>BEAUTY / '+ranks[tierIndex]+'</small></div>'+
     '<section class="beauty-result-hero" aria-label="当前颜值 '+report.score+' 分，'+report.tier.name+'">'+
       '<div class="beauty-hero-grid" aria-hidden="true"></div><div class="beauty-aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="beauty-reveal-beam" aria-hidden="true"></div>'+
       '<div class="beauty-sparkles" aria-hidden="true">'+sparks+'</div><div class="beauty-coronation" aria-label="'+report.tier.name+'等级徽章">'+(tierIndex===4?crown:star)+'</div>'+
       '<div class="beauty-portrait-stage"><div class="beauty-portrait-orbits" aria-hidden="true"><i></i><i></i><i></i></div><div class="beauty-portrait-window"><img class="beauty-hero-photo" src="'+photos.before+'" alt="你的当前照片"></div><span class="beauty-portrait-seal">'+honorCaption+'</span></div>'+
-      '<div class="beauty-hero-content"><div class="beauty-title-group"><h1 tabindex="-1">'+report.tier.name+'</h1></div><div class="beauty-score-row"><span class="beauty-score-caption">综合<br>颜值</span><div class="beauty-score-value"><strong data-count="'+report.score+'">'+report.score+'</strong><small>/ 100</small></div>'+star+'</div>'+
+      '<div class="beauty-hero-content"><div class="beauty-title-group"><h1 tabindex="-1">'+esc(report.title)+'</h1></div><div class="beauty-score-row"><span class="beauty-score-caption">综合<br>颜值</span><div class="beauty-score-value"><strong data-count="'+report.score+'">'+report.score+'</strong><small>/ 100</small></div>'+star+'</div>'+
       '<div class="beauty-percentile"><span>超过 <b data-count="'+report.percentile+'">'+report.percentile+'</b><b>%</b> 的人</span><i aria-hidden="true"><span style="width:'+report.percentile+'%"></span></i></div></div>'+
+      '<p class="beauty-result-copy">'+esc(report.copy)+'</p><button type="button" class="beauty-scroll-cue" data-action="explore" aria-controls="beautyOverview"><span>'+esc(report.scrollHint)+'</span><i aria-hidden="true"></i><small>前后对比 · 五官表现 · 6 个变美方向</small></button>'+
       '<div class="beauty-hero-bottom-glow" aria-hidden="true"></div></section>'+
-    '<p class="beauty-result-copy beauty-reveal" data-reveal>'+esc(report.copy)+'</p>'+
-    '<section class="beauty-section beauty-reveal" data-reveal>'+heading('01','更出彩的你','让改变，看得见')+
+    '<section class="beauty-section beauty-overview beauty-reveal" id="beautyOverview" data-reveal>'+heading('01','更出彩的你','从现在，到更上镜')+
       '<div class="beauty-compare-grid"><figure><div class="beauty-compare-photo"><img id="beautyBefore" src="'+photos.before+'" alt="现在的照片"><span>现在的你</span></div><figcaption><strong>'+report.score+'<small>分</small></strong><span>'+report.tier.name+'</span></figcaption><p>超过 '+report.percentile+'% 的人</p></figure>'+
       '<figure><div class="beauty-compare-photo"><img id="beautyAfter" src="'+photos.after+'" alt="变美后的照片"><span>变美后的你</span></div><figcaption><strong>'+report.afterScore+'<small>分</small></strong><span>'+report.afterTier.name+'</span></figcaption><p>超过 '+report.afterPercentile+'% 的人</p></figure></div>'+
-      '<div class="beauty-lift-line"><span>颜值提升 <b>+'+(report.afterScore-report.score)+'</b> 分</span><button type="button" class="beauty-inline-button" data-action="compare">放大对比 ↗</button></div></section>'+
-    '<section class="beauty-section beauty-reveal" data-reveal>'+heading('02','你的五官表现','找到专属优势')+
+      '<div class="beauty-lift-line"><span>妆发调整后 <b>+'+(report.afterScore-report.score)+'</b> 分</span><span>'+esc(report.keywords[0])+' · '+esc(report.keywords[1])+'</span></div><div class="beauty-features-heading"><h3>五官表现</h3><span>你的优势，逐一看清</span></div>'+
       '<div class="beauty-radar-wrap">'+radar(report.dimensions)+'<div>'+report.dimensions.map(d => '<div class="beauty-dimension"><span>'+esc(d.label)+'</span><b>'+d.score+'</b><i><span style="width:'+d.score+'%"></span></i></div>').join('')+'</div></div>'+
       '<div class="beauty-insights"><div><small>你的优势</small><p>'+esc(report.strength)+'</p></div><div><small>优先调整</small><p>'+esc(report.focus)+'</p></div></div></section>'+
-    '<section class="beauty-section beauty-areas">'+heading('03','你的变美思路','6 个方向')+report.areas.map(areaHTML).join('')+'</section>'+
-    '<section class="beauty-share-panel beauty-reveal" data-reveal><div class="beauty-share-orbits" aria-hidden="true"><i></i><i></i></div>'+star+'<h2>把高光，留给此刻</h2><p>'+esc(report.tier.name)+' · '+report.score+' 分</p>'+
-      '<button type="button" class="beauty-primary" id="beautyPoster" data-action="poster">'+report.tier.share+'</button><small>生成专属海报 · 保存后即可分享</small></section>'+
+    '<section class="beauty-section beauty-areas">'+heading('02','你的变美思路','照着做，就很好看')+report.areas.map(areaHTML).join('')+'</section>'+
+    '<section class="beauty-share-panel beauty-reveal" data-reveal><div class="beauty-share-orbits" aria-hidden="true"><i></i><i></i></div>'+star+'<h2>这份报告，值得晒一下</h2><p>'+esc(report.title)+' · '+report.score+' 分</p>'+
+      '<button type="button" class="beauty-primary" id="beautyPoster" data-action="poster">'+'生成我的变美海报</button><small>照片 · 得分 · 六部位变美攻略</small></section>'+
     '<button type="button" class="beauty-text-button" data-action="restart">换张照片，发现另一面的你</button><p class="beauty-report-footer">图灵鉴X · 每一种美，都有自己的表达</p>';
   scroll.scrollTop = 0;
-  animateReport();
+  animateReport(celebrate);
   container.querySelector('h1').focus({preventScroll:true});
 }
 function countTo(el,value) {
@@ -281,7 +284,7 @@ function countTo(el,value) {
   const id=requestAnimationFrame(time => { frames.delete(id); tick(time); });
   frames.add(id);
 }
-function animateReport() {
+function animateReport(celebrate=true) {
   observer?.disconnect();
   const reveals=[...$('beautyReport').querySelectorAll('[data-reveal]')];
   if (motion.matches) reveals.forEach(el => { el.classList.add('is-visible'); inert(el,false); });
@@ -294,10 +297,32 @@ function animateReport() {
         later(()=>{el.classList.add('is-visible');inert(el,false);},delay);
         delay+=160;
       }
-    },{root:scroll,threshold:.07,rootMargin:'0px 0px -12px 0px'});
+    },{root:scroll,threshold:.025,rootMargin:'0px 0px -8px 0px'});
     reveals.forEach(el => { inert(el,true); observer.observe(el); });
   }
   $('beautyReport').querySelectorAll('[data-count]').forEach(el => countTo(el,Number(el.dataset.count)));
+  if(celebrate && !motion.matches) later(()=>{
+    if(page.hidden || !currentReport || scroll.scrollTop>60)return;
+    stopCelebration=startBeautyCelebration({host:$('beautyReport').querySelector('.beauty-result-hero'),score:currentReport.score,reducedMotion:motion.matches});
+  },1200);
+}
+function exploreReport() {
+  const target=$('beautyOverview');
+  if(!target)return;
+  target.classList.add('is-visible');inert(target,false);
+  const top=target.getBoundingClientRect().top-scroll.getBoundingClientRect().top+scroll.scrollTop-12;
+  scroll.scrollTo({top,behavior:motion.matches?'instant':'smooth'});
+  const heading=target.querySelector('h2');
+  heading.tabIndex=-1;heading.focus({preventScroll:true});
+}
+function cycleCopy() {
+  if(!currentReport || !photos)return;
+  const readyPhotos=photos;
+  const score=currentReport.score;
+  copyVariant=(currentReport.copyVariant+1)%5;
+  closeSheet(false);cancelPresentation();
+  showReport(createReport(score,copyVariant),readyPhotos,{celebrate:false});
+  toast('换了一条，看看这句怎么样');
 }
 function openSheet(title,body,kind) {
   if ($('beautyOverlay').hidden) sheetFocus=document.activeElement;
@@ -344,7 +369,7 @@ function sceneSheet() {
   const list=TIERS.map(tier => '<button type="button" class="beauty-scene-option" style="--scene-accent:'+tier.accent+'" data-score="'+tier.sampleScore+'" aria-pressed="'+(currentReport?.tier.id===tier.id)+'"><b>'+tier.sampleScore+'</b><span><strong>'+tier.name+'</strong><small>'+tier.min+'–'+tier.max+' 分</small></span><i>↗</i></button>').join('');
   openSheet('场景切换','<p class="beauty-sheet-description">选择一个分数，查看对应的颜值报告与高光时刻。</p><div class="beauty-scene-list">'+list+'</div>'+
     '<form id="beautyCustomScore" class="beauty-custom-score"><label for="beautyScoreInput">指定分数</label><input id="beautyScoreInput" type="number" min="0" max="100" step="1" required value="'+selectedScore+'"><button type="submit">查看结果</button></form>'+
-    '<div class="beauty-scene-tools"><button type="button" class="beauty-inline-button" data-action="replay">重播揭晓动画</button><button type="button" class="beauty-inline-button" data-action="poster" '+(currentReport?'':'disabled')+'>预览本档海报</button></div>','scenes');
+    '<div class="beauty-scene-tools"><button type="button" class="beauty-inline-button" data-action="replay">重播揭晓动画</button><button type="button" class="beauty-inline-button" data-action="copy-next" '+(currentReport?'':'disabled')+'>换条评价</button><button type="button" class="beauty-inline-button" data-action="poster" '+(currentReport?'':'disabled')+'>预览本档海报</button></div>','scenes');
 }
 function detailSheet(product) {
   openSheet('为你甄选', productImage(product,'beauty-detail-image')+
@@ -363,23 +388,19 @@ function orderSheet(product) {
     '<label>收货地址<textarea name="address" autocomplete="street-address" rows="2" placeholder="省市区、街道与详细门牌号" minlength="8" maxlength="120" required></textarea></label></div>'+
     '<p class="beauty-form-error" id="beautyOrderError" role="alert" hidden></p><button type="submit" class="beauty-primary" id="beautySubmitOrder">提交订单 · ¥'+product.price+'</button></form>','order');
 }
-function compareSheet() {
-  openSheet('看看你的改变','<div class="beauty-comparison-view" id="beautyCompareView"><img src="'+photos.before+'" alt="现在的你"><img class="beauty-swipe-after" src="'+photos.after+'" alt="变美后的你"><i></i></div>'+
-    '<input class="beauty-compare-range" id="beautyCompareRange" type="range" min="0" max="100" value="50" aria-label="前后照片对比位置"><div class="beauty-compare-legend"><span>现在 · '+currentReport.score+' 分</span><span>变美后 · '+currentReport.afterScore+' 分</span></div>','compare');
-}
 async function posterSheet() {
   if(!currentReport||!photos) return;
   const report=currentReport;
   const imagePair=photos;
   openSheet('你的专属高光海报','<p class="beauty-sheet-description">正在为你定格高光时刻…</p>','poster');
   const token=overlayGeneration;
-  const task=posterCache || renderBeautyPoster({report,beforeSrc:imagePair.before,afterSrc:imagePair.after});
+  const task=posterCache || renderBeautyPoster({report,beforeSrc:imagePair.before,afterSrc:imagePair.after,parts:imagePair.parts});
   posterCache=task;
   try {
     const {blob}=await task;
     if(token!==overlayGeneration || currentReport!==report || page.hidden) return;
     posterPreviewUrl=URL.createObjectURL(blob);
-    $('beautySheetBody').innerHTML='<img class="beauty-poster-image" src="'+posterPreviewUrl+'" alt="'+report.tier.name+' · '+report.score+' 分分享海报">'+
+    $('beautySheetBody').innerHTML='<img class="beauty-poster-image" src="'+posterPreviewUrl+'" alt="'+esc(report.title)+' · '+report.score+' 分分享海报">'+
       '<button type="button" class="beauty-primary" data-action="download">下载海报，分享高光</button><p class="beauty-poster-status" id="beautyPosterStatus" role="status">已为你生成专属海报</p>';
   }catch(error){
     if(posterCache===task)posterCache=null;
@@ -394,7 +415,7 @@ async function downloadPoster() {
     const {blob}=await posterCache;
     const url=URL.createObjectURL(blob);
     const link=document.createElement('a');
-    link.href=url;link.download='鉴颜值-'+report.tier.name+'-'+report.score+'分.png';
+    link.href=url;link.download='鉴颜值-'+report.title+'-'+report.score+'分.png';
     document.body.append(link);link.click();link.remove();
     setTimeout(()=>URL.revokeObjectURL(url),30000);
     if($('beautyPosterStatus'))$('beautyPosterStatus').textContent='已发起海报下载，可在下载列表查看并分享。';
@@ -404,8 +425,7 @@ page.addEventListener('click',event=>{
   const target=event.target.closest('button');
   if(!target)return;
   if(target.hasAttribute('data-beauty-close'))return closeSheet();
-  if(target.dataset.score){clearUpload();return start(Number(target.dataset.score),false);}
-  if(target.dataset.areaDetail){const area=currentReport?.areas.find(item=>item.id===target.dataset.areaDetail);if(area)return areaSheet(area);}
+  if(target.dataset.score){copyVariant=0;clearUpload();return start(Number(target.dataset.score),false);}
   const productId=target.dataset.productDetail||target.dataset.productBuy;
   if(productId){
     const product=PRODUCTS.find(item=>item.id===productId);
@@ -417,7 +437,8 @@ page.addEventListener('click',event=>{
     case 'scenes':return sceneSheet();
     case 'choose-photo':return $('beautyPhotoInput').click();
     case 'use-photo':clearUpload();return start(90);
-    case 'compare':return compareSheet();
+    case 'explore':return exploreReport();
+    case 'copy-next':return cycleCopy();
     case 'poster':return posterSheet();
     case 'download':return downloadPoster();
     case 'restart':clearUpload();return resetEntry();
@@ -426,7 +447,6 @@ page.addEventListener('click',event=>{
   }
 });
 page.addEventListener('input',event=>{
-  if(event.target.id==='beautyCompareRange')$('beautyCompareView').style.setProperty('--split',event.target.value+'%');
   if(event.target.id==='beautyQuantity'&&order.product){
     const quantity=Number(event.target.value);
     $('beautySubmitOrder').textContent=Number.isInteger(quantity)&&quantity>=1&&quantity<=9?'提交订单 · ¥'+(quantity*order.product.price):'提交订单';
@@ -437,7 +457,7 @@ page.addEventListener('submit',event=>{
     event.preventDefault();
     const score=Number($('beautyScoreInput').value);
     try{createReport(score);}catch{return toast('请输入 0–100 的整数分数');}
-    clearUpload();start(score,false);
+    copyVariant=0;clearUpload();start(score,false);
   }
   if(event.target.id==='beautyOrderForm'){
     event.preventDefault();
@@ -454,6 +474,11 @@ page.addEventListener('submit',event=>{
     openSheet('订单详情','<div class="beauty-order-success">'+star+'<h3>下单成功</h3><p>'+esc(order.product.name)+' × '+quantity+'<br>订单金额 ¥'+quantity*order.product.price+'</p><p>收货人 '+esc(name.slice(0,1))+'**<br>'+mobile.slice(0,3)+'****'+mobile.slice(-4)+'</p><button type="button" class="beauty-primary" data-action="continue">继续查看我的变美方案</button></div>','success');
   }
 });
+scroll.addEventListener('scroll',()=>{
+  const moved=scroll.scrollTop>40;
+  $('beautyReport').classList.toggle('has-scrolled',moved);
+  if(moved)stopCelebration();
+},{passive:true});
 $('beautyMenu').addEventListener('click',menuSheet);
 $('beautyUpload').addEventListener('click',uploadSheet);
 $('beautyComposerUpload').addEventListener('click',uploadSheet);

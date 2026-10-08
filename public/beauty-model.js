@@ -15,6 +15,52 @@ export const TIERS = freeze([
   { id: 'icon', name: '惊艳焦点', min: 95, max: 100, sampleScore: 97, accent: '#F5E5B8', share: '晒出我的惊艳成绩', copy: '你的颜值，值得一次高光登场。' },
 ]);
 
+const COPY_LIBRARY = freeze({
+  natural: [
+    { title: '美貌还在加载', copy: '这张先当开场，后面还有戏。自然舒展的五官很适合轻盈的妆容，把眉尾补清楚、发根吹蓬一点，再给唇色添点气色，下一个镜头就有了新看头。', scrollHint: '往下看，解锁你的下一幕' },
+    { title: '颜值还有隐藏款', copy: '先别急着划走，你的隐藏款还没亮相。自然的五官线条已经给妆容留好了位置，眉眼加点层次、底妆薄薄匀开，藏在细节里的亮点就能慢慢露出来。', scrollHint: '下滑看看，隐藏款怎么打开' },
+    { title: '这局先养成', copy: '这局的看点，在于一点点把细节养起来。顺着原有五官整理眉形，再用轻薄底妆和蓬松发根搭个配，每一步都不复杂，凑在一起却能让画面更有精神。', scrollHint: '往下看，从哪一步开始' },
+    { title: '下一幕有看头', copy: '开场照先收好，下一幕值得期待。自然的眉眼还有不少发挥空间，先让眉尾连贯起来，再用柔和唇色衔接气色，脸侧发丝稍微松一松，整套造型就有了思路。', scrollHint: '下滑看看，下一幕怎么出场' },
+    { title: '这张脸有后手', copy: '这张脸的后手，藏在还没安排上的小细节里。自然五官配一点眉眼层次、轻盈发根和匀净气色，就能把视觉重点慢慢理清，下面这份计划可以一项项照着来。', scrollHint: '往下看，把小细节安排上' },
+  ],
+  fresh: [
+    { title: '越看越上头', copy: '第一眼挺顺眼，再看一眼还有点挪不开。柔和眉眼和自然协调的五官，让这张脸越看越有味道，给眼尾添点层次、唇色加点气色，这份耐看还能再细细打磨。', scrollHint: '往下看，耐看还能怎么加分' },
+    { title: '属于耐看那挂', copy: '你属于那种，多看几眼才发现越来越好看的类型。清秀眉眼和自然唇形配在一起很舒服，底妆保持轻透，再让眉尾和唇色互相呼应，日常镜头也能更有记忆点。', scrollHint: '下滑看看，日常妆怎么加分' },
+    { title: '这脸有点东西', copy: '这脸有点东西，细看更能发现。柔和眉形衬着清秀眼睛，自然气色也很适合轻妆，把眼尾和睫毛的层次稍微提起来，再补一抹玫瑰唇色，精致感就能接上。', scrollHint: '往下看，亮点还能怎么突出' },
+    { title: '看着就很顺眼', copy: '这张脸的观感，可以用一个词形容：顺眼。五官搭在一起自然协调，发型再轻盈一些、眼尾再清晰一点，就很适合清透的日常妆，下面几处小调整可以直接抄作业。', scrollHint: '下滑看看，几步就能抄作业' },
+    { title: '耐看是个技术活', copy: '耐看这件事，你已经掌握了基础操作。柔和的眉眼和自然唇形相互照应，妆容只要把浓淡拿捏好，再用一件细小配饰收个尾，这份清新就能显得更完整。', scrollHint: '往下看，把清新感再调一调' },
+  ],
+  radiant: [
+    { title: '美貌开始营业', copy: '美貌已经营业，镜头可以排队了。鲜明眉眼和清晰唇形让这张脸很有记忆点，把眼妆边缘晕得细一点、发型层次拨得松一点，原本的辨识度就能更顺畅地发挥。', scrollHint: '往下看，营业状态还能升级' },
+    { title: '镜头偏爱这张脸', copy: '镜头是不是对这张脸有点偏爱。眉眼的表现力很足，五官也有自己的特点，再把发根与发尾的体积调平衡，让唇色呼应眼妆，拍照时的重点就会更清晰。', scrollHint: '下滑看看，怎么更上镜一点' },
+    { title: '有点抢镜天赋', copy: '这张脸有点抢镜天赋，放进画面就容易被记住。鲜明眉眼已经很有存在感，妆容把深浅过渡收拾细致，再给发型留点松弛层次，眼神的表现力还能更突出。', scrollHint: '往下看，让抢镜更有章法' },
+    { title: '审美点被拿捏', copy: '审美点被拿捏了，就是这份鲜明又自然的感觉。眉形和眼神各有亮点，唇形也很清晰，接下来让色彩浓度彼此配合、配饰少而精，整体造型就能更加连贯。', scrollHint: '下滑看看，亮点怎么连起来' },
+    { title: '路过也得多看眼', copy: '路过也得多看一眼，这张脸确实有记忆点。眉眼鲜明、五官特点自然，发型和妆容只要再统一一下重点，面中光泽轻轻提亮，原本的吸睛感就更容易被看见。', scrollHint: '往下看，把吸睛感再放大' },
+  ],
+  spotlight: [
+    { title: '你啥意思，拍杂志呢', copy: '你啥意思，随手一拍就要交杂志封面作业吗。眉眼和轮廓搭得很漂亮，妆面也已经很整洁，把散落发丝和眼尾边缘再收拾细一点，这份主角感就更有完成度了。', scrollHint: '往下看，封面感还能怎么加' },
+    { title: '这张建议置顶', copy: '这张建议置顶，往下翻之前先多看两眼。出众眉眼和协调唇形撑得起画面，妆容只需细调光泽与色彩浓度，再添一处香槟金小配饰，就很适合认真留个纪念。', scrollHint: '下滑看看，置顶照怎么精修' },
+    { title: '主角位给你了', copy: '主角位给你了，这张脸接得住。眉眼和轮廓相得益彰，整体造型也很协调，保留现在的优势，轻轻柔化眉峰、理顺发丝，让镜头里的细节再多一点精致就够了。', scrollHint: '往下看，主角妆发怎么细化' },
+    { title: '爱豆直拍本人', copy: '这画面，有点爱豆直拍本人那味了。眉眼出众、轮廓协调，已经很能留住视线，再把眼尾晕染和唇缘衔接处理细致，让妆面的柔光统一起来，就更适合近镜头。', scrollHint: '下滑看看，近镜头怎么加分' },
+    { title: '这脸自带聚光灯', copy: '聚光灯还没开，这张脸已经把画面撑起来了。出众眉眼和协调五官很有主角感，发丝再轻盈一些、妆面光泽再统一一点，用小配饰点个睛，就能把造型收得更漂亮。', scrollHint: '往下看，高光细节怎么收尾' },
+  ],
+  icon: [
+    { title: '女娲毕设', copy: '想了半天怎么夸，发现这张脸已经替我说完了。眉眼有记忆点，轮廓与整体风格也很合拍，镜头很难装作没看见，接下来把发丝和妆面再精修一点，就很有封面那味了。', scrollHint: '往下看，已经很美还能怎么加分' },
+    { title: '美貌超纲了', copy: '这题超纲了，普通夸法有点跟不上。亮眼双眸和鲜明风格已经很完整，通透气色也值得保留，妆发顺着原有特点轻轻打磨，再留一处极简配饰，细节就能稳稳接住镜头。', scrollHint: '下滑看看，精修细节怎么安排' },
+    { title: '这颜值不讲道理', copy: '这颜值有点不讲道理，多看两眼都不算浪费。眉形、眼睛和轮廓彼此呼应，个人风格也足够鲜明，接下来留住自然毛流和通透气色，让发丝多一点光泽就很有看头。', scrollHint: '往下看，让每个细节都在线' },
+    { title: '建议原地出道', copy: '建议原地出道，第一张宣传照就用这张。五官与整体风格配合得很漂亮，眼部亮点尤其鲜明，妆容保留轻盈感、唇色低饱和点睛，再梳顺发丝，近看也有值得细品的细节。', scrollHint: '下滑看看，宣传照还能怎么精修' },
+    { title: '女娲炫技现场', copy: '这有点像女娲炫技现场，细节还挺经得起看。自然眉形和亮眼双眸相互呼应，五官与风格都很协调，轻薄底妆留住通透气色，再精修发丝和配饰，整套造型就很完整。', scrollHint: '往下看，把造型细节补到位' },
+  ],
+});
+
+const STYLE_PROFILES = freeze({
+  natural: { summary: '轻盈发根与自然眉眼，配一抹柔和唇色。', palette: [{ color: '#D8C8B5', label: '柔米白' }, { color: '#796754', label: '灰茶棕' }, { color: '#B67578', label: '玫瑰豆沙' }, { color: '#D4B58C', label: '浅香槟金' }] },
+  fresh: { summary: '清透底妆、柔和眉眼，日常也有精致感。', palette: [{ color: '#E7D6C5', label: '米杏色' }, { color: '#9E8069', label: '浅暖棕' }, { color: '#B88388', label: '柔玫瑰' }, { color: '#DCC6A0', label: '浅金色' }] },
+  radiant: { summary: '松弛发型与立体眼尾，突出五官辨识度。', palette: [{ color: '#DEC9AD', label: '暖米色' }, { color: '#87624C', label: '眼尾暖棕' }, { color: '#A96573', label: '玫瑰豆沙' }, { color: '#C7A571', label: '细闪金' }] },
+  spotlight: { summary: '柔光妆面与精致毛流，香槟金轻轻点睛。', palette: [{ color: '#ECE1D1', label: '柔光米白' }, { color: '#80674F', label: '细腻暖棕' }, { color: '#AC747E', label: '柔雾玫瑰' }, { color: '#D4BA89', label: '香槟金' }] },
+  icon: { summary: '保留鲜明五官，以通透妆面和极简配饰收尾。', palette: [{ color: '#EEE4D8', label: '通透米白' }, { color: '#766353', label: '自然茶棕' }, { color: '#AA737D', label: '低饱和玫瑰' }, { color: '#DCCA9D', label: '柔金色' }] },
+});
+
 const PRODUCT_PREVIEWS = {
   brow: { shortName: '轻羽双头眉笔', shortReason: '补齐眉尾空隙，自然保留毛流', shortFeatures: ['细芯易勾勒', '自然灰茶棕'] },
   eye: { shortName: '暮光四色眼影', shortReason: '柔和暖棕，突出眼尾层次', shortFeatures: ['低饱和', '易晕染'] },
@@ -149,10 +195,16 @@ function createDimensions(score) {
   return labels.map((label, index) => ({ label, score: values[index] }));
 }
 
-export function createReport(score = 90) {
+export function createReport(score = 90, copyVariant = 0) {
   validateScore(score);
+  if (!Number.isSafeInteger(copyVariant) || copyVariant < 0) {
+    throw new RangeError('copyVariant must be a non-negative safe integer');
+  }
+  const variant = copyVariant % 5;
   const tier = getTier(score);
   const profile = PROFILES[tier.id];
+  const wording = COPY_LIBRARY[tier.id][variant];
+  const style = STYLE_PROFILES[tier.id];
   const afterScore = Math.max(score, Math.round(interpolate(score, [[0, 18], [52, 70], [68, 80], [80, 88], [90, 95], [97, 99], [100, 100]])));
   const areas = AREAS.map((area, index) => ({
     ...copyOf(area),
@@ -172,7 +224,12 @@ export function createReport(score = 90) {
     dimensions: createDimensions(score),
     strength: profile.strength,
     focus: profile.focus,
-    copy: tier.copy,
+    title: wording.title,
+    copy: wording.copy,
+    scrollHint: wording.scrollHint,
+    copyVariant: variant,
+    styleSummary: style.summary,
+    palette: copyOf(style.palette),
     keywords: [...profile.keywords],
     areas,
     products: copyOf(PRODUCTS),

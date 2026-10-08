@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
 import { runInNewContext } from 'node:vm';
 import test from 'node:test';
+import { TIERS, PRODUCTS, createReport } from '../public/beauty-model.js';
 
 const publicRoot = new URL('../public/', import.meta.url);
 const read = path => readFileSync(new URL(path, publicRoot), 'utf8');
@@ -246,5 +247,258 @@ test('a dismissed upload preset cannot write into a later sheet when its fixture
     assert.equal(nextPhoto.hidden, true);
     assert.equal(nextStart.disabled, true);
     assert.equal(nextStart.textContent, 'next-sheet-action');
+  }
+});
+
+function reportHarness({ reducedMotion = false } = {}) {
+  const nodes = new Map();
+  const timers = new Map();
+  const frames = new Map();
+  const effects = { celebrations: [], stopped: 0, observers: [], revoked: [], posterRequests: [], blobCount: 0 };
+  let timerId = 0;
+  let frameId = 0;
+  let resolvePoster;
+  let document;
+  const posterReady = new Promise(resolve => { resolvePoster = resolve; });
+  const node = id => {
+    if (!nodes.has(id)) {
+      const classes = new Set();
+      const attributes = {};
+      const handlers = new Map();
+      nodes.set(id, {
+        id, hidden: true, value: '', innerHTML: '', textContent: '', scrollTop: 0,
+        dataset: {}, style: {}, inert: false, isConnected: true, handlers,
+        classList: {
+          add(...values) { values.forEach(value => classes.add(value)); },
+          remove(...values) { values.forEach(value => classes.delete(value)); },
+          contains(value) { return classes.has(value); },
+          toggle(value, force) { const add = force ?? !classes.has(value); if (add) classes.add(value); else classes.delete(value); return add; },
+        },
+        addEventListener(name, callback) { handlers.set(name, callback); },
+        setAttribute(name, value) { attributes[name] = value; },
+        getAttribute(name) { return attributes[name]; },
+        querySelector(selector) { return node(`${id}:${selector}`); },
+        querySelectorAll() { return []; },
+        getBoundingClientRect() { return { top: 0 }; },
+        focus() { document.activeElement = this; },
+        scrollTo(options) { this.lastScroll = options; this.scrollTop = options.top; },
+      });
+    }
+    return nodes.get(id);
+  };
+  document = { getElementById: node, querySelector: selector => node(selector), addEventListener() {}, activeElement: null };
+  const api = runInNewContext(controller.replace(/^import .*;$/gm, '') + `
+    ({
+      show: showReport, explore: exploreReport, cycle: cycleCopy, reset: resetEntry,
+      cancel: cancelPresentation, poster: posterSheet, closeSheet, scenes: sceneSheet,
+      setPosterCache(value) { posterCache = value; },
+      setPreviewURL(value) { posterPreviewUrl = value; },
+      addPendingFrame(id) { frames.add(id); },
+      state() { return { currentReport, photos, posterCache, copyVariant, generation, timerCount: timers.size, frameCount: frames.size }; }
+    });
+  `, {
+    document, TIERS, PRODUCTS, createReport,
+    matchMedia: () => ({ matches: reducedMotion, addEventListener() {} }),
+    window: {}, location: { search: '' }, URLSearchParams,
+    URL: {
+      createObjectURL() { return `blob:poster-${++effects.blobCount}`; },
+      revokeObjectURL(url) { effects.revoked.push(url); },
+    },
+    setTimeout(callback, delay) { const id = ++timerId; timers.set(id, { callback, delay }); return id; },
+    clearTimeout(id) { timers.delete(id); },
+    requestAnimationFrame(callback) { const id = ++frameId; frames.set(id, callback); return id; },
+    cancelAnimationFrame(id) { frames.delete(id); },
+    IntersectionObserver: class {
+      constructor(callback, options) { this.callback = callback; this.options = options; this.disconnected = false; this.observed = []; effects.observers.push(this); }
+      observe(element) { this.observed.push(element); }
+      unobserve() {}
+      disconnect() { this.disconnected = true; }
+    },
+    startBeautyCelebration(options) {
+      effects.celebrations.push(options);
+      let stopped = false;
+      return () => { if (!stopped) { effects.stopped++; stopped = true; } };
+    },
+    renderBeautyPoster(options) { effects.posterRequests.push(options); return posterReady; },
+  });
+  node('beautyPage').hidden = false;
+  const click = action => node('beautyPage').handlers.get('click')({ target: { closest: () => ({ dataset: { action }, hasAttribute: () => false }) } });
+  const runDelay = delay => {
+    for (const [id, timer] of [...timers]) if (timer.delay === delay) { timers.delete(id); timer.callback(); }
+  };
+  return { api, node, document, effects, timers, frames, click, runDelay, resolvePoster };
+}
+
+const reportPhotos = () => ({
+  before: 'photo-before', after: 'photo-after',
+  parts: Object.fromEntries(['hair', 'brows', 'eyes', 'skin', 'lips', 'style'].map(id => [id, { before: `${id}-before`, after: `${id}-after` }])),
+});
+
+test('v17 renders one combined overview and the complete inline advice without secondary advice or comparison controls', () => {
+  const harness = reportHarness({ reducedMotion: true });
+  const report = createReport(90, 2);
+  const photos = reportPhotos();
+  harness.api.show(report, photos);
+  const rendered = harness.node('beautyReport').innerHTML;
+  assert.equal(harness.node('beautyReport').hidden, false);
+  assert.equal(harness.node('beautyReport').dataset.tier, report.tier.id);
+  assert.ok(rendered.includes(`<h1 tabindex="-1">${report.title}</h1>`));
+  assert.ok(rendered.includes(report.copy));
+  const overview = rendered.slice(rendered.indexOf('id="beautyOverview"'), rendered.indexOf('class="beauty-section beauty-areas"'));
+  assert.equal((rendered.match(/id="beautyOverview"/g) || []).length, 1);
+  assert.ok(overview.includes('更出彩的你'));
+  assert.ok(overview.includes('beauty-compare-grid'));
+  assert.ok(overview.includes('beautyBefore'));
+  assert.ok(overview.includes('beautyAfter'));
+  assert.ok(overview.includes('beauty-radar-wrap'));
+  assert.ok(overview.includes('五官表现'));
+  assert.ok(overview.includes(`超过 ${report.afterPercentile}% 的人`));
+  assert.equal((overview.match(/class="beauty-dimension"/g) || []).length, 5);
+  assert.doesNotMatch(rendered, /放大对比|详细建议|data-area-detail|data-action="compare"/);
+  assert.doesNotMatch(controller, /function areaSheet\(|function comparisonSheet\(|case 'compare':/);
+  const adviceLists = [...rendered.matchAll(/<ol class="beauty-inline-steps">([\s\S]*?)<\/ol>/g)];
+  assert.equal(adviceLists.length, 6);
+  for (const [index, match] of adviceLists.entries()) {
+    assert.equal((match[1].match(/<li>/g) || []).length, 3);
+    report.areas[index].steps.forEach(step => assert.ok(match[1].includes(step)));
+    assert.ok(rendered.includes(`src="${photos.parts[report.areas[index].id].before}"`));
+    assert.ok(rendered.includes(`src="${photos.parts[report.areas[index].id].after}"`));
+  }
+  assert.equal((rendered.match(/class="beauty-product beauty-product-compact"/g) || []).length, 6);
+  assert.equal((rendered.match(/class="beauty-product-purchase"/g) || []).length, 6);
+  assert.equal((rendered.match(/data-product-buy=/g) || []).length, 6);
+  assert.equal((rendered.match(/class="beauty-product-reason"/g) || []).length, 6);
+});
+
+test('the first-screen cue opens and focuses the overview, and scrolling dismisses the cue and celebration', () => {
+  for (const reducedMotion of [false, true]) {
+    const harness = reportHarness({ reducedMotion });
+    const report = createReport(97);
+    harness.api.show(report, reportPhotos());
+    const rendered = harness.node('beautyReport').innerHTML;
+    assert.ok(rendered.includes('class="beauty-scroll-cue" data-action="explore" aria-controls="beautyOverview"'));
+    assert.ok(rendered.includes(report.scrollHint));
+    const overview = harness.node('beautyOverview');
+    const scroll = harness.node('beautyScroll');
+    overview.inert = true;
+    overview.getBoundingClientRect = () => ({ top: 600 });
+    scroll.getBoundingClientRect = () => ({ top: 100 });
+    harness.runDelay(1200);
+    harness.click('explore');
+    assert.equal(scroll.lastScroll.top, 488);
+    assert.equal(scroll.lastScroll.behavior, reducedMotion ? 'instant' : 'smooth');
+    assert.equal(overview.inert, false);
+    assert.ok(overview.classList.contains('is-visible'));
+    assert.equal(harness.document.activeElement, overview.querySelector('h2'));
+    assert.equal(overview.querySelector('h2').tabIndex, -1);
+    scroll.handlers.get('scroll')();
+    assert.ok(harness.node('beautyReport').classList.contains('has-scrolled'));
+    assert.equal(harness.effects.stopped, reducedMotion ? 0 : 1);
+  }
+});
+
+test('changing the copy wraps through all five choices, preserves report facts and photos, and cancels stale presentation and poster data', () => {
+  const harness = reportHarness();
+  const original = createReport(97, 4);
+  const photos = reportPhotos();
+  harness.api.show(original, photos);
+  harness.runDelay(1200);
+  assert.equal(harness.effects.celebrations.length, 1);
+  harness.api.setPosterCache(Promise.resolve({ blob: {} }));
+  harness.api.setPreviewURL('blob:previous-copy-poster');
+  const oldObserver = harness.effects.observers.at(-1);
+  const oldGeneration = harness.api.state().generation;
+  harness.api.addPendingFrame(88);
+  harness.frames.set(88, () => { throw new Error('stale count frame executed'); });
+  harness.click('copy-next');
+  const changed = harness.api.state();
+  assert.equal(changed.currentReport.copyVariant, 0);
+  assert.equal(changed.copyVariant, 0);
+  assert.equal(changed.currentReport.title, createReport(97, 0).title);
+  assert.notEqual(changed.currentReport.copy, original.copy);
+  for (const key of ['score', 'percentile', 'afterScore', 'afterPercentile']) assert.equal(changed.currentReport[key], original[key]);
+  assert.deepEqual(changed.currentReport.areas, original.areas);
+  assert.deepEqual(changed.currentReport.products, original.products);
+  assert.equal(changed.photos, photos);
+  assert.equal(changed.posterCache, null);
+  assert.deepEqual(harness.effects.revoked, ['blob:previous-copy-poster']);
+  assert.equal(harness.effects.stopped, 1);
+  assert.equal(oldObserver.disconnected, true);
+  assert.ok(changed.generation > oldGeneration);
+  assert.equal(changed.frameCount, 0);
+  assert.equal(harness.frames.size, 0);
+  assert.equal([...harness.timers.values()].filter(timer => timer.delay === 1200).length, 0, 'changing copy does not replay fireworks');
+  assert.equal(harness.node('beautyOverlay').hidden, true);
+  assert.ok(harness.node('beautyReport').innerHTML.includes(changed.currentReport.copy));
+  for (let variant = 1; variant <= 4; variant++) {
+    harness.click('copy-next');
+    assert.equal(harness.api.state().currentReport.copyVariant, variant);
+  }
+  harness.api.reset();
+  assert.equal(harness.api.state().copyVariant, 0);
+  assert.equal(harness.api.state().currentReport, null);
+  assert.equal(harness.api.state().photos, null);
+  assert.equal(harness.api.state().posterCache, null);
+  assert.equal(harness.node('beautyReport').innerHTML, '');
+  assert.equal(harness.node('beautyComposer').hidden, false);
+});
+
+test('poster generation receives the current wording and all six before/after parts, and reuses only the current report cache', async () => {
+  const harness = reportHarness({ reducedMotion: true });
+  const report = createReport(80, 3);
+  const photos = reportPhotos();
+  harness.api.show(report, photos);
+  const pending = harness.click('poster');
+  assert.equal(harness.effects.posterRequests.length, 1);
+  const request = harness.effects.posterRequests[0];
+  assert.equal(request.report, report);
+  assert.equal(request.parts, photos.parts);
+  assert.equal(request.beforeSrc, photos.before);
+  assert.equal(request.afterSrc, photos.after);
+  assert.equal(Object.keys(request.parts).length, 6);
+  harness.resolvePoster({ blob: { type: 'image/png' } });
+  await pending;
+  assert.equal(harness.effects.blobCount, 1);
+  assert.ok(harness.node('beautySheetBody').innerHTML.includes(`${report.title} · ${report.score} 分分享海报`));
+  assert.ok(harness.node('beautySheetBody').innerHTML.includes('data-action="download"'));
+  harness.api.closeSheet();
+  assert.deepEqual(harness.effects.revoked, ['blob:poster-1']);
+  await harness.click('poster');
+  assert.equal(harness.effects.posterRequests.length, 1, 'same report reuses rendered poster');
+  assert.equal(harness.effects.blobCount, 2);
+});
+
+test('a poster resolving after the copy changes cannot replace the current report or reopen its sheet', async () => {
+  const harness = reportHarness({ reducedMotion: true });
+  harness.api.show(createReport(90), reportPhotos());
+  const pending = harness.api.poster();
+  harness.click('copy-next');
+  const current = harness.api.state().currentReport;
+  harness.resolvePoster({ blob: { type: 'image/png' } });
+  await pending;
+  assert.equal(harness.api.state().currentReport, current);
+  assert.equal(current.copyVariant, 1);
+  assert.equal(harness.api.state().posterCache, null);
+  assert.equal(harness.node('beautyOverlay').hidden, true);
+  assert.equal(harness.effects.blobCount, 0, 'no object URL is created for a stale poster');
+  assert.doesNotMatch(harness.node('beautySheetBody').innerHTML, /beauty-poster-image/);
+});
+
+test('celebration starts after the score reveal and is omitted when motion is reduced or the reader has moved on', () => {
+  for (const scenario of ['normal', 'reduced', 'scrolled', 'closed', 'cancelled']) {
+    const harness = reportHarness({ reducedMotion: scenario === 'reduced' });
+    harness.api.show(createReport(97), reportPhotos());
+    assert.equal(harness.effects.celebrations.length, 0);
+    if (scenario === 'scrolled') harness.node('beautyScroll').scrollTop = 80;
+    if (scenario === 'closed') harness.node('beautyPage').hidden = true;
+    if (scenario === 'cancelled') harness.api.cancel();
+    harness.runDelay(1200);
+    assert.equal(harness.effects.celebrations.length, scenario === 'normal' ? 1 : 0, scenario);
+    if (scenario === 'normal') {
+      assert.equal(harness.effects.celebrations[0].score, 97);
+      assert.equal(harness.effects.celebrations[0].host, harness.node('beautyReport').querySelector('.beauty-result-hero'));
+      harness.api.cancel();
+      assert.equal(harness.effects.stopped, 1);
+    }
   }
 });

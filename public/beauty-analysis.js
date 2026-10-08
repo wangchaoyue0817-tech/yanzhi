@@ -245,7 +245,7 @@ function showReport(report,readyPhotos,{celebrate=true}={}) {
   posterCache = null;
   const tierIndex = TIERS.findIndex(tier => tier.id === report.tier.id);
   const sparkleCount = [4,8,14,26,42][tierIndex];
-  const honorCaption = tierIndex >= 3 ? 'TOP '+Number((100-report.percentile).toFixed(1))+'%' : ['NATURAL BEAUTY','FRESH GLOW','RADIANT BEAUTY'][tierIndex];
+  const honorCaption = report.tier.name;
   const sparks = Array.from({length:sparkleCount},(_,i) => '<i style="--x:'+((i*37+7)%100)+'%;--y:'+((i*23+8)%96)+'%;--wait:'+(i%11)*.37+'s;--life:'+(3+i%5)+'s"></i>').join('');
   $('beautyScanning').hidden = true;
   $('beautyEntry').hidden = true;
@@ -256,17 +256,21 @@ function showReport(report,readyPhotos,{celebrate=true}={}) {
   container.innerHTML =
     '<div class="beauty-report-intro"><span>你的专属颜值档案</span><small>BEAUTY / '+ranks[tierIndex]+'</small></div>'+
     '<section class="beauty-result-hero" aria-label="当前颜值 '+report.score+' 分，'+report.tier.name+'">'+
-      '<div class="beauty-hero-grid" aria-hidden="true"></div><div class="beauty-aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="beauty-reveal-beam" aria-hidden="true"></div>'+
+      '<div class="beauty-hero-grid" aria-hidden="true"></div><div class="beauty-aurora" aria-hidden="true"><i></i><i></i><i></i></div><div class="beauty-reveal-halo" aria-hidden="true"></div>'+
       '<div class="beauty-sparkles" aria-hidden="true">'+sparks+'</div><div class="beauty-coronation" aria-label="'+report.tier.name+'等级徽章">'+(tierIndex===4?crown:star)+'</div>'+
       '<div class="beauty-portrait-stage"><div class="beauty-portrait-orbits" aria-hidden="true"><i></i><i></i><i></i></div><div class="beauty-portrait-window"><img class="beauty-hero-photo" src="'+photos.before+'" alt="你的当前照片"></div><span class="beauty-portrait-seal">'+honorCaption+'</span></div>'+
       '<div class="beauty-hero-content"><div class="beauty-title-group"><h1 tabindex="-1">'+esc(report.title)+'</h1></div><div class="beauty-score-row"><span class="beauty-score-caption">综合<br>颜值</span><div class="beauty-score-value"><strong data-count="'+report.score+'">'+report.score+'</strong><small>/ 100</small></div>'+star+'</div>'+
       '<div class="beauty-percentile"><span>超过 <b data-count="'+report.percentile+'">'+report.percentile+'</b><b>%</b> 的人</span><i aria-hidden="true"><span style="width:'+report.percentile+'%"></span></i></div></div>'+
-      '<p class="beauty-result-copy">'+resultCopy(report.copy)+'</p><button type="button" class="beauty-scroll-cue" data-action="explore" aria-controls="beautyOverview"><span class="beauty-guide-copy"><strong>'+esc(report.scrollHint)+'</strong><small>前后对比 · 五官表现 · 变美思路</small></span><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 4v15m-6-6 6 6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></i></button>'+
+      '<p class="beauty-result-copy">'+resultCopy(report.copy)+'</p>'+
       '<div class="beauty-hero-bottom-glow" aria-hidden="true"></div></section>'+
     '<section class="beauty-section beauty-overview beauty-reveal" id="beautyOverview" data-reveal>'+heading('01','更出彩的你','从现在，到更上镜')+
-      '<div class="beauty-compare-grid"><figure><div class="beauty-compare-photo"><img id="beautyBefore" src="'+photos.before+'" alt="现在的照片"><span>现在的你</span></div><figcaption><strong>'+report.score+'<small>分</small></strong><span>'+report.tier.name+'</span></figcaption><p>超过 '+report.percentile+'% 的人</p></figure>'+
-      '<figure><div class="beauty-compare-photo"><img id="beautyAfter" src="'+photos.after+'" alt="变美后的照片"><span>变美后的你</span></div><figcaption><strong>'+report.afterScore+'<small>分</small></strong><span>'+report.afterTier.name+'</span></figcaption><p>超过 '+report.afterPercentile+'% 的人</p></figure></div>'+
-      '<div class="beauty-lift-line"><span>预计增加 <b>'+(report.afterScore-report.score)+'</b> 分</span><span>'+esc(report.keywords[0])+' · '+esc(report.keywords[1])+'</span></div><div class="beauty-features-heading"><h3>五官表现</h3><span>你的优势，逐一看清</span></div>'+
+      '<div class="beauty-comparison"><div class="beauty-compare-grid">'+
+      '<figure class="beauty-compare-before"><div class="beauty-compare-photo"><img id="beautyBefore" src="'+photos.before+'" alt="现在的照片"><span>现在的你</span></div></figure>'+
+      '<figure class="beauty-compare-after"><div class="beauty-compare-photo"><img id="beautyAfter" src="'+photos.after+'" alt="变美后的照片"><span>'+star+'变美后的你</span></div></figure></div>'+
+      '<div class="beauty-compare-transition" aria-label="预计增加 '+(report.afterScore-report.score)+' 分"><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></i><span>预计增加 <b>'+(report.afterScore-report.score)+'</b> 分</span></div>'+
+      '<div class="beauty-compare-scores"><div><div class="beauty-compare-score"><strong>'+report.score+'<small>分</small></strong><span>'+report.tier.name+'</span></div><p>超过 <b>'+report.percentile+'%</b> 的人</p></div>'+
+      '<div><div class="beauty-compare-score"><strong>'+report.afterScore+'<small>分</small></strong><span>'+report.afterTier.name+'</span></div><p>超过 <b>'+report.afterPercentile+'%</b> 的人</p></div></div></div>'+
+      '<div class="beauty-features-heading"><h3>五官表现</h3><span>你的优势，逐一看清</span></div>'+
       '<div class="beauty-radar-wrap">'+radar(report.dimensions)+'<div class="beauty-dimensions">'+report.dimensions.map((d,index) => '<div class="beauty-dimension" data-dimension="'+index+'"><span>'+esc(d.label)+'</span><b>'+d.score+'</b><i><span style="width:'+d.score+'%"></span></i></div>').join('')+'</div></div>'+
       '<div class="beauty-insights"><div class="beauty-insight beauty-insight-strength"><small><i aria-hidden="true">'+star+'</i>你的优势</small><p>'+esc(report.strength)+'</p></div><div class="beauty-insight beauty-insight-focus"><small><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 18 6-6m-3-5 3-3m4 4 3-3m-4 9 6-6M5 21l-2-2 9-9 2 2Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>优先调整</small><p>'+esc(report.focus)+'</p></div></div></section>'+
     '<section class="beauty-section beauty-areas">'+heading('02','你的变美思路','照着做，就很好看')+report.areas.map(areaHTML).join('')+'</section>'+
@@ -306,22 +310,17 @@ function animateReport(celebrate=true) {
         delay+=160;
       }
     },{root:scroll,threshold:.025,rootMargin:'0px 0px -8px 0px'});
-    reveals.forEach(el => { inert(el,true); observer.observe(el); });
+    reveals.forEach(el => {
+      // Keep the veiled next chapter visible even when only its edge fits the viewport.
+      if(el.id==='beautyOverview'){el.classList.add('is-visible');inert(el,false);}
+      else {inert(el,true);observer.observe(el);}
+    });
   }
   $('beautyReport').querySelectorAll('[data-count]').forEach(el => countTo(el,Number(el.dataset.count)));
   if(celebrate && !motion.matches) later(()=>{
     if(page.hidden || !currentReport || scroll.scrollTop>60)return;
     stopCelebration=startBeautyCelebration({host:$('beautyReport').querySelector('.beauty-result-hero'),score:currentReport.score,reducedMotion:motion.matches});
   },1200);
-}
-function exploreReport() {
-  const target=$('beautyOverview');
-  if(!target)return;
-  target.classList.add('is-visible');inert(target,false);
-  const top=target.getBoundingClientRect().top-scroll.getBoundingClientRect().top+scroll.scrollTop-12;
-  scroll.scrollTo({top,behavior:motion.matches?'instant':'smooth'});
-  const heading=target.querySelector('h2');
-  heading.tabIndex=-1;heading.focus({preventScroll:true});
 }
 function cycleCopy() {
   if(!currentReport || !photos)return;
@@ -445,7 +444,6 @@ page.addEventListener('click',event=>{
     case 'scenes':return sceneSheet();
     case 'choose-photo':return $('beautyPhotoInput').click();
     case 'use-photo':clearUpload();return start(90);
-    case 'explore':return exploreReport();
     case 'copy-next':return cycleCopy();
     case 'poster':return posterSheet();
     case 'download':return downloadPoster();
@@ -484,7 +482,7 @@ page.addEventListener('submit',event=>{
 });
 scroll.addEventListener('scroll',()=>{
   const moved=scroll.scrollTop>40;
-  $('beautyReport').classList.toggle('has-scrolled',moved);
+  if(moved)$('beautyReport').classList.add('has-scrolled');
   if(moved)stopCelebration();
 },{passive:true});
 $('beautyMenu').addEventListener('click',menuSheet);
@@ -515,6 +513,7 @@ document.addEventListener('keydown',event=>{
   if(event.key!=='Tab')return;
   // Reveal every section before keyboard traversal so offscreen controls stay in order.
   if($('beautyOverlay').hidden && !$('beautyReport').hidden){
+    $('beautyReport').classList.add('has-scrolled');
     observer?.disconnect();
     $('beautyReport').querySelectorAll('[data-reveal]').forEach(el=>{
       el.classList.add('is-visible');

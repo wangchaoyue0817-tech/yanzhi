@@ -49,7 +49,7 @@
 
 目标仓库为 [wangchaoyue0817-tech/yanzhi](https://github.com/wangchaoyue0817-tech/yanzhi)，使用单独的 `github` remote，保留原 Sites `origin`。发布技能保存在 `docs/yanzhi-github-publish/SKILL.md`，并安装到本机 Codex 技能目录；凭据仅保存在 macOS 钥匙串，不随源码分发。
 
-2026-10-08 接入检查：凭据账户确认成功，但目标仓库返回未授予写入权限；本地代码已提交，尚未上传 GitHub。修正 Token 的仓库授权与 `Contents: Read and write` 权限后，按发布技能推送并核对远端 commit。
+GitHub 使用 `main` 分支发布。每次版本完成后，按发布技能执行测试与构建、创建提交、推送，并核对本地与远端 commit 一致。
 
 ---
 

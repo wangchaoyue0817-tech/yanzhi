@@ -1,0 +1,66 @@
+/* Fifteen-second interlude: keep the tip readable while the report prepares. */
+.beauty-page .beauty-scanning.beauty-loading-v22 { display:block;min-height:100%;width:100%;max-width:100%;padding:18px 0 28px;text-align:left;overflow:hidden;background:radial-gradient(ellipse at 65% 36%,#6144b422,transparent 58%); }
+.beauty-loading-v22 *, .beauty-loading-v22 *::before, .beauty-loading-v22 *::after { box-sizing:border-box; }
+.beauty-loading-v22 .beauty-loading-header { display:flex;align-items:center;gap:11px;padding:0 7px; }
+.beauty-loading-v22 .beauty-loading-photo { position:relative;display:grid;place-items:center;flex:none;width:48px;height:48px;border:1px solid #ae9fe44d;border-radius:50%;background:linear-gradient(145deg,#3d346d,#171b32);color:#cab8ff;box-shadow:0 0 0 4px #afa0e608;overflow:hidden; }
+.beauty-loading-v22 .beauty-loading-photo>svg { width:25px;height:25px; }
+.beauty-loading-v22 .beauty-loading-photo>img { position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 25%; }
+.beauty-loading-v22 .beauty-loading-eyebrow { color:#a5a4bc;font-size:11px;letter-spacing:.05em; }
+.beauty-page .beauty-loading-v22 .beauty-loading-header h1 { margin:3px 0 0;background:none;color:#eeedfc;font-size:15px;line-height:1.4;font-weight:600;letter-spacing:0; }
+.beauty-loading-v22 .beauty-loading-intro { position:relative;margin:28px 0 16px;padding:0 18px; }
+.beauty-loading-v22 .beauty-loading-intro h2 { margin:0;color:#efedfa;font-size:26px;line-height:1.4;font-weight:500;letter-spacing:-.025em; }
+.beauty-loading-v22 .beauty-loading-intro em { font-style:normal;background:linear-gradient(105deg,#a9cbff,#c1a7fa 52%,#f0bddb);-webkit-background-clip:text;background-clip:text;color:transparent; }
+.beauty-page .beauty-loading-v22 .beauty-loading-intro p { margin:9px 0 0;min-height:0;color:#a8a7bd;font-size:12px;line-height:1.7; }
+.beauty-loading-v22 .beauty-loading-spark { position:absolute;right:23px;top:15px;color:#bda6fb;opacity:.65;transform:rotate(9deg); }
+.beauty-loading-v22 .beauty-loading-spark svg { width:43px;height:43px;filter:drop-shadow(0 0 15px #9c82eb70); }
+.beauty-loading-v22 .beauty-loading-carousel { position:relative;height:324px;width:100%;outline-offset:-4px;touch-action:pan-y;cursor:grab;isolation:isolate; }
+.beauty-loading-v22 .beauty-loading-carousel:active { cursor:grabbing; }
+.beauty-loading-v22 .beauty-loading-carousel::before { content:"";position:absolute;inset:30% 10% 0;border-radius:50%;background:#8163d71e;filter:blur(30px);pointer-events:none; }
+.beauty-loading-v22 .beauty-loading-card { position:absolute;inset:10px 20px 8px;display:flex;flex-direction:column;padding:22px 22px 18px;border:1px solid #ab94eb45;border-radius:24px;overflow:hidden;background:radial-gradient(ellipse at 80% 0,#826cbb2b,transparent 62%),linear-gradient(150deg,#242441,#181b34 62%,#14182e);box-shadow:inset 0 1px #dbc5ff1c,0 12px 30px #02061454;transform:translateX(0) scale(1);opacity:0;transition:transform .55s cubic-bezier(.22,.68,.23,1),opacity .4s ease,border-color .4s ease;user-select:none;pointer-events:none; }
+.beauty-loading-v22 .beauty-loading-card::after { content:"";position:absolute;width:140px;height:140px;right:-74px;top:45px;border:1px solid #b2a3e812;border-radius:50%;box-shadow:0 0 0 26px #b2a3e806,0 0 0 52px #b2a3e804;pointer-events:none; }
+.beauty-loading-v22 .beauty-loading-card[data-position="active"] { opacity:1;z-index:3; }
+.beauty-loading-v22 .beauty-loading-card[data-position="previous"] { transform:translateX(-96%) scale(.94);opacity:.45;z-index:1; }
+.beauty-loading-v22 .beauty-loading-card[data-position="next"] { transform:translateX(96%) scale(.94);opacity:.45;z-index:1; }
+.beauty-loading-v22 .beauty-loading-card[data-position="away"] { transform:translateX(110%) scale(.9);opacity:0;z-index:0; }
+.beauty-loading-v22 .beauty-loading-card-meta { display:flex;justify-content:space-between;gap:12px;color:#c5b0f1;font-size:11px;line-height:1.5; }
+.beauty-loading-v22 .beauty-loading-card-meta>span { padding-bottom:5px;border-bottom:1px solid #ba9ddd45; }
+.beauty-loading-v22 .beauty-loading-card-meta small { font-size:11px;color:#a5a4c0;font-variant-numeric:tabular-nums;letter-spacing:.06em; }
+.beauty-loading-v22 .beauty-loading-tip-icon { display:grid;place-items:center;width:42px;height:44px;margin:13px 0 9px;border:1px solid #b6a0e936;border-radius:13px;background:linear-gradient(135deg,#a994e51c,#93b2e608);color:#c7b0f5; }
+.beauty-loading-v22 .beauty-loading-tip-icon svg { width:25px;height:32px; }
+.beauty-loading-v22 .beauty-loading-card h3 { position:relative;z-index:1;margin:0;color:#f0ecfc;font-size:20px;line-height:1.45;font-weight:600;letter-spacing:-.02em; }
+.beauty-page .beauty-loading-v22 .beauty-loading-card p { position:relative;z-index:1;margin:11px 0 16px;min-height:0;color:#c1c1d4;font-size:13px;line-height:1.85;text-wrap:pretty; }
+.beauty-loading-v22 .beauty-loading-card-foot { display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:10px;border-top:1px solid #b5a0e213;color:#aaa7c3;font-size:11px;line-height:1.5; }
+.beauty-loading-v22 .beauty-loading-card-foot>span { color:#d5bbf2;font-size:15px; }
+.beauty-loading-v22 .beauty-loading-controls { display:flex;align-items:center;justify-content:center;gap:13px;margin-top:5px; }
+.beauty-loading-v22 .beauty-loading-controls button { display:grid;place-items:center;width:42px;height:42px;padding:0;border:0;border-radius:50%;background:transparent;color:#c5bfde;cursor:pointer; }
+.beauty-loading-v22 .beauty-loading-controls .beauty-loading-arrow { border:1px solid #b6a4dc23;background:#a78bde08; }
+.beauty-loading-v22 .beauty-loading-arrow svg { width:18px;height:18px; }
+.beauty-loading-v22 .beauty-loading-dots { display:flex;align-items:center; }
+.beauty-loading-v22 .beauty-loading-dots button { width:25px; }
+.beauty-loading-v22 .beauty-loading-dots i { display:block;width:5px;height:5px;border-radius:10px;background:#787188;transition:width .3s ease,background .3s ease; }
+.beauty-loading-v22 .beauty-loading-dots button[aria-current="true"] i { width:17px;background:linear-gradient(90deg,#9b8afa,#d5b9f7);box-shadow:0 0 8px #b096f535; }
+.beauty-loading-v22 .beauty-loading-mode { display:flex;align-items:center;justify-content:center;gap:12px;min-height:36px;color:#aaa5bd;font-size:11px;line-height:1.5; }
+.beauty-loading-v22 .beauty-loading-mode button { min-height:40px;padding:0 3px;border:0;background:none;color:#c9b9ee;font:inherit;font-size:11px;cursor:pointer; }
+.beauty-loading-v22 .beauty-loading-mode button[hidden] { display:none; }
+.beauty-loading-v22 .beauty-loading-progress { margin:15px 20px 0; }
+.beauty-loading-v22 .beauty-loading-progress>div:first-child { display:flex;justify-content:space-between;gap:8px;color:#aaa8c0;font-size:11px;line-height:1.6; }
+.beauty-loading-v22 .beauty-loading-progress b { color:#ddd1f5;font-size:12px;font-weight:500;font-variant-numeric:tabular-nums; }
+.beauty-loading-v22 .beauty-loading-track { margin-top:9px;height:3px;border-radius:4px;background:#9182b41c;overflow:hidden; }
+.beauty-loading-v22 .beauty-loading-track i { display:block;width:100%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#7e6be8,#bea5f5 65%,#a7d5e9);transform:scaleX(0);transform-origin:left center; }
+.beauty-loading-v22 .beauty-loading-cancel { display:block;margin:12px auto 0;min-height:42px;padding:0 18px;border:0;border-radius:8px;background:transparent;color:#b7accb;font-size:12px;cursor:pointer; }
+.beauty-loading-v22 .beauty-loading-announcement { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+.beauty-loading-v22 button:focus-visible,.beauty-loading-v22 .beauty-loading-carousel:focus-visible { outline:2px solid #c0a7f4;outline-offset:2px; }
+.beauty-loading-v22.is-reduced-motion .beauty-loading-card,.beauty-loading-v22.is-reduced-motion .beauty-loading-dots i { transition:none; }
+@media(max-width:360px) {
+  .beauty-page .beauty-scanning.beauty-loading-v22 { padding-top:13px; }
+  .beauty-loading-v22 .beauty-loading-header { gap:9px;padding:0 3px; }
+  .beauty-page .beauty-loading-v22 .beauty-loading-header h1 { font-size:14px; }
+  .beauty-loading-v22 .beauty-loading-photo { width:42px;height:42px; }
+  .beauty-loading-v22 .beauty-loading-intro { margin-top:24px;padding:0 12px; }
+  .beauty-loading-v22 .beauty-loading-intro h2 { font-size:24px; }
+  .beauty-loading-v22 .beauty-loading-card { left:14px;right:14px;padding:19px 17px 16px; }
+  .beauty-loading-v22 .beauty-loading-card h3 { font-size:19px; }
+  .beauty-page .beauty-loading-v22 .beauty-loading-card p { font-size:13px;line-height:1.75; }
+  .beauty-loading-v22 .beauty-loading-progress { margin-inline:14px; }
+}
+@media(prefers-reduced-motion:reduce) { .beauty-loading-v22 .beauty-loading-card,.beauty-loading-v22 .beauty-loading-dots i { transition:none; } }

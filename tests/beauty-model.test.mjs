@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { AREAS, PRODUCTS, TIERS, createReport, getPercentile, getTier } from '../public/beauty-model.js';
+import { AREAS, PRODUCTS, TIERS, SKIN_TYPES, createReport, getFoundationProducts, getPercentile, getTier } from '../public/beauty-model.js';
 
 test('tier boundaries cover every score without gaps and switch on the agreed thresholds', () => {
   const cases = [[0, 'natural'], [59, 'natural'], [60, 'fresh'], [74, 'fresh'], [75, 'radiant'], [84, 'radiant'], [85, 'spotlight'], [94, 'spotlight'], [95, 'icon'], [100, 'icon']];
@@ -62,7 +62,7 @@ test('five integer dimension scores reproduce the overall score, including both 
 
 test('every facial area has actionable advice and valid individually purchasable recommendations', () => {
   const products = new Map(PRODUCTS.map(product => [product.id, product]));
-  assert.equal(products.size, 6);
+  assert.equal(products.size, 12);
   assert.deepEqual(AREAS.map(area => area.id), ['hair', 'brows', 'eyes', 'skin', 'lips', 'style']);
   for (const tier of TIERS) {
     const report = createReport(tier.sampleScore);
@@ -76,15 +76,17 @@ test('every facial area has actionable advice and valid individually purchasable
       for (const key of ['brand', 'name', 'shade', 'reason', 'usage']) assert.ok(product[key]);
       assert.ok(Number.isFinite(product.price) && product.price > 0);
       assert.ok(product.features.length >= 2);
-      assert.match(product.atlasPosition, /^(0|50|100)% (0|100)%$/);
+      assert.equal(product.image, 'assets/beauty-products-v22.png');
+      assert.equal(product.atlasSize, '400% 300%');
+      assert.match(product.atlasPosition, /^(0|33\.333|66\.667|100)% (0|50|100)%$/);
     }
     assert.doesNotMatch(JSON.stringify(report), /演示|示意|模拟/);
   }
-  assert.equal(new Set(PRODUCTS.map(product => product.atlasPosition)).size, 6);
+  assert.equal(new Set(PRODUCTS.map(product => product.atlasPosition)).size, 12);
 });
 
 test('every product has a stable positive original price above its current price', () => {
-  const originals = { brow: 99, eye: 219, base: 299, lip: 169, hair: 129, style: 199 };
+  const originals = { hair: 129, brow: 99, eye: 219, eyeliner: 109, lashes: 89, 'base-dry': 299, 'base-normal': 269, 'base-oily': 279, blush: 139, lip: 169, earrings: 149, style: 199 };
   for (const product of PRODUCTS) {
     assert.ok(Number.isSafeInteger(product.originalPrice));
     assert.ok(product.originalPrice > product.price && product.price > 0);
@@ -97,6 +99,57 @@ test('every product has a stable positive original price above its current price
       assert.equal(product.originalPrice, originals[product.id]);
     }
   }
+});
+
+test('v22 recommendations cover all twelve products with the agreed simultaneous groupings', () => {
+  const catalogIds = ['hair', 'brow', 'eye', 'eyeliner', 'lashes', 'base-dry', 'base-normal', 'base-oily', 'blush', 'lip', 'earrings', 'style'];
+  assert.deepEqual(PRODUCTS.map(product => product.id), catalogIds);
+  for (const tier of TIERS) {
+    const report = createReport(tier.sampleScore);
+    const byArea = Object.fromEntries(report.areas.map(area => [area.id, area]));
+    assert.deepEqual(byArea.hair.productIds, ['hair']);
+    assert.deepEqual(byArea.brows.productIds, ['brow']);
+    assert.deepEqual(byArea.eyes.productIds, ['eye', 'eyeliner', 'lashes']);
+    assert.deepEqual(byArea.lips.productIds, ['lip']);
+    assert.deepEqual(byArea.style.productIds, ['earrings', 'style']);
+    assert.deepEqual(new Set(report.areas.flatMap(area => area.productIds)), new Set(catalogIds));
+    assert.match(byArea.hair.reason + byArea.hair.steps.join(''), /护发精油|精油/);
+    assert.match(byArea.eyes.steps.join(''), /假睫毛/);
+    assert.match(byArea.skin.steps.join(''), /腮红/);
+    assert.equal(byArea.style.title, '配饰搭配');
+    assert.doesNotMatch(JSON.stringify(byArea.style), /服装|衣服|上装|领口|裙|穿搭/);
+    assert.match(byArea.style.after, /珍珠/);
+    assert.match(byArea.style.steps.join(''), /耳钉/);
+    assert.match(byArea.style.steps.join(''), /项链/);
+  }
+  assert.match(PRODUCTS.find(product => product.id === 'hair').name, /护发精油/);
+  assert.match(PRODUCTS.find(product => product.id === 'lashes').name, /假睫毛/);
+  assert.match(PRODUCTS.find(product => product.id === 'style').features.join(''), /珍珠吊坠/);
+  assert.doesNotMatch(JSON.stringify(PRODUCTS), /服装|衣服|上装|领口|睫毛膏|蓬松喷雾/);
+});
+
+test('skin fixtures recommend the matching foundation first and retain all three alternatives plus blush', () => {
+  const fixtures = [[52, 'dry'], [68, 'normal'], [80, 'oily'], [90, 'normal'], [97, 'dry']];
+  for (const [score, skinType] of fixtures) {
+    const report = createReport(score);
+    const foundations = getFoundationProducts(skinType);
+    assert.equal(report.skinType, skinType);
+    assert.equal(report.skinLabel, SKIN_TYPES[skinType]);
+    assert.equal(foundations.length, 3);
+    assert.equal(foundations[0].skinType, skinType);
+    assert.deepEqual(new Set(foundations.map(product => product.skinType)), new Set(['dry', 'normal', 'oily']));
+    assert.deepEqual(report.areas.find(area => area.id === 'skin').productIds, [...foundations.map(product => product.id), 'blush']);
+    assert.deepEqual(createReport(score, 4).skinType, skinType);
+  }
+  assert.equal(getFoundationProducts()[0].skinType, 'normal');
+  for (const invalid of ['', 'mixed', 'DRY', null, false, 0, [], {}, { toString: () => 'dry' }]) {
+    assert.throws(() => getFoundationProducts(invalid), RangeError);
+  }
+  const changed = getFoundationProducts('dry');
+  changed[0].price = 0;
+  changed[0].features.push('changed');
+  assert.equal(getFoundationProducts('dry')[0].price, 229);
+  assert.ok(!getFoundationProducts('dry')[0].features.includes('changed'));
 });
 
 test('guidance and honor copy change with the score tier, with clear low and high score priorities', () => {

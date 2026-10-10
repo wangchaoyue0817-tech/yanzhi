@@ -62,39 +62,66 @@ const STYLE_PROFILES = freeze({
 });
 
 const PRODUCT_PREVIEWS = {
+  hair: { shortName: '柔光护发精油', shortReason: '理顺脸侧发丝，给发尾添一点光泽', shortFeatures: ['轻盈油感', '顺滑发尾'] },
   brow: { shortName: '轻羽双头眉笔', shortReason: '补齐眉尾空隙，自然保留毛流', shortFeatures: ['细芯易勾勒', '自然灰茶棕'] },
   eye: { shortName: '暮光四色眼影', shortReason: '柔和暖棕，突出眼尾层次', shortFeatures: ['低饱和', '易晕染'] },
-  base: { shortName: '水光轻透气垫', shortReason: '薄透匀肤，保留自然皮肤纹理', shortFeatures: ['轻透光泽', '局部叠加'] },
+  eyeliner: { shortName: '纤细棕调眼线笔', shortReason: '细细补齐睫毛根部，突出眼尾走向', shortFeatures: ['纤细笔尖', '自然深棕'] },
+  lashes: { shortName: '轻羽分段假睫毛', shortReason: '短段点缀眼尾，轻盈放大眼神', shortFeatures: ['短段易搭配', '自然交叉毛流'] },
+  'base-dry': { shortName: '柔润光泽粉底液', shortReason: '适合干性肤感，柔润光泽衔接气色', shortFeatures: ['柔润质地', '自然光泽'] },
+  'base-normal': { shortName: '轻透匀肤粉底液', shortReason: '适合中性肤感，薄透匀肤保留纹理', shortFeatures: ['轻薄易推开', '自然缎光'] },
+  'base-oily': { shortName: '清透柔雾粉底液', shortReason: '适合油性肤感，柔雾妆效平衡光泽', shortFeatures: ['清爽肤感', '柔雾妆效'] },
+  blush: { shortName: '微醺柔雾腮红', shortReason: '低饱和玫瑰色，衔接底妆与唇色', shortFeatures: ['细腻柔雾', '少量易叠加'] },
   lip: { shortName: '柔雾绒光唇膏', shortReason: '玫瑰豆沙衔接眉眼，提亮气色', shortFeatures: ['低饱和玫瑰', '柔雾质地'] },
-  hair: { shortName: '空气感蓬松喷雾', shortReason: '轻盈发根，让轮廓更舒展', shortFeatures: ['细雾喷头', '轻盈蓬松'] },
-  style: { shortName: '月弧细链项链', shortReason: '香槟金细链，呼应妆容暖光', shortFeatures: ['弧形吊坠', '链长可调'] },
+  earrings: { shortName: '月光珍珠耳钉', shortReason: '小巧珍珠照亮耳畔，呼应细金项链', shortFeatures: ['小巧圆珠', '香槟金底托'] },
+  style: { shortName: '月光珍珠项链', shortReason: '小圆珍珠衔接耳钉，细金链自然点睛', shortFeatures: ['珍珠吊坠', '链长可调'] },
 };
 
 export const PRODUCTS = freeze([
+  { id: 'hair', category: 'hair', name: '柔光顺滑护发精油', brand: '映色', shade: '轻盈顺滑 · 50ml', price: 89, originalPrice: 129, reason: '少量精油理顺脸侧和发尾的碎发，让发丝的光泽更均匀，衬托面部轮廓。', features: ['轻盈油感', '顺滑发中与发尾', '按压泵头便于取量'], usage: '按瓶身说明取少量在掌心抹开，先带过发尾，再轻理脸侧发丝，避开发根。', atlasPosition: '50% 100%' },
   { id: 'brow', name: '轻羽双头眉笔', brand: '映色', shade: '02 灰茶棕', price: 69, originalPrice: 99, reason: '灰茶棕与柔和眉形的方向一致，细笔芯便于补齐眉尾空隙，保留原有毛流。', features: ['0.9mm 细笔芯', '自然灰茶棕', '自带螺旋眉刷'], usage: '先沿毛流补空隙，再用眉刷向眉尾轻梳，让边缘自然散开。', atlasPosition: '0% 0%' },
   { id: 'eye', name: '暮光四色综合眼影', brand: '映色', shade: '03 杏雾暖棕', price: 159, originalPrice: 219, reason: '低饱和暖棕可以承接眉眼色调，浅色提亮、深色集中眼尾，突出眼部层次。', features: ['低饱和棕调', '哑光与细闪组合', '可少量叠加晕染'], usage: '米杏色铺满眼窝，浅棕加深眼尾，细闪仅点在眼皮中央。', atlasPosition: '50% 0%' },
-  { id: 'base', name: '水光轻透气垫', brand: '映色', shade: 'N21 自然米白', price: 229, originalPrice: 299, reason: '轻薄底妆有助于突出均匀的面部气色，局部叠加即可保留自然皮肤纹理。', features: ['轻透光泽妆效', '可局部叠加', '柔软水滴粉扑'], usage: '取少量从面中向外轻拍，鼻翼与眼下用粉扑尖角按压。', atlasPosition: '100% 0%' },
+  { id: 'eyeliner', name: '纤细棕调液体眼线笔', brand: '映色', shade: '02 柔深棕', price: 79, originalPrice: 109, reason: '深棕细线承接暖棕眼影，少量补齐睫毛根部，在眼尾留下自然延伸感。', features: ['纤细软笔尖', '自然深棕色', '便于分段勾勒'], usage: '贴近睫毛根部分段画细线，眼尾短短延伸，再检查左右走向。', atlasPosition: '0% 0%' },
+  { id: 'lashes', name: '轻羽自然分段假睫毛', brand: '映色', shade: '自然交叉款 · 8–10mm', price: 59, originalPrice: 89, reason: '短款分段假睫毛可以按眼型安排疏密，在眼尾增加层次，保留自然眉眼的轻盈感。', features: ['8–10mm 短款组合', '自然交叉毛流', '分段按需搭配'], usage: '按产品说明使用配套睫毛胶，将短段贴于上睫毛根部外侧，避开眼内与黏膜，眼尾少量点缀即可。', atlasPosition: '50% 0%' },
+  { id: 'base-dry', skinType: 'dry', skinLabel: '干性', name: '柔润光泽粉底液', brand: '映色', shade: 'N21 自然米白 · 干性适用', price: 229, originalPrice: 299, reason: '柔润质地适合干性肤感的底妆方向，薄薄叠加面中，让妆面保留自然光泽。', features: ['柔润延展质地', '自然光泽妆效', '局部少量叠加'], usage: '基础保湿后少量铺开，从面中向外轻拍，干燥处避免反复摩擦。', atlasPosition: '100% 0%' },
+  { id: 'base-normal', skinType: 'normal', skinLabel: '中性', name: '轻透匀肤粉底液', brand: '映色', shade: 'N21 自然米白 · 中性适用', price: 200, originalPrice: 269, reason: '轻透质地承接中性肤感，均匀局部肤色，让自然肌肤纹理和细腻缎光一起保留。', features: ['轻薄易推开', '自然缎光妆效', '可局部叠加'], usage: '取少量点在面中，向外轻拍铺匀，再针对鼻翼等位置局部补妆。', atlasPosition: '100% 0%' },
+  { id: 'base-oily', skinType: 'oily', skinLabel: '油性', name: '清透柔雾粉底液', brand: '映色', shade: 'N21 自然米白 · 油性适用', price: 209, originalPrice: 279, reason: '清爽肤感和柔雾妆效适合油性肤感的底妆方向，帮助面中与脸颊的光泽看起来更协调。', features: ['清爽轻盈肤感', '柔雾妆效', '少量分区上妆'], usage: '少量分区铺开，在容易泛光的位置轻压定妆，脸颊保留轻薄底妆。', atlasPosition: '100% 0%' },
+  { id: 'blush', name: '微醺柔雾单色腮红', brand: '映色', shade: '05 柔玫瑰', price: 99, originalPrice: 139, reason: '低饱和玫瑰色能够连接眼妆与唇色，用少量柔和色彩为面中增添自然气色。', features: ['细腻柔雾粉质', '低饱和玫瑰调', '少量叠加易掌握'], usage: '蘸取后先抖掉余粉，从颧骨附近轻扫，边缘晕开，最后少量补色。', atlasPosition: '100% 0%' },
   { id: 'lip', name: '柔雾绒光唇膏', brand: '映色', shade: 'R07 玫瑰豆沙', price: 119, originalPrice: 169, reason: '柔和玫瑰豆沙能够衔接眼妆与气色，突出唇形而不抢走眉眼的重点。', features: ['低饱和玫瑰调', '柔雾绒光质地', '薄涂与叠涂两种浓度'], usage: '先薄涂全唇，再在唇中央叠加一层，用指腹轻拍唇缘。', atlasPosition: '0% 100%' },
-  { id: 'hair', name: '空气感蓬松喷雾', brand: '映色', shade: '清透无色', price: 89, originalPrice: 129, reason: '轻盈发根与脸侧发丝能增强发型层次，呼应柔和、自然的轮廓方向。', features: ['细雾喷头', '轻盈蓬松感', '局部塑形更方便'], usage: '按瓶身说明少量喷于发根，提起发束吹整，再用手指拨松。', atlasPosition: '50% 100%' },
-  { id: 'style', name: '月弧细链项链', brand: '映色', shade: '香槟金 · 40–45cm', price: 139, originalPrice: 199, reason: '细窄的香槟金色线条可以呼应面部暖光，将整体风格衔接得更完整。', features: ['简洁弧形吊坠', '可调节链长', '柔和香槟金色'], usage: '搭配纯色或小领口上装，调整链长，让吊坠自然落在锁骨下方。', atlasPosition: '100% 100%' },
-].map(product => ({ ...product, ...PRODUCT_PREVIEWS[product.id] })));
+  { id: 'earrings', name: '月光小珍珠耳钉', brand: '映色', shade: '香槟金 · 米白珍珠', price: 99, originalPrice: 149, reason: '小巧米白珍珠与香槟金底托在耳畔形成柔和亮点，与细金项链呼应，保留五官的视觉重点。', features: ['小巧米白圆珠', '柔和香槟金底托', '简洁单珠造型'], usage: '佩戴后将耳侧头发轻拨开，与项链保持同一金属色，检查耳畔亮点是否清晰。', atlasPosition: '100% 100%' },
+  { id: 'style', name: '月光珍珠细链项链', brand: '映色', shade: '香槟金 · 40–45cm', price: 139, originalPrice: 199, reason: '细窄的香槟金色线条呼应珍珠耳钉的金属底托，小圆珍珠吊坠自然收住视线，让配饰搭配更完整。', features: ['小圆珍珠吊坠', '可调节链长', '柔和香槟金色'], usage: '调节链长，让小圆珍珠自然落在锁骨下方，与同色珍珠耳钉形成呼应。', atlasPosition: '100% 100%' },
+].map((product, index) => ({
+  ...product,
+  ...PRODUCT_PREVIEWS[product.id],
+  image: 'assets/beauty-products-v22.png',
+  atlasSize: '400% 300%',
+  atlasPosition: `${[0, 33.333, 66.667, 100][index % 4]}% ${Math.floor(index / 4) * 50}%`,
+})));
+
+export const SKIN_TYPES = freeze({ dry: '干性', normal: '中性', oily: '油性' });
+const TIER_SKIN_TYPES = freeze({ natural: 'dry', fresh: 'normal', radiant: 'oily', spotlight: 'normal', icon: 'dry' });
+
+export function getFoundationProducts(skinType = 'normal') {
+  if (typeof skinType !== 'string' || !Object.hasOwn(SKIN_TYPES, skinType)) throw new RangeError('skinType must be dry, normal, or oily');
+  const products = PRODUCTS.filter(product => product.skinType);
+  return copyOf([...products.filter(product => product.skinType === skinType), ...products.filter(product => product.skinType !== skinType)]);
+}
 
 const AREA_PREVIEWS = {
-  hair: { summary: '抬高发根，让脸侧线条更舒展。', actions: ['吹蓬发根', '轻卷脸侧'], beforeLabel: '发根偏贴', afterLabel: '轻盈蓬松' },
+  hair: { summary: '理顺脸侧发丝，让发尾轻盈有光。', actions: ['精油理顺', '轻整发尾'], beforeLabel: '发丝偏散', afterLabel: '顺滑有光' },
   brows: { summary: '补齐眉尾，让眉眼轮廓更清晰。', actions: ['补齐眉尾', '刷开眉头'], beforeLabel: '眉尾偏浅', afterLabel: '自然毛流' },
-  eyes: { summary: '轻轻加深眼尾，让双眼更有神。', actions: ['浅棕晕染', '卷翘睫毛'], beforeLabel: '层次偏淡', afterLabel: '柔和深邃' },
-  skin: { summary: '局部匀肤，让气色自然透亮。', actions: ['薄拍面中', '局部补妆'], beforeLabel: '光泽不均', afterLabel: '轻透匀净' },
+  eyes: { summary: '眼影眼线衔接，短簇假睫毛点睛。', actions: ['浅棕细眼线', '假睫毛点缀'], beforeLabel: '层次偏淡', afterLabel: '柔和深邃' },
+  skin: { summary: '按肤质选粉底，一抹腮红添气色。', actions: ['薄透匀肤', '轻扫腮红'], beforeLabel: '光泽不均', afterLabel: '轻透匀净' },
   lips: { summary: '一抹玫瑰豆沙，让唇色衔接眉眼。', actions: ['薄涂全唇', '拍开唇缘'], beforeLabel: '唇色偏淡', afterLabel: '玫瑰气色' },
-  style: { summary: '统一妆发色调，用细金配饰点睛。', actions: ['统一色调', '细金点睛'], beforeLabel: '重点分散', afterLabel: '协调有光' },
+  style: { summary: '珍珠耳钉与细链，让小亮点相互呼应。', actions: ['珍珠耳钉', '细链呼应'], beforeLabel: '耳畔留白', afterLabel: '珍珠点睛' },
 };
 
 export const AREAS = freeze([
-  { id: 'hair', title: '发型与轮廓', before: '发根偏贴，脸侧发丝层次不够清晰。', after: '发根轻盈蓬松，脸侧发丝自然修饰轮廓。', reason: '用发型的体积与层次平衡面部视觉比例，保留自然的脸部线条。', steps: ['提起头顶发根，吹出轻盈的弧度。', '脸侧留出两束自然发丝，轻轻向外卷。', '顺着原有分缝整理，发尾保持松散。'], productIds: ['hair'] },
+  { id: 'hair', title: '发型与轮廓', before: '脸侧发丝略散，发尾光泽不够均匀。', after: '脸侧发丝顺滑轻盈，发尾光泽自然柔和。', reason: '用少量护发精油整理脸侧和发尾，让顺滑的发丝衬托原有轮廓。', steps: ['取少量精油在掌心抹开，先带过发中与发尾。', '用掌心余量轻理脸侧碎发，避开发根。', '顺着原有分缝整理，发尾保持轻盈松散。'], productIds: ['hair'] },
   { id: 'brows', title: '眉形', before: '眉尾颜色略浅，眉形轮廓不够连贯。', after: '眉峰自然过渡，眉尾清晰而轻盈。', reason: '补齐眉尾与空隙，让眉形承接眼睛的走向，保留自然毛流。', steps: ['用眉刷顺着毛流梳开眉毛。', '灰茶棕眉笔仅补齐空隙与眉尾。', '轻刷眉头，避免颜色聚集。'], productIds: ['brow'] },
-  { id: 'eyes', title: '眼妆', before: '眼部色彩层次较少，眼尾存在感偏弱。', after: '暖棕眼尾轻轻延伸，睫毛根部更清晰。', reason: '将深色集中在睫毛根部与眼尾，增强眼睛的层次与神采。', steps: ['米杏色薄铺眼窝作为底色。', '浅棕色从眼尾向内晕染，边缘保持干净。', '少量细闪点在眼皮中央，卷翘睫毛。'], productIds: ['eye'] },
-  { id: 'skin', title: '底妆与气色', before: '面部明暗过渡略不均匀，气色显得平淡。', after: '轻薄均匀的底妆，保留真实的肌肤纹理。', reason: '先让肤色与光泽均匀，再用少量修饰突出五官，避免厚重底妆。', steps: ['完成基础保湿，等待表面吸收。', '气垫少量多次，从面中向外轻拍。', '鼻翼与眼下局部补妆，脸颊保留自然光泽。'], productIds: ['base'] },
+  { id: 'eyes', title: '眼妆', before: '眼部色彩层次较少，眼尾存在感偏弱。', after: '暖棕眼影与细眼线衔接，短簇假睫毛轻盈点睛。', reason: '用眼影铺出层次、细眼线勾勒走向，再以短簇假睫毛增加眼尾神采。', steps: ['米杏色薄铺眼窝，浅棕色从眼尾向内晕染。', '深棕眼线贴近上睫毛根部分段勾勒，眼尾短短延伸。', '按产品说明贴上短簇假睫毛，眼尾少量点缀。'], productIds: ['eye', 'eyeliner', 'lashes'] },
+  { id: 'skin', title: '底妆与气色', before: '面部明暗过渡略不均匀，气色显得平淡。', after: '轻薄粉底均匀肤色，柔玫瑰腮红衔接自然气色。', reason: '根据肤感选择合适的粉底质地，用少量腮红呼应唇色，保留自然肌肤纹理。', steps: ['按干性、中性或油性肤感选择粉底，完成基础保湿。', '粉底少量多次，从面中向外轻拍，局部再补妆。', '柔玫瑰腮红轻扫颧骨附近，边缘晕开，少量叠加。'], productIds: ['base-normal', 'base-dry', 'base-oily', 'blush'] },
   { id: 'lips', title: '唇妆', before: '唇色与面部妆容的呼应不够明显。', after: '玫瑰豆沙突出唇形，边缘柔和清晰。', reason: '用低饱和唇色连接眼妆与气色，突出原有唇形的特点。', steps: ['先做好唇部保湿，再轻轻抿去余量。', '玫瑰豆沙薄涂全唇，顺着原有唇缘。', '中央少量叠涂，用指腹拍开边缘。'], productIds: ['lip'] },
-  { id: 'style', title: '整体风格', before: '发型、妆容与配饰之间的呼应还有空间。', after: '低饱和妆容与细金配饰相互呼应。', reason: '让发型、眉眼、唇色共享柔和的色调，用一处小配饰完成整体。', steps: ['优先选择米白、浅灰或棕色纯色上装。', '佩戴一件细金配饰，保持面部为视觉焦点。', '在自然光下检查妆容衔接与色彩浓淡。'], productIds: ['style'] },
+  { id: 'style', title: '配饰搭配', before: '耳畔与颈间的小亮点还可以更连贯。', after: '珍珠耳钉与细链小圆珍珠呼应，柔和点亮面部。', reason: '用同色系珍珠与香槟金统一耳畔和颈间的亮点，配饰小巧，让五官保持主角感。', steps: ['小珍珠耳钉点亮耳畔，将耳侧发丝轻拨开。', '佩戴香槟金细链项链，让小圆珍珠自然落在锁骨下方。', '耳钉与项链保持同一金属色，检查两处亮点的平衡。'], productIds: ['earrings', 'style'] },
 ].map(area => ({ ...area, ...AREA_PREVIEWS[area.id] })));
 
 const PROFILES = freeze({
@@ -102,50 +129,50 @@ const PROFILES = freeze({
     strength: '自然舒展的五官，是清新妆容的好基础。',
     focus: '先从眉尾、均匀底妆和发根蓬松感开始。',
     keywords: ['清晰眉尾', '自然气色', '轻盈发根'],
-    summaries: ['抬高发根，让脸侧线条更舒展。', '补齐眉尾，让眉眼轮廓更清晰。', '轻轻加深眼尾，让双眼更有神。', '局部匀肤，让气色自然透亮。', '一抹玫瑰豆沙，让唇色衔接眉眼。', '统一妆发色调，用细金配饰点睛。'],
+    summaries: ['理顺脸侧发丝，让发尾轻盈有光。', '补齐眉尾，让眉眼轮廓更清晰。', '眼影眼线衔接，短簇假睫毛点睛。', '局部匀肤，轻扫腮红添一点气色。', '一抹玫瑰豆沙，让唇色衔接眉眼。', '珍珠耳钉配细链，让亮点彼此呼应。'],
     beforeLabels: ['发根偏贴', '眉尾偏浅', '层次偏淡', '光泽不均', '唇色偏淡', '重点分散'],
-    actions: [['吹蓬发根', '轻卷脸侧'], ['补齐眉尾', '刷开眉头'], ['浅棕晕染', '卷翘睫毛'], ['薄拍面中', '局部补妆'], ['薄涂全唇', '拍开唇缘'], ['统一色调', '细金点睛']],
-    before: ['发根偏贴，脸侧线条显得较直。', '眉尾颜色偏浅，轮廓有少量空隙。', '眼部层次较少，目光的亮点还未突出。', '面部明暗略不均匀，整体气色偏淡。', '唇色较浅，与眉眼之间缺少呼应。', '妆发细节尚未形成统一的视觉重点。'],
+    actions: [['精油理顺', '轻整发尾'], ['补齐眉尾', '刷开眉头'], ['浅棕细眼线', '假睫毛点缀'], ['薄拍面中', '轻扫腮红'], ['薄涂全唇', '拍开唇缘'], ['珍珠耳钉', '细链呼应']],
+    before: ['脸侧发丝略散，发尾光泽还不够均匀。', '眉尾颜色偏浅，轮廓有少量空隙。', '眼部层次较少，目光的亮点还未突出。', '面部明暗略不均匀，整体气色偏淡。', '唇色较浅，与眉眼之间缺少呼应。', '耳畔与颈间还有留白，可用小巧配饰串起亮点。'],
     intro: '可以先完成这一处小调整：',
   },
   fresh: {
     strength: '五官自然协调，亲和感是你的鲜明特点。',
     focus: '为眼尾与唇色增加一点层次，让清新感更完整。',
     keywords: ['柔和眉眼', '玫瑰唇色', '清透底妆'],
-    summaries: ['松开脸侧发丝，让清新感更轻盈。', '自然延续眉尾，让眉形更连贯。', '浅棕点亮眼尾，保留清秀眉眼。', '统一局部光泽，留住自然气色。', '柔和唇色，让清新妆容更完整。', '一件细金配饰，添一点精致感。'],
+    summaries: ['精油轻抚发尾，让清新感更顺滑。', '自然延续眉尾，让眉形更连贯。', '浅棕衔接细眼线，轻羽假睫毛点睛。', '轻薄粉底配腮红，留住自然气色。', '柔和唇色，让清新妆容更完整。', '小珍珠呼应细链，为清新感添亮点。'],
     beforeLabels: ['自然发型', '柔和眉形', '清秀眉眼', '自然肤感', '自然唇形', '清新风格'],
-    actions: [['蓬松头顶', '拨松发尾'], ['轻补眉尾', '梳顺毛流'], ['浅棕眼尾', '细闪点亮'], ['少量轻拍', '匀净光泽'], ['玫瑰薄涂', '柔化唇缘'], ['纯色上装', '细链点睛']],
-    before: ['发型自然，头顶与脸侧的层次还可以更轻盈。', '眉形柔和，眉尾的连贯度还有提升空间。', '眼睛清秀，眼尾色彩与睫毛层次偏轻。', '肌肤呈现自然状态，局部光泽略不一致。', '唇形自然，唇色与眼妆之间可以更协调。', '整体风格清新，少量配饰可以增加完整度。'],
+    actions: [['精油轻抚', '梳顺发尾'], ['轻补眉尾', '梳顺毛流'], ['浅棕细眼线', '短簇假睫毛'], ['少量轻拍', '腮红晕开'], ['玫瑰薄涂', '柔化唇缘'], ['小巧耳钉', '珍珠细链']],
+    before: ['发型自然，脸侧发丝与发尾可以再添一点柔光。', '眉形柔和，眉尾的连贯度还有提升空间。', '眼睛清秀，眼尾色彩与睫毛层次偏轻。', '肌肤呈现自然状态，局部光泽略不一致。', '唇形自然，唇色与眼妆之间可以更协调。', '清新眉眼适合小巧耳钉，颈间可以用细链轻轻呼应。'],
     intro: '在自然协调的基础上，',
   },
   radiant: {
     strength: '眉眼有辨识度，五官特点鲜明而自然。',
     focus: '让发型层次与妆容重点呼应，突出你的辨识度。',
     keywords: ['立体眼尾', '通透气色', '松弛层次'],
-    summaries: ['平衡头顶与发尾，突出轮廓层次。', '淡化眉形边缘，留下鲜明眉眼。', '细化深浅过渡，放大眼神表现力。', '提亮面中光泽，让妆面更通透。', '调整唇色浓度，让眉眼更出彩。', '精简配饰，把焦点留给你的五官。'],
+    summaries: ['精油整理发丝，突出顺滑轮廓层次。', '淡化眉形边缘，留下鲜明眉眼。', '眼影细线搭短睫，放大眼神表现力。', '柔雾粉底配腮红，让妆面更协调。', '调整唇色浓度，让眉眼更出彩。', '耳钉与细链同色，衬托鲜明五官。'],
     beforeLabels: ['层次初显', '眉形鲜明', '眼神出众', '肤色均匀', '唇形清晰', '五官鲜明'],
-    actions: [['平衡发量', '拨松层次'], ['轻刷眉缘', '保留眉峰'], ['柔化边缘', '点亮眼中'], ['提亮面中', '薄透叠加'], ['中央叠色', '呼应眼妆'], ['精简配饰', '聚焦色调']],
-    before: ['发型已有层次，发根与发尾的体积仍可更平衡。', '眉形有辨识度，边缘再轻一些会更自然。', '眼睛表现力突出，深浅色过渡可以更细腻。', '肤色总体均匀，面中光泽仍有优化空间。', '唇形清晰，唇色浓度可以与眼妆更好呼应。', '五官特点鲜明，配饰与服装可进一步聚焦风格。'],
+    actions: [['精油顺毛', '整理层次'], ['轻刷眉缘', '保留眉峰'], ['晕染细眼线', '短睫点眼尾'], ['薄透叠加', '轻扫腮红'], ['中央叠色', '呼应眼妆'], ['耳钉同色', '细链点睛']],
+    before: ['发型已有层次，发尾顺滑度与光泽仍可进一步统一。', '眉形有辨识度，边缘再轻一些会更自然。', '眼睛表现力突出，深浅色过渡可以更细腻。', '肤色总体均匀，面中光泽仍有优化空间。', '唇形清晰，唇色浓度可以与眼妆更好呼应。', '五官特点鲜明，耳钉和项链的金属色可以更协调。'],
     intro: '围绕你已有的辨识度，',
   },
   spotlight: {
     strength: '眉眼与轮廓相得益彰，整体已经很有主角感。',
     focus: '保留五官优势，只细化发丝、妆面与色彩衔接。',
     keywords: ['柔光妆面', '精致毛流', '香槟金点睛'],
-    summaries: ['保留协调轮廓，让发丝更轻盈。', '保留完整眉形，柔化眉峰衔接。', '保留出众眉眼，精修晕染边缘。', '保留整洁妆面，让柔光更统一。', '保留协调唇形，细调色彩浓度。', '保留主角气质，用香槟金点睛。'],
+    summaries: ['保留协调轮廓，精油轻理碎发。', '保留完整眉形，柔化眉峰衔接。', '保留出众眉眼，细线短睫自然点睛。', '保留整洁妆面，用腮红衔接柔光。', '保留协调唇形，细调色彩浓度。', '保留主角气质，珍珠耳钉细链点睛。'],
     beforeLabels: ['轮廓协调', '完整眉形', '眉眼出众', '妆面整洁', '唇形协调', '主角气质'],
-    actions: [['整理碎发', '保持蓬松'], ['柔化眉峰', '梳顺眉头'], ['晕开边缘', '轻提眼尾'], ['统一柔光', '轻压补妆'], ['少量叠色', '柔化唇缘'], ['香槟金点睛', '保留留白']],
-    before: ['发型与脸型协调，少量散落发丝可以整理得更轻盈。', '眉形完整，眉头与眉峰衔接可再柔和一点。', '眉眼表现出众，眼尾晕染边缘可更细腻。', '妆面整洁，局部光泽的统一会更突出质感。', '唇形与五官协调，色彩浓度可随眼妆微调。', '整体气质突出，用一件小配饰便能完成造型。'],
+    actions: [['精油理碎发', '发尾轻盈'], ['柔化眉峰', '梳顺眉头'], ['眼线衔接', '短簇点缀'], ['统一柔光', '腮红衔接'], ['少量叠色', '柔化唇缘'], ['珍珠耳钉', '细链留白']],
+    before: ['发型与脸型协调，少量散落发丝可以用精油轻轻理顺。', '眉形完整，眉头与眉峰衔接可再柔和一点。', '眉眼表现出众，眼尾晕染边缘可更细腻。', '妆面整洁，局部光泽的统一会更突出质感。', '唇形与五官协调，色彩浓度可随眼妆微调。', '主角气质鲜明，耳畔珍珠与颈间细链可以再多一点呼应。'],
     intro: '保留目前的优势，',
   },
   icon: {
     strength: '五官与气质高度协调，个人风格令人过目难忘。',
     focus: '保持个人特点，精修妆发细节即可。',
     keywords: ['保留辨识度', '极简精修', '自然高光'],
-    summaries: ['保留发型轮廓，只添一点发丝光泽。', '保留自然毛流，让眉形舒展有神。', '保留眼部亮点，用轻盈色彩衬托。', '保留通透肤感，轻薄底妆就足够。', '保留独特唇形，用低饱和色点睛。', '保留鲜明风格，极简配饰刚刚好。'],
+    summaries: ['保留发型轮廓，精油添一点柔光。', '保留自然毛流，让眉形舒展有神。', '保留眼部亮点，细线短睫轻盈衬托。', '保留通透肤感，薄底妆配柔和腮红。', '保留独特唇形，用低饱和色点睛。', '保留鲜明风格，耳钉细链轻巧呼应。'],
     beforeLabels: ['轮廓出众', '自然毛流', '亮眼双眸', '通透气色', '独特唇形', '鲜明风格'],
-    actions: [['梳顺光泽', '保留分缝'], ['顺梳毛流', '少量补空'], ['轻扫棕调', '保留亮点'], ['薄妆保光', '局部轻拍'], ['低饱和点睛', '保持唇形'], ['一件配饰', '突出个人风格']],
-    before: ['发型与轮廓已经协调，发丝光泽是可精修的细节。', '眉形与五官高度呼应，保留自然毛流更能突出气质。', '眼部已是鲜明亮点，适合更轻盈的色彩表达。', '肤色与气色表现完整，妆面可保持轻薄。', '唇形与整体风格协调，适合低饱和色彩点睛。', '个人风格鲜明，少量装饰即可完成高光造型。'],
+    actions: [['少量精油', '梳顺光泽'], ['顺梳毛流', '少量补空'], ['细眼线轻描', '短睫少量'], ['薄妆保光', '腮红轻扫'], ['低饱和点睛', '保持唇形'], ['小珍珠耳钉', '细链轻呼应']],
+    before: ['发型与轮廓已经协调，精油带出的均匀柔光是可精修的细节。', '眉形与五官高度呼应，保留自然毛流更能突出气质。', '眼部已是鲜明亮点，适合更轻盈的色彩表达。', '肤色与气色表现完整，妆面可保持轻薄。', '唇形与整体风格协调，适合低饱和色彩点睛。', '个人风格鲜明，珍珠耳钉与纤细项链能轻巧完成点睛。'],
     intro: '以保留你的个人特点为前提，',
   },
 });
@@ -203,6 +230,7 @@ export function createReport(score = 90, copyVariant = 0) {
   const variant = copyVariant % 5;
   const tier = getTier(score);
   const profile = PROFILES[tier.id];
+  const skinType = TIER_SKIN_TYPES[tier.id];
   const wording = COPY_LIBRARY[tier.id][variant];
   const style = STYLE_PROFILES[tier.id];
   const afterScore = Math.max(score, Math.round(interpolate(score, [[0, 18], [52, 70], [68, 80], [80, 88], [90, 95], [97, 99], [100, 100]])));
@@ -213,9 +241,12 @@ export function createReport(score = 90, copyVariant = 0) {
     summary: profile.summaries[index],
     actions: [...profile.actions[index]],
     beforeLabel: profile.beforeLabels[index],
+    ...(area.id === 'skin' ? { productIds: [...getFoundationProducts(skinType).map(product => product.id), 'blush'] } : {}),
   }));
   return {
     score,
+    skinType,
+    skinLabel: SKIN_TYPES[skinType],
     percentile: getPercentile(score),
     tier: copyOf(tier),
     afterScore,

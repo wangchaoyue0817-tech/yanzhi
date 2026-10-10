@@ -4,6 +4,7 @@ import { inflateSync } from 'node:zlib';
 import { runInNewContext } from 'node:vm';
 import test from 'node:test';
 import { TIERS, PRODUCTS, createReport } from '../public/beauty-model.js';
+import { quoteOrder, getFoundationProducts } from '../public/beauty-commerce.js';
 
 const publicRoot = new URL('../public/', import.meta.url);
 const read = path => readFileSync(new URL(path, publicRoot), 'utf8');
@@ -61,9 +62,9 @@ test('the browser receives the feature as a module with resolvable named depende
   const entry = staticElements.find(element => element.tag === 'script' && element.src?.split('?')[0] === 'beauty-analysis.js');
   assert.ok(entry, 'feature entry script must be included by the homepage');
   assert.equal(entry.type, 'module', 'named imports require browser module loading');
-  assert.equal(entry.src, 'beauty-analysis.js?v=21');
+  assert.equal(entry.src, 'beauty-analysis.js?v=22');
   for (const filename of ['beauty-model.js', 'beauty-poster.js']) {
-    assert.ok(controller.includes(`from './${filename}?v=18'`), `${filename} must bypass the preceding version's cache`);
+    assert.ok(controller.includes(`from './${filename}?v=22'`), `${filename} must bypass the preceding version's cache`);
   }
   assert.ok(staticElements.some(element => element.tag === 'link' && element.rel === 'stylesheet' && element.href?.split('?')[0] === 'beauty-analysis.css'));
 
@@ -161,7 +162,7 @@ test('the shipped portrait and product atlases contain complete usable image dat
   assert.ok(portraits.width / 5 >= 250 && portraits.height / 2 >= 350, 'five before/after portraits need usable crop resolution');
   assert.ok(products.width / 3 >= 300 && products.height / 2 >= 300, 'six individual products need usable image resolution');
 
-  const referencedAssets = new Set([...`${html}\n${controller}\n${css}`.matchAll(/['"](assets\/beauty[^'"]+|assets\/icons\/face-sparkle\.svg)['"]/g)].map(match => match[1]));
+  const referencedAssets = new Set([...`${html}\n${controller}\n${css}`.matchAll(/['"](assets\/beauty[^'"]+\.(?:png|jpg|webp|svg)|assets\/icons\/face-sparkle\.svg)['"]/g)].map(match => match[1]));
   for (const tier of ['natural','fresh','radiant','spotlight','icon']) {
     const path = 'assets/beauty-portrait-'+tier+'-v2.png';
     const pair = pngInfo(path);
@@ -169,6 +170,9 @@ test('the shipped portrait and product atlases contain complete usable image dat
     assert.ok(referencedAssets.has(path), 'high resolution pair is wired to the report');
   }
   assert.ok(referencedAssets.has('assets/beauty-products-v2.png'));
+  const expandedProducts = pngInfo(PRODUCTS[0].image);
+  assert.ok(expandedProducts.width / 4 >= 300 && expandedProducts.height / 3 >= 300, 'twelve recommended products retain usable crop resolution');
+  assert.equal(new Set(PRODUCTS.map(product => product.atlasPosition)).size, 12);
   for (const path of referencedAssets) assert.ok(existsSync(new URL(path, publicRoot)), `missing runtime asset: ${path}`);
 });
 
@@ -302,7 +306,7 @@ function reportHarness({ reducedMotion = false } = {}) {
       state() { return { currentReport, photos, posterCache, copyVariant, generation, timerCount: timers.size, frameCount: frames.size }; }
     });
   `, {
-    document, TIERS, PRODUCTS, createReport,
+    document, TIERS, PRODUCTS, createReport, getFoundationProducts, quoteOrder,
     matchMedia: () => ({ matches: reducedMotion, addEventListener() {} }),
     window: {}, location: { search: '' }, URLSearchParams,
     URL: {
@@ -380,13 +384,14 @@ test('v21 keeps a short result cover and mounts complete report chapters directl
   for (const [index, match] of adviceLists.entries()) {
     assert.equal((match[1].match(/<li>/g) || []).length, 3);
     report.areas[index].steps.forEach(step => assert.ok(match[1].includes(step)));
-    assert.ok(rendered.includes(`src="${photos.parts[report.areas[index].id].before}"`));
+    if (report.areas[index].id !== 'style') assert.ok(rendered.includes(`src="${photos.parts[report.areas[index].id].before}"`));
+    else assert.ok(!rendered.includes(`src="${photos.parts.style.before}"`));
     assert.ok(rendered.includes(`src="${photos.parts[report.areas[index].id].after}"`));
   }
-  assert.equal((rendered.match(/class="beauty-product beauty-product-compact"/g) || []).length, 6);
+  assert.equal((rendered.match(/class="beauty-product beauty-product-compact"/g) || []).length, 12);
   assert.doesNotMatch(rendered, /beauty-product-purchase|data-product-buy=/);
-  assert.equal((rendered.match(/data-product-detail=/g) || []).length, 6);
-  assert.equal((rendered.match(/class="beauty-product-reason"/g) || []).length, 6);
+  assert.equal((rendered.match(/data-product-detail=/g) || []).length, 26);
+  assert.equal((rendered.match(/class="beauty-product-reason"/g) || []).length, 12);
 });
 
 test('result copy emphasizes the opening sentence without losing text or permitting HTML injection', () => {
@@ -517,12 +522,12 @@ test('strength and focus retain their analysis in separately styled cards with d
   }
 });
 
-test('all six recommendation cards have one detail action, paired prices and no purchase action', () => {
+test('all twelve recommendation cards have one detail action, paired prices and no purchase action', () => {
   const harness = reportHarness({ reducedMotion: true });
   harness.api.show(createReport(90), reportPhotos());
   const markup = harness.node('beautyReport').innerHTML;
   const cards = [...markup.matchAll(/<article class="beauty-product beauty-product-compact">([\s\S]*?)<\/article>/g)];
-  assert.equal(cards.length, 6);
+  assert.equal(cards.length, 12);
   const ids = new Set();
   for (const [, card] of cards) {
     const controls = elements(card).filter(element => element.tag === 'button');

@@ -506,11 +506,17 @@ function drawPoster(ctx, before, after, parts, report, layout) {
     text(ctx,String(index+1).padStart(2,'0'),x+23,rowY+41,21,theme.accent,600);
     drawLines(ctx,info.heading,x+70,rowY+43,30,'#F1EDFC',38,600);
     const imageY=rowY+info.imageY;
-    imageRegion(ctx,parts[area.id].before,x+22,imageY,210,113,11);
-    imageRegion(ctx,parts[area.id].after,x+248,imageY,210,113,11);
-    for (const [label,labelX] of [['原来',x+30],['调整后',x+256]]) {
-      roundedPath(ctx,labelX,imageY+8,label==='原来'?58:78,29,7);ctx.fillStyle='#090C20B8';ctx.fill();
-      text(ctx,label,labelX+9,imageY+29,20,label==='原来'?'#E0E5F2':theme.light,500);
+    if(area.id==='style') {
+      imageRegion(ctx,parts[area.id].after,x+22,imageY,90,113,11);
+      text(ctx,'珍珠耳钉 × 细链',x+142,imageY+42,25,theme.light,600);
+      text(ctx,'耳畔与锁骨的呼应',x+142,imageY+82,22,'#C8BED7');
+    } else {
+      imageRegion(ctx,parts[area.id].before,x+22,imageY,210,113,11);
+      imageRegion(ctx,parts[area.id].after,x+248,imageY,210,113,11);
+      for (const [label,labelX] of [['原来',x+30],['调整后',x+256]]) {
+        roundedPath(ctx,labelX,imageY+8,label==='原来'?58:78,29,7);ctx.fillStyle='#090C20B8';ctx.fill();
+        text(ctx,label,labelX+9,imageY+29,20,label==='原来'?'#E0E5F2':theme.light,500);
+      }
     }
     drawLines(ctx,info.summary,x+25,rowY+info.summaryY,26,'#E7E1F0',36,600);
     let actionY=rowY+info.actionY;

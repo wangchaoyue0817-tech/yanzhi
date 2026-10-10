@@ -1,0 +1,99 @@
+/* v22 · coordinated products, quiet surfaces and an explicit shopping summary. */
+.beauty-foundation-picker { margin:18px 0 10px;min-width:0;touch-action:pan-y; }
+.beauty-foundation-heading { display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px; }
+.beauty-foundation-heading strong { font-size:13px;font-weight:500;color:#e2d8f1; }
+.beauty-foundation-heading>span { font-size:11px;color:#aaa6c3; }
+.beauty-foundation-tabs { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:4px;background:#090d205c;border:1px solid #b6a7e31c;border-radius:12px; }
+.beauty-foundation-tabs button { position:relative;min-height:44px;padding:9px 5px;border:0;border-radius:9px;color:#aaa8c1;background:transparent;font-size:13px;display:flex;align-items:center;justify-content:center;gap:5px; }
+.beauty-foundation-tabs button[aria-selected=true] { background:linear-gradient(115deg,#6154ba60,#9b73cf30);color:#f5eaff;box-shadow:inset 0 1px #c8b0ff2e; }
+.beauty-foundation-tabs em { font-size:10px;font-style:normal;line-height:1.4;color:#efd7a9;border:1px solid #ddbf7140;background:#b99a471c;border-radius:4px;padding:2px 3px; }
+.beauty-foundation-picker [role=tabpanel] { animation:beauty-product-in .25s ease both; }
+.beauty-reader .beauty-product-compact { margin-top:9px; }
+.beauty-reader .beauty-product-compact .beauty-product-link { grid-template-columns:52px minmax(0,1fr) auto;gap:6px 9px; }
+.beauty-reader .beauty-product-compact .beauty-product-image { width:52px; }
+.beauty-reader .beauty-product-copy small { font-size:11px;line-height:1.5; }
+.beauty-reader .beauty-product-copy strong { font-size:13px;line-height:1.55; }
+.beauty-reader .beauty-product-features { font-size:11px;line-height:1.5; }
+.beauty-reader .beauty-product-reason { font-size:12px;line-height:1.6;padding-top:7px; }
+.beauty-reader .beauty-product-compact .beauty-price { font-size:20px; }
+.beauty-reader .beauty-product-compact .beauty-product-prices del { font-size:11px; }
+.beauty-accessory-look { position:relative;isolation:isolate;overflow:hidden;border-radius:18px;border:1px solid #d6bb8945;background:#151b2a; }
+.beauty-accessory-look>img { display:block;width:100%;aspect-ratio:4/5;object-fit:cover;object-position:center 38%; }
+.beauty-accessory-look:after { content:"";position:absolute;inset:55% 0 0;pointer-events:none;background:linear-gradient(180deg,transparent,#090e2399 70%,#090e23e6); }
+.beauty-accessory-look figcaption { position:absolute;z-index:1;bottom:18px;left:16px;right:12px;display:grid;gap:6px; }
+.beauty-accessory-look figcaption span { color:#e3d1b5;font-size:11px;letter-spacing:1px; }
+.beauty-accessory-look figcaption strong { font-size:17px;font-weight:500;color:#fff7ec; }
+.beauty-accessory-tag { position:absolute;z-index:2;display:flex;align-items:center;justify-content:center;min-height:40px;padding:8px 10px;border:1px solid #eed9b670;border-radius:30px;background:#10192eab;backdrop-filter:blur(12px);color:#f9e6c7;font-size:11px;box-shadow:0 3px 15px #09132730; }
+.beauty-accessory-ear { top:43%;right:7px; }
+.beauty-accessory-neck { top:68%;left:9px; }
+.beauty-collection { margin:32px 0 0;padding-top:24px;border-top:1px solid #c7b0f32b; }
+.beauty-collection>header { position:relative;padding:0 0 17px; }
+.beauty-collection>header small { font-size:11px;letter-spacing:2px;color:#b8a1e2; }
+.beauty-collection>header h2 { margin-top:7px;font-size:23px;letter-spacing:.5px;font-weight:600;color:#f0e9ff; }
+.beauty-collection>header p { margin:8px 0 0;color:#b0a8c5;font-size:12px; }
+.beauty-offer { display:flex;justify-content:space-between;align-items:center;gap:8px;padding:13px 14px;margin-bottom:14px;border-radius:12px;border:1px solid #ddc18c36;background:linear-gradient(110deg,#a3803e24,#1d203842);color:#e8d1a9; }
+.beauty-offer>span { font-size:13px; }
+.beauty-offer b { font-size:21px;font-weight:600; }
+.beauty-offer small { font-size:11px;color:#ccbc9f; }
+.beauty-collection-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+.beauty-collection-item { position:relative;min-width:0;background:linear-gradient(135deg,#20203666,#12172be0);border:1px solid #afa4d323;border-radius:14px;overflow:hidden; }
+.beauty-collection-item:has([aria-pressed=true]) { border-color:#b193efb0;background:linear-gradient(135deg,#45346765,#191b33); }
+.beauty-collection-link { border:0;display:block;width:100%;padding:8px;text-align:left;color:#e5dff2;background:transparent; }
+.beauty-collection-link .beauty-product-image { width:100%;border-radius:9px; }
+.beauty-collection-copy { display:grid;gap:5px;padding:9px 3px 4px; }
+.beauty-collection-copy>small { font-size:11px;color:#aaa7bf;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.beauty-collection-copy>strong { font-size:13px;font-weight:500;line-height:1.5;min-height:39px; }
+.beauty-collection-copy>span { display:flex;align-items:baseline;gap:6px; }
+.beauty-collection-copy b { color:#e7cd9f;font-size:17px;font-weight:600; }
+.beauty-collection-copy del { font-size:10px;color:#9995ae; }
+.beauty-select-product { position:absolute;z-index:2;top:6px;right:6px;width:44px;height:44px;display:grid;place-items:center;padding:0;border:0;border-radius:50%;background:transparent; }
+.beauty-select-product>span { display:grid;place-items:center;width:23px;height:23px;border:1px solid #fff9;border-radius:50%;background:#10132375;box-shadow:0 2px 7px #0b0d251e;color:transparent;font-size:13px; }
+.beauty-select-product[aria-pressed=true]>span { color:#fff;background:linear-gradient(135deg,#7b6aef,#a16fc5);border-color:#e0c3ff; }
+.beauty-collection-hint { font-size:11px;color:#a49bb8;text-align:center;margin:16px 0 8px; }
+.beauty-cart-dock { flex:none;z-index:5;padding:9px 18px 12px;background:linear-gradient(115deg,#15162efa,#171528fa);border-top:1px solid #b8a0e64d;box-shadow:0 -8px 26px #05081766; }
+.beauty-cart-savings { color:#d6bc91;font-size:11px;line-height:1.5;margin-bottom:5px; }
+.beauty-cart-row { display:flex;align-items:center;justify-content:space-between;gap:14px; }
+.beauty-cart-row>div { display:flex;gap:4px;flex-direction:column; }
+.beauty-cart-row small { font-size:10px;color:#b6b1c6; }
+.beauty-cart-row strong { font-size:23px;line-height:1.1;color:#efdcba;font-weight:600; }
+.beauty-cart-row>.beauty-primary { display:flex;align-items:center;justify-content:center;gap:16px;margin:0;min-height:46px;width:auto;min-width:140px;padding:10px 19px;font-size:14px; }
+.beauty-checkout-offer { padding:12px 14px;background:linear-gradient(115deg,#a7853926,#51467626);border:1px solid #cfb47538;border-radius:10px;color:#ebd1a2;font-size:14px;margin:8px 0 17px; }
+.beauty-checkout-offer span { float:right;padding:2px 6px;border-radius:4px;background:#d0ac521c;font-size:11px; }
+.beauty-checkout-item { position:relative;display:grid;grid-template-columns:68px minmax(0,1fr);gap:12px;margin-bottom:0;padding:15px 21px 15px 0;border-bottom:1px solid #b3a0d320; }
+.beauty-checkout-item>.beauty-product-image { width:68px; }
+.beauty-checkout-item>div { display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;min-width:0; }
+.beauty-checkout-item strong,.beauty-checkout-item small { grid-column:1/-1; }
+.beauty-checkout-item strong { font-size:13px;color:#e6e0f1;font-weight:500; }
+.beauty-checkout-item small { font-size:11px;color:#b2a8c2; }
+.beauty-checkout-item b { color:#e5cea6;font-size:15px;font-weight:500; }
+.beauty-checkout-quantity { display:flex;align-items:center;border:1px solid #a590d532;border-radius:7px;overflow:hidden; }
+.beauty-checkout-quantity button { border:0;width:28px;min-height:32px;background:#b393db12;color:#dfd6f1;font-size:16px; }
+.beauty-checkout-quantity input { appearance:textfield;-moz-appearance:textfield;width:30px;height:32px;padding:0;border:0;background:#080d2199;color:#e5d9f5;text-align:center;font-size:12px; }
+.beauty-checkout-quantity input::-webkit-inner-spin-button,.beauty-checkout-quantity input::-webkit-outer-spin-button { -webkit-appearance:none;margin:0; }
+.beauty-order-remove { position:absolute;right:-11px;top:4px;padding:0;width:40px;height:40px;border:0;border-radius:50%;background:transparent;color:#aca4bf;font-size:21px; }
+.beauty-order-totals { padding:16px 0 12px;border-top:1px solid #ab91d126; }
+.beauty-order-totals>div { display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;gap:10px;font-size:13px;color:#bfb4d0; }
+.beauty-order-totals b { font-weight:500; }
+.beauty-order-totals .beauty-order-discount { color:#d8bd90; }
+.beauty-order-totals .beauty-order-payable { padding-top:10px;border-top:1px solid #a18eb51f;color:#ede2f6; }
+.beauty-order-payable strong { font-size:24px;font-weight:600;color:#efdbb2; }
+.beauty-order-totals>p { margin:3px 0 0;color:#b29ac9;font-size:11px;line-height:1.6;text-align:right; }
+#beautyOrderForm>.beauty-primary { position:sticky;bottom:0;z-index:2;box-shadow:0 -8px 15px #0b0d20aa; }
+@keyframes beauty-product-in { from{opacity:.5;transform:translateX(5px)}to{opacity:1;transform:none} }
+@media(max-width:350px) {
+ .beauty-reader .beauty-product-compact .beauty-product-link { grid-template-columns:42px minmax(0,1fr) auto;gap:6px; }
+ .beauty-reader .beauty-product-compact .beauty-product-image { width:42px; }
+ .beauty-reader .beauty-product-copy small { font-size:10px; }
+ .beauty-reader .beauty-product-compact .beauty-price { font-size:18px; }
+ .beauty-foundation-tabs em { font-size:9px;padding:2px; }
+ .beauty-foundation-heading>span { font-size:10px; }
+ .beauty-offer { padding-inline:11px; }
+ .beauty-offer small { font-size:10px; }
+ .beauty-collection-grid { gap:8px; }
+ .beauty-collection-copy { padding-inline:1px; }
+ .beauty-cart-dock { padding-inline:14px; }
+ .beauty-cart-row>.beauty-primary { min-width:120px;padding-inline:14px; }
+}
+@media(prefers-reduced-motion:reduce) { .beauty-foundation-picker [role=tabpanel] { animation:none; } }
+
+.beauty-reader .beauty-product-features span { font-size:11px; }

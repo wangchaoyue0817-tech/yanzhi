@@ -1,7 +1,7 @@
 import { mountBeautyLoading } from './beauty-loading.js?v=22';
 import { quoteOrder, getFoundationProducts } from './beauty-commerce.js?v=22';
 import { TIERS, PRODUCTS, createReport } from './beauty-model.js?v=22';
-import { renderBeautyPoster } from './beauty-poster.js?v=22';
+import { renderBeautyPoster } from './beauty-poster.js?v=23';
 import { startBeautyCelebration } from './beauty-celebration.js?v=17';
 
 const $ = id => document.getElementById(id);
@@ -118,10 +118,9 @@ async function preparePhotos(score) {
   }
   const [beforeImage, afterImage] = await Promise.all([loadImage(pair.before),loadImage(pair.after)]);
   const parts = Object.fromEntries(Object.entries(regions).map(([id,box]) => [id,{before:crop(beforeImage,box),after:crop(afterImage,box)}]));
-  const tier = TIERS.find(tier => score >= tier.min && score <= tier.max);
-  // Preset editorial accessory photograph, paired with the exact recommended jewellery.
-  parts.style.after = 'assets/beauty-accessory-'+tier.id+'-v22.png';
-  await loadImage(parts.style.after);
+  // Editorial wear details show only the two recommended accessories.
+  parts.style = { before:'assets/beauty-earring-detail-v23.png', after:'assets/beauty-necklace-detail-v23.png' };
+  await Promise.all([loadImage(parts.style.before),loadImage(parts.style.after)]);
   return {...pair,parts};
 }
 function clearUpload() {
@@ -252,7 +251,10 @@ function selectFoundation(id,{focus=false}={}) {
   if(focus)$('foundationTab-'+id).focus({preventScroll:true});
 }
 function accessoryHTML(parts){
-  return '<figure class="beauty-accessory-look"><img draggable="false" loading="lazy" src="'+parts.after+'" alt="珍珠耳钉与香槟金细链的佩戴搭配"><figcaption><span>小小点睛，刚好出彩</span><strong>让耳畔与锁骨，悄悄呼应</strong></figcaption><button type="button" class="beauty-accessory-tag beauty-accessory-ear" data-product-detail="earrings">珍珠耳钉 ↗</button><button type="button" class="beauty-accessory-tag beauty-accessory-neck" data-product-detail="style">细链点睛 ↗</button></figure>';
+  return '<div class="beauty-accessory-grid">'+[
+    {id:'earrings',src:parts.before,label:'珍珠耳钉',alt:'耳部佩戴珍珠耳钉的局部特写'},
+    {id:'style',src:parts.after,label:'细链项链',alt:'锁骨处佩戴珍珠细链项链的局部特写'}
+  ].map(item=>'<figure class="beauty-accessory-look"><button type="button" class="beauty-accessory-detail" data-product-detail="'+item.id+'" aria-label="查看'+item.label+'详情"><img draggable="false" loading="lazy" src="'+esc(item.src)+'" alt="'+item.alt+'"><span>'+item.label+'<i aria-hidden="true">↗</i></span></button></figure>').join('')+'</div>';
 }
 function areaHTML(area,index) {
   const parts = photos.parts[area.id];
@@ -264,7 +266,7 @@ function areaHTML(area,index) {
 const areaNames={hair:'发型',brows:'眉形',eyes:'眼妆',skin:'底妆',lips:'唇妆',style:'配饰'};
 function collectionHTML(report){
   const products=[...new Set(report.areas.flatMap(area=>area.productIds))].map(id=>PRODUCTS.find(p=>p.id===id));
-  return '<section class="beauty-collection" id="beautyCollection" aria-labelledby="beautyCollectionTitle"><header><small>为你整理好了</small><h2 id="beautyCollectionTitle">我的专属产品</h2><p>喜欢哪一件，就带走哪一件。</p></header><div class="beauty-offer"><span>满 <b>200</b> 减 <b>20</b></span><small>每满即减 · 优惠可叠加</small></div><div class="beauty-collection-grid">'+products.map(product=>'<article class="beauty-collection-item" data-collection-item="'+product.id+'"><button type="button" class="beauty-select-product" data-cart-toggle="'+product.id+'" aria-pressed="'+selectedProducts.has(product.id)+'" aria-label="选择'+esc(product.name)+'"><span aria-hidden="true">✓</span></button><button type="button" class="beauty-collection-link" data-product-detail="'+product.id+'">'+productImage(product)+'<span class="beauty-collection-copy"><small>'+esc(product.shade)+'</small><strong>'+esc(product.shortName || product.name)+'</strong><span><b>¥'+money(product.price)+'</b><del>¥'+money(product.originalPrice)+'</del></span></span></button></article>').join('')+'</div><p class="beauty-collection-hint">点击商品查看详情，勾选后可合并下单</p></section>';
+  return '<section class="beauty-collection" id="beautyCollection" aria-labelledby="beautyCollectionTitle"><header><h2 id="beautyCollectionTitle">我的专属产品</h2><small>共 '+products.length+' 件</small></header><div class="beauty-offer"><span>满 <b>200</b> 减 <b>20</b></span><small>每满即减 · 优惠可叠加</small></div><div class="beauty-collection-list">'+products.map(product=>'<article class="beauty-collection-item" data-collection-item="'+product.id+'"><button type="button" class="beauty-select-product" data-cart-toggle="'+product.id+'" aria-pressed="'+selectedProducts.has(product.id)+'" aria-label="选择'+esc(product.name)+'"><span aria-hidden="true">✓</span></button><button type="button" class="beauty-collection-link" data-product-detail="'+product.id+'" aria-label="查看'+esc(product.name)+'详情">'+productImage(product)+'<span class="beauty-collection-copy"><strong>'+esc(product.shortName || product.name)+'</strong><small>'+esc(product.shade)+'</small><span><b>¥'+money(product.price)+'</b><del>¥'+money(product.originalPrice)+'</del></span></span><i aria-hidden="true">›</i></button></article>').join('')+'</div></section>';
 }
 function selectedItems(){return [...selectedProducts].map(([id,quantity])=>({id,quantity}));}
 function quoteHint(quote){if(!quote.quantity)return '勾选喜欢的商品，享每满 200 减 20';return quote.discount?'已减 ¥'+money(quote.discount)+' · 再选 ¥'+money(quote.nextThresholdGap)+' 多减 ¥20':'再选 ¥'+money(quote.nextThresholdGap)+'，立减 ¥20';}
@@ -346,7 +348,6 @@ function selectChapter(tab,{focus=true,reset=false}={}){
   }
   $('beautyAreaNavigation').hidden=tab!=='advice';
   scroll.scrollTo({top:readerTop()+(reset?0:reader.positions[tab] || 0),behavior:'instant'});
-  $('beautyReaderProgress').textContent=(tab==='overview'?'01':'02')+' / 02 · 左右滑动切换栏目';
   syncReading();updateCartDock();
   if(focus)$('beautyTab-'+tab).focus({preventScroll:true});
 }
@@ -400,8 +401,7 @@ function showReport(report,readyPhotos,{celebrate=true}={}) {
       '<div class="beauty-features-heading"><h3>五官表现</h3><span>你的优势，逐一看清</span></div>'+
       '<div class="beauty-radar-wrap">'+radar(report.dimensions)+'<div class="beauty-dimensions">'+report.dimensions.map((d,index) => '<div class="beauty-dimension" data-dimension="'+index+'"><span>'+esc(d.label)+'</span><b>'+d.score+'</b><i><span style="width:'+d.score+'%"></span></i></div>').join('')+'</div></div>'+
       '<div class="beauty-insights"><div class="beauty-insight beauty-insight-strength"><small><i aria-hidden="true">'+star+'</i>你的优势</small><p>'+esc(report.strength)+'</p></div><div class="beauty-insight beauty-insight-focus"><small><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 18 6-6m-3-5 3-3m4 4 3-3m-4 9 6-6M5 21l-2-2 9-9 2 2Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>优先调整</small><p>'+esc(report.focus)+'</p></div></div><p class="beauty-reader-copy">'+resultCopy(report.copy)+'</p><div class="beauty-chapter-end" id="beautyChapterEnd"><span>继续上滑，查看我的变美思路</span><button type="button" data-action="read-advice" aria-label="查看我的变美思路">↓</button></div></section>'+
-    '<section class="beauty-advice-panel" id="beautyAdvice" role="tabpanel" aria-labelledby="beautyTab-advice" hidden><div class="beauty-advice-intro"><h2>我的变美思路</h2><p>从发型到妆容，找到适合你的改变。</p></div>'+report.areas.map(areaHTML).join('')+collectionHTML(report)+'<p class="beauty-advice-end">六个变美方向，找到属于你的表达。</p></section>'+
-    '<p class="beauty-reader-progress" id="beautyReaderProgress" aria-live="polite">01 / 02 · 左右滑动切换栏目</p></div>' ;
+    '<section class="beauty-advice-panel" id="beautyAdvice" role="tabpanel" aria-labelledby="beautyTab-advice" hidden><div class="beauty-advice-intro"><h2>我的变美思路</h2><p>从发型到妆容，找到适合你的改变。</p></div>'+report.areas.map(areaHTML).join('')+collectionHTML(report)+'</section></div>' ;
   scroll.scrollTop = 0;
   updateCartDock();
   animateReport(celebrate);

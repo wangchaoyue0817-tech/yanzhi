@@ -62,9 +62,9 @@ test('the browser receives the feature as a module with resolvable named depende
   const entry = staticElements.find(element => element.tag === 'script' && element.src?.split('?')[0] === 'beauty-analysis.js');
   assert.ok(entry, 'feature entry script must be included by the homepage');
   assert.equal(entry.type, 'module', 'named imports require browser module loading');
-  assert.equal(entry.src, 'beauty-analysis.js?v=22');
-  for (const filename of ['beauty-model.js', 'beauty-poster.js']) {
-    assert.ok(controller.includes(`from './${filename}?v=22'`), `${filename} must bypass the preceding version's cache`);
+  assert.equal(entry.src, 'beauty-analysis.js?v=23');
+  for (const [filename, version] of [['beauty-model.js', 22], ['beauty-poster.js', 23]]) {
+    assert.ok(controller.includes(`from './${filename}?v=${version}'`), `${filename} must use the current version's cache key`);
   }
   assert.ok(staticElements.some(element => element.tag === 'link' && element.rel === 'stylesheet' && element.href?.split('?')[0] === 'beauty-analysis.css'));
 
@@ -384,8 +384,7 @@ test('v21 keeps a short result cover and mounts complete report chapters directl
   for (const [index, match] of adviceLists.entries()) {
     assert.equal((match[1].match(/<li>/g) || []).length, 3);
     report.areas[index].steps.forEach(step => assert.ok(match[1].includes(step)));
-    if (report.areas[index].id !== 'style') assert.ok(rendered.includes(`src="${photos.parts[report.areas[index].id].before}"`));
-    else assert.ok(!rendered.includes(`src="${photos.parts.style.before}"`));
+    assert.ok(rendered.includes(`src="${photos.parts[report.areas[index].id].before}"`));
     assert.ok(rendered.includes(`src="${photos.parts[report.areas[index].id].after}"`));
   }
   assert.equal((rendered.match(/class="beauty-product beauty-product-compact"/g) || []).length, 12);

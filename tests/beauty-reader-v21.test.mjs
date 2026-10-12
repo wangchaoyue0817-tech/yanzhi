@@ -190,6 +190,7 @@ test('all five tiers directly show the cover, prominent poster action and two re
     const html=h.node('beautyReport').innerHTML;
     const cover=html.slice(0,html.indexOf('<div id="beautyDetail"'));
     assert.doesNotMatch(html,/beauty-preview-card|你的下一幕|data-action="open-report"|data-action="report-back"/);
+    assert.doesNotMatch(html,/beauty-advice-end|beautyReaderProgress|beauty-reader-progress|beauty-collection-hint|六个变美方向，找到属于你的表达。|左右滑动切换栏目|点击商品查看详情，勾选后可合并下单/,'removed footer copy stays absent in every score tier');
     assert.match(cover,/查看我的颜值海报/);
     assert.equal((cover.match(/data-action="poster"/g)||[]).length,1);
     assert.equal(tags(html).filter(tag=>tag['data-report-tab']).length,2);

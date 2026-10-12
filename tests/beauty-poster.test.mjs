@@ -66,7 +66,7 @@ function withCanvasEnvironment(t, { failedImage = false, nullBlob = false, missi
     getContext: () => missingContext ? null : context,
     toBlob(callback, type) {
       assert.equal(type, 'image/png');
-      assert.equal(images.length, 13, 'both main photos, ten part photos and one accessory portrait are drawn before export');
+      assert.equal(images.length, 14, 'both main photos, ten part photos and two accessory close-ups are drawn before export');
       if (throwBlob) throw new Error('canvas tainted');
       callback(nullBlob ? null : new Blob(['png'], { type }));
     },
@@ -104,7 +104,8 @@ test('poster exports a compact infographic with both portraits, six illustrated 
   assert.equal(output.blob.type, 'image/png');
   assert.deepEqual(environment.images.slice(0, 2), ['/before.webp', '/after.webp']);
   assert.equal(environment.images.filter(value => value === '/before.webp').length, 6);
-  assert.equal(environment.images.filter(value => value === '/after.webp').length, 7);
+  assert.equal(environment.images.filter(value => value === '/after.webp').length, 6);
+  assert.deepEqual(environment.images.slice(-2), ['assets/beauty-earring-detail-v23.png', 'assets/beauty-necklace-detail-v23.png']);
   for (const caption of ['90', '97', '超过 96% 的人', '超过 99.6% 的人', '预计增加7分', '高光主角', '惊艳焦点', '轻盈眉眼']) {
     assert.ok(environment.captions.join('').includes(caption), caption);
   }
@@ -174,10 +175,14 @@ test('complete report renders supplied part images, concise six-area advice, dim
   const output=await renderBeautyPoster({report:complete,beforeSrc:'/before.webp',afterSrc:'/after.webp',parts});
   const rendered=environment.captions.join('');
   for(const value of [complete.title,complete.copy,complete.styleSummary,...complete.keywords,...complete.palette.map(value=>value.label),...complete.dimensions.map(value=>value.label),...complete.areas.flatMap(area=>[area.title,area.summary,...area.actions.slice(0,2)])]) assert.ok(rendered.includes(value),value);
-  assert.deepEqual(environment.images,['/before.webp','/after.webp',...complete.areas.flatMap(area=>area.id==='style'?[`/${area.id}-after.webp`]:[`/${area.id}-before.webp`,`/${area.id}-after.webp`])]);
-  assert.ok(environment.captions.includes('珍珠耳钉 × 细链'));
-  assert.ok(environment.captions.includes('耳畔与锁骨的呼应'));
-  assert.ok(!environment.images.includes('/style-before.webp'), 'accessories use one styled portrait, not a before/after pair');
+  assert.deepEqual(environment.images,['/before.webp','/after.webp',...complete.areas.flatMap(area=>[`/${area.id}-before.webp`,`/${area.id}-after.webp`])]);
+  assert.ok(environment.captions.includes('珍珠耳钉'));
+  assert.ok(environment.captions.includes('细链项链'));
+  const earLabel=environment.labels.find(label=>label.value==='珍珠耳钉');
+  const necklaceLabel=environment.labels.find(label=>label.value==='细链项链');
+  assert.equal(earLabel.y,necklaceLabel.y, 'the two product close-ups have aligned labels');
+  assert.ok(necklaceLabel.x>earLabel.x, 'necklace is beside the earring, not below it');
+  assert.ok(!environment.captions.includes('珍珠耳钉 × 细链'), 'no old full-portrait companion caption remains');
   assert.ok(output.canvas.height/output.canvas.width<=1.2);
   assert.ok(environment.captions.every(value => !/^[，。！？；：、）】]$/u.test(value)), 'Chinese punctuation never occupies a standalone line');
 });
@@ -241,7 +246,7 @@ test('fallback crops use the correct face regions when callers omit part photogr
   const environment=withCanvasEnvironment(t);
   await renderBeautyPoster({report:createReport(68),beforeSrc:'/before.webp',afterSrc:'/after.webp'});
   const crops=environment.commands.filter(value=>value.name==='drawImage'&&value.args.length===8);
-  assert.equal(crops.length,11);
+  assert.equal(crops.length,10);
   assert.ok(crops.every(value=>value.args[0]>=0&&value.args[1]>=0&&value.args[2]>0&&value.args[3]>0));
   assert.ok(crops[4].args[3]<crops[0].args[3],'eyes crop is tighter than hair crop');
   assert.ok(crops[2].args[0]>=1024*.28&&crops[2].args[1]>=1536*.23,'brows use the upper single-eye close-up');

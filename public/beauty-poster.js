@@ -20,7 +20,11 @@ const ART_DIRECTIONS = [
 
 const PART_REGIONS = {
   hair: [0, 0, 1, .7], brows: [.28, .23, .25, .14], eyes: [.27, .27, .25, .14],
-  skin: [.29, .34, .45, .20], lips: [.38, .43, .25, .12], style: [.06, .16, .88, .84],
+  skin: [.29, .34, .45, .20], lips: [.38, .43, .25, .12],
+};
+const ACCESSORY_IMAGES = {
+  before: 'assets/beauty-earring-detail-v23.png',
+  after: 'assets/beauty-necklace-detail-v23.png',
 };
 const PART_DEFAULTS = [
   ['hair', '发型与轮廓', '整理发根与脸侧发丝，让轮廓更轻盈。', '吹蓬发根，顺着原有分缝整理。'],
@@ -28,7 +32,7 @@ const PART_DEFAULTS = [
   ['eyes', '眼妆', '轻盈的色彩层次，衬托原有眉眼。', '浅棕轻扫眼尾，保持边缘柔和。'],
   ['skin', '底妆与气色', '薄透匀肤，保留自然肌肤纹理。', '底妆少量多次，局部轻拍补妆。'],
   ['lips', '唇妆', '柔和唇色与眉眼呼应，让气色更完整。', '薄涂全唇，再轻轻拍开唇缘。'],
-  ['style', '整体风格', '让妆发与配饰共享柔和色调。', '用一件简洁配饰，为整体造型点睛。'],
+  ['style', '配饰搭配', '珍珠耳钉与细链项链，让耳畔和锁骨悄悄呼应。', '耳侧发丝轻拨开，让小珍珠自然点睛。'],
 ];
 const DEFAULT_PALETTE = [
   { color: '#8B715B', label: '灰茶棕' }, { color: '#C0A58E', label: '杏雾棕' },
@@ -506,17 +510,13 @@ function drawPoster(ctx, before, after, parts, report, layout) {
     text(ctx,String(index+1).padStart(2,'0'),x+23,rowY+41,21,theme.accent,600);
     drawLines(ctx,info.heading,x+70,rowY+43,30,'#F1EDFC',38,600);
     const imageY=rowY+info.imageY;
-    if(area.id==='style') {
-      imageRegion(ctx,parts[area.id].after,x+22,imageY,90,113,11);
-      text(ctx,'珍珠耳钉 × 细链',x+142,imageY+42,25,theme.light,600);
-      text(ctx,'耳畔与锁骨的呼应',x+142,imageY+82,22,'#C8BED7');
-    } else {
-      imageRegion(ctx,parts[area.id].before,x+22,imageY,210,113,11);
-      imageRegion(ctx,parts[area.id].after,x+248,imageY,210,113,11);
-      for (const [label,labelX] of [['原来',x+30],['调整后',x+256]]) {
-        roundedPath(ctx,labelX,imageY+8,label==='原来'?58:78,29,7);ctx.fillStyle='#090C20B8';ctx.fill();
-        text(ctx,label,labelX+9,imageY+29,20,label==='原来'?'#E0E5F2':theme.light,500);
-      }
+    imageRegion(ctx,parts[area.id].before,x+22,imageY,210,113,11);
+    imageRegion(ctx,parts[area.id].after,x+248,imageY,210,113,11);
+    const imageLabels=area.id==='style'?['珍珠耳钉','细链项链']:['原来','调整后'];
+    for (const [labelIndex,label] of imageLabels.entries()) {
+      const labelX=x+(labelIndex?256:30),labelWidth=Array.from(label).length*20+18;
+      roundedPath(ctx,labelX,imageY+8,labelWidth,29,7);ctx.fillStyle='#090C20B8';ctx.fill();
+      text(ctx,label,labelX+9,imageY+29,20,labelIndex?theme.light:'#E0E5F2',500);
     }
     drawLines(ctx,info.summary,x+25,rowY+info.summaryY,26,'#E7E1F0',36,600);
     let actionY=rowY+info.actionY;
@@ -546,6 +546,7 @@ export async function renderBeautyPoster({report, beforeSrc, afterSrc, parts = {
     const value=parts?.[area.id];
     const sources=await Promise.all(['before','after'].map(async (side,index)=>{
       if(value?.[side]) return {image:await loadImage(value[side])};
+      if(area.id==='style') return {image:await loadImage(ACCESSORY_IMAGES[side])};
       return {image:index?after:before,region:PART_REGIONS[area.id]};
     }));
     return [area.id,{before:sources[0],after:sources[1]}];

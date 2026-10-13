@@ -50,6 +50,12 @@
 .beauty-collection-copy>span { display:flex;align-items:baseline;gap:7px;margin-top:1px; }
 .beauty-collection-copy b { color:#e4cda2;font-size:16px;font-weight:600;line-height:1.2; }
 .beauty-collection-copy del { font-size:11px;color:#91899e; }
+.beauty-collection-more { display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;margin-top:16px;padding:12px 18px;border:1px solid #b8a9ff6b;border-radius:14px;background:linear-gradient(112deg,#5b68ed 0%,#7753dd 58%,#a660d1 100%);box-shadow:inset 0 1px 0 #ffffff24,0 4px 16px #7753dd1a;color:#fff;font:inherit;font-size:14px;font-weight:500;line-height:1.5;cursor:pointer;transition:filter .2s ease,transform .2s ease; }
+.beauty-collection-more svg { width:18px;height:18px;flex:none; }
+.beauty-collection-more:hover { filter:brightness(1.08); }
+.beauty-collection-more:active { transform:scale(.985);filter:brightness(.95); }
+.beauty-collection-more:focus-visible { outline:2px solid #e2d6ff;outline-offset:3px; }
+@media(prefers-reduced-motion:reduce) { .beauty-collection-more { transition:none; } .beauty-collection-more:active { transform:none; } }
 .beauty-select-product { position:relative;display:grid;place-items:center;align-self:stretch;width:44px;min-height:44px;padding:0;border:0;background:transparent; }
 .beauty-select-product>span { display:grid;place-items:center;width:18px;height:18px;border:1px solid #9990ad88;border-radius:50%;background:transparent;color:transparent;font-size:11px;transition:background .2s ease,border-color .2s ease; }
 .beauty-select-product[aria-pressed=true]>span { color:#fff;background:linear-gradient(135deg,#7362db,#ac7cd1);border-color:#b7a0e5; }

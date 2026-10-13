@@ -98,6 +98,36 @@ test('shopping list renders the selected SKU and removes duplicate recommendatio
   }
 });
 
+test('each report ends its product collection with one browse-more button without a destination', () => {
+  for (const score of [52, 68, 80, 90, 97]) {
+    const html = renderer.collectionHTML(createReport(score));
+    const matches = [...html.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)]
+      .filter(match => attributes(match[1]).class?.split(/\s+/).includes('beauty-collection-more'));
+    assert.equal(matches.length, 1, `${score}: exactly one browse-more entry`);
+    const [button] = matches, attrs = attributes(button[1]);
+    assert.equal(attrs.type, 'button');
+    assert.match(button[2], /<span>逛逛更多好物<\/span>/);
+    assert.equal((html.match(/逛逛更多好物/g) || []).length, 1);
+    assert.ok(button.index > html.lastIndexOf('</article>'), `${score}: entry follows all product rows`);
+    assert.match(html.slice(html.lastIndexOf('</article>') + '</article>'.length, button.index), /^\s*<\/div>\s*$/);
+    assert.match(html.slice(button.index + button[0].length), /^\s*<\/section>\s*$/);
+    assert.ok(!Object.hasOwn(attrs, 'disabled'));
+    assert.ok(!Object.keys(attrs).some(key => /^(?:href|formaction|onclick|data-)/.test(key)), 'destination and commerce actions remain unset');
+    const icons = elements(button[2], 'svg');
+    assert.equal(icons.length, 1);
+    assert.equal(icons[0]['aria-hidden'], 'true');
+  }
+});
+
+test('browse-more entry uses a full-width gradient touch target and accessible focus treatment', () => {
+  const button = cssBlock('.beauty-collection-more');
+  assert.match(button, /min-height:\s*48px/);
+  assert.match(button, /width:\s*100%/);
+  assert.match(button, /background:\s*linear-gradient/);
+  assert.match(css, /\.beauty-collection-more:focus-visible\s*\{[^}]*outline:/);
+  assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[^}]*\.beauty-collection-more[^}]*transition:\s*none/);
+});
+
 test('foundation tabs use light text and a gradient underline while keeping touch targets', () => {
   const tab = cssBlock('.beauty-foundation-tabs button');
   assert.match(tab, /min-height:\s*44px/);

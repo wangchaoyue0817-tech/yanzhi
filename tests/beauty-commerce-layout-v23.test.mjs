@@ -148,12 +148,32 @@ test('accessory details are side by side and product recommendations form compac
 });
 
 
-test('single-product purchase controls use a compact pill with one-line copy and keyboard focus', () => {
+test('single-product purchase controls separate a slender visible button from its full touch target', () => {
   const button = cssBlock('.beauty-page .beauty-collection-buy');
+  const label = cssBlock('.beauty-page .beauty-collection-buy>span');
+  assert.match(button, /(?:^|;)\s*(?:min-)?width:\s*68px/);
   assert.ok(Number(button.match(/min-height:\s*(\d+)px/)[1]) >= 44);
-  assert.match(button, /border-radius:\s*999px/);
+  assert.match(button, /background:\s*transparent/);
+  assert.match(button, /border:\s*0/);
+  assert.match(button, /padding:\s*0/);
+  assert.match(button, /font-size:\s*12px/);
+  assert.match(button, /font-weight:\s*(?:400|normal)/);
   assert.match(button, /white-space:\s*nowrap/);
-  assert.doesNotMatch(button, /flex-direction:\s*column/);
-  assert.match(button, /background:\s*linear-gradient/);
-  assert.match(css, /\.beauty-collection-buy:focus-visible[^}]*outline:/);
+  assert.doesNotMatch(button, /flex-direction:\s*column|linear-gradient/);
+  assert.match(label, /(?:^|;)\s*width:\s*68px/);
+  assert.match(label, /(?:^|;)\s*height:\s*28px/);
+  assert.match(label, /border:\s*1px solid #[0-9a-f]{6,8}/i);
+  assert.match(label, /border-radius:\s*8px/);
+  assert.doesNotMatch(label, /linear-gradient/);
+  for (const block of [button, label]) {
+    const shadow = block.match(/box-shadow:\s*([^;]+)/)?.[1];
+    assert.ok(shadow === undefined || shadow.trim() === 'none', 'purchase action has no heavy shadow');
+  }
+});
+
+test('slender purchase controls retain keyboard focus and reduced-motion handling', () => {
+  assert.match(css, /\.beauty-page \.beauty-collection-buy:focus-visible[^}]*outline:\s*[1-9]/);
+  const reduced = css.slice(css.indexOf('@media(prefers-reduced-motion:reduce)'));
+  assert.match(reduced, /\.beauty-page \.beauty-collection-buy>span[^}]*transition:\s*none/);
+  assert.match(reduced, /\.beauty-page \.beauty-collection-buy:active[^}]*transform:\s*none/);
 });

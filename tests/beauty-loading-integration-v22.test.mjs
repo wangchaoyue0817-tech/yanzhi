@@ -48,7 +48,7 @@ function harness({ reducedMotion = false } = {}) {
     document, TIERS, PRODUCTS, createReport, getFoundationProducts, prepare,
     recordShow: (report, photos) => { shown.push({ report, photos }); events.push(`show:${report.score}`); },
     recordToast: message => toasts.push(message),
-    location: { search: '' }, URLSearchParams, URL: { revokeObjectURL() {} },
+    location: { search: '' }, URLSearchParams, URL: { createObjectURL: () => 'blob:uploaded-photo', revokeObjectURL() {} },
     window: {}, matchMedia: () => ({ matches: reducedMotion, addEventListener() {} }),
     setTimeout: (callback, delay) => { clockTimers.set(++serial, { callback, at: now + delay }); return serial; },
     clearTimeout: id => clockTimers.delete(id), cancelAnimationFrame() {},
@@ -69,7 +69,16 @@ function harness({ reducedMotion = false } = {}) {
     }
     for (const [id, timer] of [...clockTimers]) if (timer.at <= now) { clockTimers.delete(id); timer.callback(); }
   }
-  return { api, node, requests, experiences, shown, toasts, events, advance };
+  const click = dataset => node('beautyPage').handlers.click({
+    target: { closest: selector => selector === 'button' ? { dataset, hasAttribute: () => false } : null }
+  });
+  const submitScore = score => {
+    node('beautyScoreInput').value = String(score);
+    const event = { target: node('beautyCustomScore'), prevented: false, preventDefault() { this.prevented = true; } };
+    node('beautyPage').handlers.submit(event);
+    return event;
+  };
+  return { api, node, requests, experiences, shown, toasts, events, advance, click, submitScore };
 }
 
 test('upload starts the loading UI before photos resolve and passes the original photo immediately', async () => {
@@ -146,14 +155,21 @@ test('a replacement run keeps its own loader when old photos and deadline arrive
   assert.equal(h.shown[0].photos, current);
 });
 
-test('switching to a score scene cancels the old loading and does not inherit its deadline', async () => {
+test('switching through the scene click handler cancels old loading and starts a fresh full deadline', async () => {
   const h = harness(); const old = h.api.start(52);
-  const scene = h.api.start(90, false);
-  assert.equal(h.experiences.length, 1);
+  h.advance(6000);
+  const scene = h.click({ score: '90' });
+  assert.equal(h.experiences.length, 2);
   assert.equal(h.experiences[0].destroyed, 1);
+  assert.equal(h.experiences[1].at, 21000);
   h.requests[1].resolve(pair('scene')); await scene;
   h.requests[0].resolve(pair('previous')); await old;
   h.experiences[0].options.onComplete();
+  h.advance(15000);
+  assert.equal(h.shown.length, 0);
+  h.advance(20999);
+  assert.equal(h.shown.length, 0);
+  h.advance(21000);
   assert.equal(h.shown.length, 1);
   assert.equal(h.shown[0].report.score, 90);
   assert.equal(h.shown[0].photos.before, 'scene-before');
@@ -182,12 +198,102 @@ test('reduced-motion users still receive the complete fifteen-second interactive
   h.advance(15000); assert.equal(h.shown.length, 1);
 });
 
-test('explicit scene preview bypasses the loader but still waits for its photographs', async () => {
-  const h = harness(); const pending = h.api.start(80, false);
-  assert.equal(h.experiences.length, 0);
-  assert.equal(h.shown.length, 0);
-  assert.equal(h.node('beautyScanning').hidden, true);
-  const photos = pair('direct'); h.requests[0].resolve(photos); await pending;
+test('all five scene choices enter the fifteen-second loader through the shipped click handler', async () => {
+  for (const score of [52, 68, 80, 90, 97]) {
+    const h = harness();
+    const pending = h.click({ score: String(score) });
+    assert.deepEqual(h.events, ['mount', `prepare:${score}`]);
+    assert.equal(h.experiences[0].options.duration, 15000);
+    assert.equal(h.node('beautyScanning').hidden, false);
+    assert.equal(h.node('beautyReport').hidden, true);
+    const photos = pair(`scene-${score}`);
+    h.requests[0].resolve(photos); await pending;
+    h.advance(14999); assert.equal(h.shown.length, 0);
+    h.advance(15000); assert.equal(h.shown.length, 1);
+    assert.equal(h.shown[0].report.score, score);
+    assert.equal(h.shown[0].photos, photos);
+  }
+});
+
+test('the preset photo action waits the full duration before its result appears', async () => {
+  const h = harness();
+  h.api.setUpload('blob:previous-upload');
+  const pending = h.click({ action: 'use-photo' });
+  assert.equal(h.requests[0].score, 90);
+  assert.equal(h.experiences[0].options.photo, '');
+  assert.equal(h.experiences[0].options.duration, 15000);
+  assert.equal(h.node('beautyScanning').hidden, false);
+  h.requests[0].resolve(pair('preset')); await pending;
+  h.advance(14999); assert.equal(h.shown.length, 0);
+  h.advance(15000); assert.equal(h.shown.length, 1);
+  assert.equal(h.shown[0].photos.before, 'preset-before');
+});
+
+test('replay uses the current score and runs a new fifteen-second loading experience', async () => {
+  const h = harness();
+  const initial = h.click({ score: '80' });
+  h.requests[0].resolve(pair('initial')); await initial;
+  h.advance(15000);
   assert.equal(h.shown.length, 1);
-  assert.equal(h.shown[0].photos, photos);
+  const replay = h.click({ action: 'replay' });
+  assert.equal(h.requests[1].score, 80);
+  assert.equal(h.experiences.length, 2);
+  assert.equal(h.experiences[1].at, 30000);
+  assert.equal(h.node('beautyReport').hidden, true);
+  assert.equal(h.node('beautyScanning').hidden, false);
+  h.requests[1].resolve(pair('replay')); await replay;
+  h.advance(29999); assert.equal(h.shown.length, 1);
+  h.advance(30000); assert.equal(h.shown.length, 2);
+  assert.equal(h.shown[1].report.score, 80);
+  assert.equal(h.shown[1].photos.before, 'replay-before');
+});
+
+test('custom score submission starts real loading and gates completion for fifteen seconds', async () => {
+  for (const reducedMotion of [false, true]) {
+    const h = harness({ reducedMotion });
+    assert.equal(h.submitScore(83).prevented, true);
+    assert.equal(h.requests[0].score, 83);
+    assert.equal(h.experiences[0].options.duration, 15000);
+    assert.equal(h.experiences[0].options.reducedMotion, reducedMotion);
+    h.requests[0].resolve(pair('custom'));
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(h.node('beautyScanning').hidden, false);
+    h.advance(14999); assert.equal(h.shown.length, 0);
+    h.advance(15000); assert.equal(h.shown.length, 1);
+    assert.equal(h.shown[0].report.score, 83);
+  }
+});
+
+test('cancelling from the loading action blocks the old callback during the next complete run', async () => {
+  const h = harness();
+  const old = h.click({ score: '52' });
+  h.requests[0].resolve(pair('old')); await old;
+  const oldExperience = h.experiences[0];
+  h.advance(3000);
+  h.click({ action: 'cancel-scan' });
+  assert.equal(oldExperience.destroyed, 1);
+  assert.equal(h.node('beautyEntry').hidden, false);
+  const fresh = h.click({ score: '97' });
+  h.requests[1].resolve(pair('fresh')); await fresh;
+  oldExperience.options.onComplete();
+  h.advance(15000); assert.equal(h.shown.length, 0);
+  h.advance(17999); assert.equal(h.shown.length, 0);
+  h.advance(18000); assert.equal(h.shown.length, 1);
+  assert.equal(h.shown[0].report.score, 97);
+});
+
+
+test('the actual photo input handler retains the same fifteen-second gate', async () => {
+  const h = harness();
+  const input = { value: 'selected-photo.png', files: [{ type: 'image/png', size: 1024 }] };
+  await h.node('beautyPhotoInput').handlers.change({ target: input });
+  assert.equal(input.value, '');
+  assert.equal(h.experiences.length, 1);
+  assert.equal(h.experiences[0].options.photo, 'blob:uploaded-photo');
+  assert.equal(h.experiences[0].options.duration, 15000);
+  h.requests[0].resolve(pair('upload-handler'));
+  await new Promise(resolve => setImmediate(resolve));
+  h.advance(14999); assert.equal(h.shown.length, 0);
+  h.advance(15000); assert.equal(h.shown.length, 1);
+  assert.equal(h.shown[0].photos.before, 'upload-handler-before');
 });

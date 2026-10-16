@@ -69,7 +69,10 @@ test('all five reports build one twelve-item shopping list with complete row con
       assert.equal(buttons[1]['data-product-buy'], id);
       assert.match(buttons[0]['aria-label'], /详情$/);
       assert.ok(buttons.every(button => button.type === 'button'));
-      assert.match(body, /去小程序购买/);
+      const buyMarkup = [...body.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)].find(match => attributes(match[1])['data-product-buy']);
+      assert.equal(buyMarkup[2].replace(/<[^>]+>/g, '').trim(), '立即购买');
+      assert.equal((buyMarkup[2].match(/<span/g) || []).length, 1);
+      assert.doesNotMatch(buyMarkup[2], /<br|<svg|↗|去小程序/);
       assert.ok(body.includes(`<strong>${product.shortName || product.name}</strong>`));
       assert.ok(body.includes(`<small>${product.shade}</small>`));
       assert.ok(body.includes(`<b>¥${product.price}</b>`));
@@ -139,7 +142,18 @@ test('accessory details are side by side and product recommendations form compac
   assert.match(list, /display:\s*flex/);
   assert.match(list, /flex-direction:\s*column/);
   assert.match(cssBlock('.beauty-collection-item'), /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
-  assert.ok(Number(cssBlock('.beauty-collection-buy').match(/min-height:\s*(\d+)px/)[1]) >= 44);
+  assert.ok(Number(cssBlock('.beauty-page .beauty-collection-buy').match(/min-height:\s*(\d+)px/)[1]) >= 44);
   assert.match(cssBlock('.beauty-collection-link'), /grid-template-columns:\s*\d+px\s+minmax\(0,\s*1fr\)/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
+});
+
+
+test('single-product purchase controls use a compact pill with one-line copy and keyboard focus', () => {
+  const button = cssBlock('.beauty-page .beauty-collection-buy');
+  assert.ok(Number(button.match(/min-height:\s*(\d+)px/)[1]) >= 44);
+  assert.match(button, /border-radius:\s*999px/);
+  assert.match(button, /white-space:\s*nowrap/);
+  assert.doesNotMatch(button, /flex-direction:\s*column/);
+  assert.match(button, /background:\s*linear-gradient/);
+  assert.match(css, /\.beauty-collection-buy:focus-visible[^}]*outline:/);
 });

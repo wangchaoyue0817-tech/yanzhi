@@ -173,7 +173,8 @@ test('product details retain their facts and route the same SKU to the external 
     const detail = h.node('beautySheetBody').innerHTML;
     for (const value of [product.name, product.brand, product.shade, product.reason, product.usage, ...product.features]) assert.ok(detail.includes(value));
     assert.ok(detail.includes(`<del>¥${product.originalPrice}</del>`));
-    assert.match(detail, /去小程序购买/);
+    assert.match(detail, /立即购买/);
+    assert.doesNotMatch(detail, />去小程序购买/);
     const attrs = attributes(detail.match(/<button\b([^>]*data-product-buy[^>]*)>/)[1]);
     assert.equal(attrs['data-product-buy'], product.id);
     assert.equal(attrs.type, 'button');
@@ -291,7 +292,7 @@ test('removing internal checkout keeps the custom score form functional and vali
   for (const score of [0, 52, 90, 100]) {
     h.node('beautyScoreInput').value = String(score);
     h.dispatch('submit', { target: h.node('beautyCustomScore') });
-    assert.deepEqual(h.effects.starts.at(-1), [score, false]);
+    assert.deepEqual(h.effects.starts.at(-1), [score]);
   }
   assert.equal(h.effects.clearedUploads, 4);
 });

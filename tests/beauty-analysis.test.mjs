@@ -3,8 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { inflateSync } from 'node:zlib';
 import { runInNewContext } from 'node:vm';
 import test from 'node:test';
-import { TIERS, PRODUCTS, createReport } from '../public/beauty-model.js';
-import { quoteOrder, getFoundationProducts } from '../public/beauty-commerce.js';
+import { TIERS, PRODUCTS, createReport, getFoundationProducts } from '../public/beauty-model.js';
 
 const publicRoot = new URL('../public/', import.meta.url);
 const read = path => readFileSync(new URL(path, publicRoot), 'utf8');
@@ -62,7 +61,7 @@ test('the browser receives the feature as a module with resolvable named depende
   const entry = staticElements.find(element => element.tag === 'script' && element.src?.split('?')[0] === 'beauty-analysis.js');
   assert.ok(entry, 'feature entry script must be included by the homepage');
   assert.equal(entry.type, 'module', 'named imports require browser module loading');
-  assert.equal(entry.src, 'beauty-analysis.js?v=24');
+  assert.equal(entry.src, 'beauty-analysis.js?v=25');
   for (const [filename, version] of [['beauty-model.js', 22], ['beauty-poster.js', 23]]) {
     assert.ok(controller.includes(`from './${filename}?v=${version}'`), `${filename} must use the current version's cache key`);
   }
@@ -299,14 +298,14 @@ function reportHarness({ reducedMotion = false } = {}) {
   const api = runInNewContext(controller.replace(/^import .*;$/gm, '') + `
     ({
       show: showReport, cycle: cycleCopy, reset: resetEntry, formatCopy: resultCopy,
-      cancel: cancelPresentation, poster: posterSheet, closeSheet, scenes: sceneSheet,
+      cancel: cancelPresentation, poster: posterSheet, closeSheet, scenes: sceneSheet, miniProgramSheet,
       setPosterCache(value) { posterCache = value; },
       setPreviewURL(value) { posterPreviewUrl = value; },
       addPendingFrame(id) { frames.add(id); },
-      state() { return { currentReport, photos, posterCache, copyVariant, generation, timerCount: timers.size, frameCount: frames.size }; }
+      state() { return { currentReport, photos, posterCache, copyVariant, generation, modalKind, timerCount: timers.size, frameCount: frames.size }; }
     });
   `, {
-    document, TIERS, PRODUCTS, createReport, getFoundationProducts, quoteOrder,
+    document, TIERS, PRODUCTS, createReport, getFoundationProducts,
     matchMedia: () => ({ matches: reducedMotion, addEventListener() {} }),
     window: {}, location: { search: '' }, URLSearchParams,
     URL: {
@@ -388,7 +387,8 @@ test('v21 keeps a short result cover and mounts complete report chapters directl
     assert.ok(rendered.includes(`src="${photos.parts[report.areas[index].id].after}"`));
   }
   assert.equal((rendered.match(/class="beauty-product beauty-product-compact"/g) || []).length, 12);
-  assert.doesNotMatch(rendered, /beauty-product-purchase|data-product-buy=/);
+  assert.doesNotMatch(rendered.slice(0, rendered.indexOf('<section class="beauty-collection"')), /beauty-product-purchase|data-product-buy=/);
+  assert.equal((rendered.match(/data-product-buy=/g) || []).length, 12);
   assert.equal((rendered.match(/data-product-detail=/g) || []).length, 26);
   assert.equal((rendered.match(/class="beauty-product-reason"/g) || []).length, 12);
 });
@@ -689,4 +689,28 @@ test('celebration starts after the score reveal and is omitted when motion is re
       assert.equal(harness.effects.stopped, 1);
     }
   }
+});
+
+
+test('restarting from a purchase handoff clears the report and sheet before a fresh scene', () => {
+  const h = reportHarness({ reducedMotion: true });
+  h.api.show(createReport(90), reportPhotos());
+  h.api.miniProgramSheet(PRODUCTS.find(product => product.id === 'hair'));
+  assert.equal(h.api.state().modalKind, 'mini-program');
+  assert.equal(h.node('beautyScroll').inert, true);
+  h.click('restart');
+  assert.equal(h.api.state().modalKind, '');
+  assert.equal(h.api.state().currentReport, null);
+  assert.equal(h.api.state().photos, null);
+  assert.equal(h.node('beautyOverlay').hidden, true);
+  assert.equal(h.node('beautyEntry').hidden, false);
+  assert.equal(h.node('beautyReport').hidden, true);
+  assert.equal(h.node('beautyReport').innerHTML, '');
+  for (const id of ['beautyScroll', '.beauty-header', 'beautyComposer']) assert.equal(h.node(id).inert, false);
+  assert.equal(h.document.activeElement, h.node('beautyUpload'));
+  h.api.show(createReport(68), reportPhotos());
+  h.api.miniProgramSheet(PRODUCTS.find(product => product.id === 'lip'));
+  assert.match(h.node('beautySheetBody').innerHTML, /data-mini-product="lip"/);
+  assert.doesNotMatch(h.node('beautySheetBody').innerHTML, /data-mini-product="hair"/);
+  assert.equal(h.api.state().currentReport.score, 68);
 });

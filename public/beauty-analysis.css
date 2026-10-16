@@ -223,16 +223,7 @@
 .beauty-detail-block p { font-size:13px;line-height:1.85;color:#c2b5ce;margin:0; }
 .beauty-detail-footer { display:flex;align-items:center;gap:15px;margin-top:18px; }
 .beauty-detail-footer .beauty-primary { flex:1; }
-.beauty-order-fields { display:grid;gap:13px;margin:22px 0; }
-.beauty-order-fields label { display:grid;gap:7px;font-size:12px;color:#c4b8d0; }
-.beauty-order-fields input,.beauty-order-fields textarea { width:100%;padding:12px;border:1px solid #bdabd436;border-radius:10px;background:#080a18;color:#f0e8f6;font-size:14px;font-family:inherit;resize:vertical; }
-.beauty-order-fields .beauty-order-row { display:flex;align-items:center;justify-content:space-between;color:#b6a9c4;font-size:13px; }
-.beauty-order-row input { width:65px; }
 .beauty-form-error { color:#fac6cb;font-size:12px;line-height:1.7;margin:10px 0; }
-.beauty-order-success { padding:20px 5px;text-align:center; }
-.beauty-order-success>svg { color:#d8c39b;width:46px;height:46px;margin-bottom:15px; }
-.beauty-order-success h3 { font-size:25px;font-weight:500; }
-.beauty-order-success p { font-size:13px;color:#baacc8;line-height:1.8; }
 .beauty-poster-image { display:block;max-width:100%;width:auto;max-height:54vh;margin:0 auto 17px;border:1px solid #a590c148;border-radius:12px;box-shadow:0 14px 40px #0004; }
 .beauty-poster-status { font-size:12px;color:#c9bcda;line-height:1.7;text-align:center;min-height:20px;margin:13px 0 0; }
 .beauty-comparison-view { position:relative;aspect-ratio:.75;border-radius:14px;overflow:hidden;background:#141426; }

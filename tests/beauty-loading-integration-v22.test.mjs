@@ -2,8 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import { TIERS, PRODUCTS, createReport } from '../public/beauty-model.js';
-import { quoteOrder, getFoundationProducts } from '../public/beauty-commerce.js';
+import { TIERS, PRODUCTS, createReport, getFoundationProducts } from '../public/beauty-model.js';
 
 const controller = readFileSync(new URL('../public/beauty-analysis.js', import.meta.url), 'utf8');
 const pair = label => ({ before: `${label}-before`, after: `${label}-after`, parts: {} });
@@ -46,7 +45,7 @@ function harness({ reducedMotion = false } = {}) {
       state(){ return {generation,currentReport,photos,loadingExperience}; }
     });
   `, {
-    document, TIERS, PRODUCTS, createReport, quoteOrder, getFoundationProducts, prepare,
+    document, TIERS, PRODUCTS, createReport, getFoundationProducts, prepare,
     recordShow: (report, photos) => { shown.push({ report, photos }); events.push(`show:${report.score}`); },
     recordToast: message => toasts.push(message),
     location: { search: '' }, URLSearchParams, URL: { revokeObjectURL() {} },

@@ -2,8 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import test from 'node:test';
-import { TIERS, PRODUCTS, createReport } from '../public/beauty-model.js';
-import { quoteOrder, getFoundationProducts } from '../public/beauty-commerce.js';
+import { TIERS, PRODUCTS, createReport, getFoundationProducts } from '../public/beauty-model.js';
 
 const controller = readFileSync(new URL('../public/beauty-analysis.js', import.meta.url), 'utf8');
 const areaIds = ['hair', 'brows', 'eyes', 'skin', 'lips', 'style'];
@@ -98,7 +97,7 @@ function readerHarness({ reducedMotion = false } = {}) {
        openSheet, closeSheet, poster:posterSheet, detail:detailSheet,
        state(){ return { reader, currentReport, photos, frameCount:frames.size }; } });
   `, {
-    document, TIERS, PRODUCTS, createReport, getFoundationProducts, quoteOrder, history, window: { addEventListener(type, fn) { windowHandlers.set(type, fn); } },
+    document, TIERS, PRODUCTS, createReport, getFoundationProducts, history, window: { addEventListener(type, fn) { windowHandlers.set(type, fn); } },
     location: { search: '' }, URLSearchParams,
     matchMedia: () => ({ matches: reducedMotion, addEventListener() {} }),
     Date: { now: () => now }, URL: { createObjectURL: () => 'blob:poster', revokeObjectURL() {} },

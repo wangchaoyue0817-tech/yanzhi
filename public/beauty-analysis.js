@@ -1,6 +1,5 @@
 import { mountBeautyLoading } from './beauty-loading.js?v=22';
-import { quoteOrder, getFoundationProducts } from './beauty-commerce.js?v=22';
-import { TIERS, PRODUCTS, createReport } from './beauty-model.js?v=22';
+import { TIERS, PRODUCTS, createReport, getFoundationProducts } from './beauty-model.js?v=22';
 import { renderBeautyPoster } from './beauty-poster.js?v=23';
 import { startBeautyCelebration } from './beauty-celebration.js?v=17';
 
@@ -40,10 +39,8 @@ let posterPreviewUrl = '';
 let modalKind = '';
 let loadingExperience = null;
 let foundationSwipe = null;
-const selectedProducts = new Map();
 const timers = new Set();
 const frames = new Set();
-const order = { items:[], submitted:false, fromCart:false };
 const money = value => Number.isInteger(value) ? String(value) : value.toFixed(2);
 
 function later(fn, delay) {
@@ -133,8 +130,6 @@ function resetEntry() {
   cancelPresentation();
   closeSheet(false);
   currentReport = null;
-  selectedProducts.clear();
-  updateCartDock();
   posterCache = null;
   photos = null;
   $('beautyEntry').hidden = false;
@@ -173,7 +168,6 @@ async function start(score = selectedScore, scan = true) {
   clearReader();closeSheet(false);cancelPresentation();
   const token = generation;
   selectedScore = score;currentReport = null;photos = null;posterCache = null;
-  selectedProducts.clear();updateCartDock();
   const nextReport = createReport(score, copyVariant);
   $('beautyEntry').hidden = true;page.classList.remove('is-entry');
   $('beautyComposer').hidden = true;$('beautyReport').hidden = true;
@@ -266,24 +260,9 @@ function areaHTML(area,index) {
 const areaNames={hair:'发型',brows:'眉形',eyes:'眼妆',skin:'底妆',lips:'唇妆',style:'配饰'};
 function collectionHTML(report){
   const products=[...new Set(report.areas.flatMap(area=>area.productIds))].map(id=>PRODUCTS.find(p=>p.id===id));
-  return '<section class="beauty-collection" id="beautyCollection" aria-labelledby="beautyCollectionTitle"><header><h2 id="beautyCollectionTitle">我的专属产品</h2><small>共 '+products.length+' 件</small></header><div class="beauty-offer"><span>满 <b>200</b> 减 <b>20</b></span><small>每满即减 · 优惠可叠加</small></div><div class="beauty-collection-list">'+products.map(product=>'<article class="beauty-collection-item" data-collection-item="'+product.id+'"><button type="button" class="beauty-select-product" data-cart-toggle="'+product.id+'" aria-pressed="'+selectedProducts.has(product.id)+'" aria-label="选择'+esc(product.name)+'"><span aria-hidden="true">✓</span></button><button type="button" class="beauty-collection-link" data-product-detail="'+product.id+'" aria-label="查看'+esc(product.name)+'详情">'+productImage(product)+'<span class="beauty-collection-copy"><strong>'+esc(product.shortName || product.name)+'</strong><small>'+esc(product.shade)+'</small><span><b>¥'+money(product.price)+'</b><del>¥'+money(product.originalPrice)+'</del></span></span><i aria-hidden="true">›</i></button></article>').join('')+'</div><button type="button" class="beauty-collection-more"><span>逛逛更多好物</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></section>';
-}
-function selectedItems(){return [...selectedProducts].map(([id,quantity])=>({id,quantity}));}
-function quoteHint(quote){if(!quote.quantity)return '勾选喜欢的商品，享每满 200 减 20';return quote.discount?'已减 ¥'+money(quote.discount)+' · 再选 ¥'+money(quote.nextThresholdGap)+' 多减 ¥20':'再选 ¥'+money(quote.nextThresholdGap)+'，立减 ¥20';}
-function updateCartDock(){
-  const dock=$('beautyCartDock');
-  if(!dock)return;
-  const visible=!!currentReport && reader.tab==='advice' && selectedProducts.size>0 && !page.hidden && $('beautyOverlay').hidden;
-  dock.hidden=!visible;page.classList.toggle('has-beauty-cart',visible);
-  if(!visible)return;
-  const quote=quoteOrder(selectedItems());
-  dock.innerHTML='<div class="beauty-cart-savings" aria-live="polite">'+quoteHint(quote)+'</div><div class="beauty-cart-row"><div><small>已选 '+quote.quantity+' 件 · 合计</small><strong>¥'+money(quote.total)+'</strong></div><button type="button" class="beauty-primary" data-action="checkout-cart">合并下单 <span>↗</span></button></div>';
-}
-function toggleProduct(id){
-  if(!PRODUCTS.some(product=>product.id===id))return;
-  if(selectedProducts.has(id))selectedProducts.delete(id);else selectedProducts.set(id,1);
-  page.querySelectorAll('[data-cart-toggle="'+id+'"]').forEach(control=>control.setAttribute('aria-pressed',String(selectedProducts.has(id))));
-  updateCartDock();
+  return '<section class="beauty-collection" id="beautyCollection" aria-labelledby="beautyCollectionTitle"><header><h2 id="beautyCollectionTitle">我的专属产品</h2><small>共 '+products.length+' 件</small></header><div class="beauty-collection-list">'+products.map(product=>
+    '<article class="beauty-collection-item" data-collection-item="'+product.id+'"><button type="button" class="beauty-collection-link" data-product-detail="'+product.id+'" aria-label="查看'+esc(product.name)+'详情">'+productImage(product)+'<span class="beauty-collection-copy"><strong>'+esc(product.shortName || product.name)+'</strong><small>'+esc(product.shade)+'</small><span><b>¥'+money(product.price)+'</b><del>¥'+money(product.originalPrice)+'</del></span></span></button><button type="button" class="beauty-collection-buy" data-product-buy="'+product.id+'" aria-label="去小程序购买'+esc(product.name)+'"><span>去小程序</span><span>购买 ↗</span></button></article>'
+  ).join('')+'</div><button type="button" class="beauty-collection-more"><span>逛逛更多好物</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></section>';
 }
 
 function priorityArea(report){return {natural:'brows',fresh:'eyes',radiant:'hair',spotlight:'hair',icon:'style'}[report.tier.id] || 'hair';}
@@ -348,7 +327,7 @@ function selectChapter(tab,{focus=true,reset=false}={}){
   }
   $('beautyAreaNavigation').hidden=tab!=='advice';
   scroll.scrollTo({top:readerTop()+(reset?0:reader.positions[tab] || 0),behavior:'instant'});
-  syncReading();updateCartDock();
+  syncReading();
   if(focus)$('beautyTab-'+tab).focus({preventScroll:true});
 }
 function selectArea(id,{focus=true}={}){
@@ -403,7 +382,6 @@ function showReport(report,readyPhotos,{celebrate=true}={}) {
       '<div class="beauty-insights"><div class="beauty-insight beauty-insight-strength"><small><i aria-hidden="true">'+star+'</i>你的优势</small><p>'+esc(report.strength)+'</p></div><div class="beauty-insight beauty-insight-focus"><small><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 18 6-6m-3-5 3-3m4 4 3-3m-4 9 6-6M5 21l-2-2 9-9 2 2Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>优先调整</small><p>'+esc(report.focus)+'</p></div></div><p class="beauty-reader-copy">'+resultCopy(report.copy)+'</p><div class="beauty-chapter-end" id="beautyChapterEnd"><span>继续上滑，查看我的变美思路</span><button type="button" data-action="read-advice" aria-label="查看我的变美思路">↓</button></div></section>'+
     '<section class="beauty-advice-panel" id="beautyAdvice" role="tabpanel" aria-labelledby="beautyTab-advice" hidden><div class="beauty-advice-intro"><h2>我的变美思路</h2><p>从发型到妆容，找到适合你的改变。</p></div>'+report.areas.map(areaHTML).join('')+collectionHTML(report)+'</section></div>' ;
   scroll.scrollTop = 0;
-  updateCartDock();
   animateReport(celebrate);
   container.querySelector('h1').focus({preventScroll:true});
 }
@@ -447,8 +425,7 @@ function openSheet(title,body,kind) {
   $('beautySheetTitle').textContent=title;
   $('beautySheetBody').innerHTML=body;
   $('beautyOverlay').hidden=false;
-  updateCartDock();
-  inert(scroll,true);inert($('beautyCartDock'),true);
+  inert(scroll,true);
   inert(document.querySelector('.beauty-header'),true);
   inert($('beautyComposer'),true);
   $('beautySheet').scrollTop=0;
@@ -458,8 +435,7 @@ function closeSheet(restore=true) {
   overlayGeneration++;
   modalKind='';
   $('beautyOverlay').hidden=true;
-  updateCartDock();
-  inert(scroll,false);inert($('beautyCartDock'),false);
+  inert(scroll,false);
   inert(document.querySelector('.beauty-header'),false);
   inert($('beautyComposer'),false);
   if(posterPreviewUrl) URL.revokeObjectURL(posterPreviewUrl);
@@ -495,43 +471,15 @@ function detailSheet(product) {
     '<div class="beauty-detail-block"><h4>推荐理由</h4><p>'+esc(product.reason)+'</p></div>'+
     '<div class="beauty-detail-block"><h4>产品特点</h4><p>'+product.features.map(esc).join(' · ')+'</p></div>'+
     '<div class="beauty-detail-block"><h4>这样用，更适合你</h4><p>'+esc(product.usage)+'</p></div>'+
-    '<div class="beauty-checkout-offer">每满 ¥200 减 ¥20 <span>可叠加</span></div><div class="beauty-detail-footer"><span class="beauty-price"><small>¥</small>'+product.price+'</span><button type="button" class="beauty-primary" data-product-buy="'+product.id+'">立即购买</button></div>','product');
+    '<div class="beauty-detail-footer"><span class="beauty-product-prices"><span class="beauty-price"><small>¥</small>'+money(product.price)+'</span><del>¥'+money(product.originalPrice)+'</del></span><button type="button" class="beauty-primary" data-product-buy="'+product.id+'">去小程序购买 ↗</button></div>','product');
 }
-function orderItemsHTML(){
-  return order.items.map(item=>{
-    const p=PRODUCTS.find(product=>product.id===item.id);
-    return '<article class="beauty-checkout-item">'+productImage(p)+'<div><strong>'+esc(p.shortName || p.name)+'</strong><small>'+esc(p.shade)+'</small><b>¥'+money(p.price)+'</b><div class="beauty-checkout-quantity"><button type="button" data-order-step="-1" data-order-id="'+p.id+'" aria-label="减少'+esc(p.name)+'数量" '+(item.quantity<=1?'disabled':'')+'>−</button><input type="number" min="1" max="9" step="1" required value="'+item.quantity+'" data-order-quantity="'+p.id+'" aria-label="'+esc(p.name)+'数量"><button type="button" data-order-step="1" data-order-id="'+p.id+'" aria-label="增加'+esc(p.name)+'数量" '+(item.quantity>=9?'disabled':'')+'>＋</button></div></div><button type="button" class="beauty-order-remove" data-order-remove="'+p.id+'" aria-label="移除'+esc(p.name)+'">×</button></article>';
-  }).join('');
-}
-function updateOrderTotal(){
-  const quote=quoteOrder(order.items);
-  $('beautyOrderTotals').innerHTML='<div><span>商品金额</span><b>¥'+money(quote.subtotal)+'</b></div><div class="beauty-order-discount"><span>每满 200 减 20</span><b>−¥'+money(quote.discount)+'</b></div><div class="beauty-order-payable"><span>实付款</span><strong>¥'+money(quote.total)+'</strong></div><p>'+quoteHint(quote)+'</p>';
-  $('beautySubmitOrder').textContent=order.items.length?'提交订单 · ¥'+money(quote.total):'请先选择商品';
-  $('beautySubmitOrder').disabled=!order.items.length;
-  if(order.fromCart){
-    selectedProducts.clear();order.items.forEach(item=>selectedProducts.set(item.id,item.quantity));
-    page.querySelectorAll('[data-cart-toggle]').forEach(control=>control.setAttribute('aria-pressed',String(selectedProducts.has(control.dataset.cartToggle))));
-    updateCartDock();
-  }
-}
-function changeOrderQuantity(id,quantity){
-  const item=order.items.find(item=>item.id===id);
-  if(!item || !Number.isInteger(quantity) || quantity<1 || quantity>9)return false;
-  item.quantity=quantity;
-  updateOrderTotal();
-  return true;
-}
-function orderSheet(productOrItems,fromCart=false) {
-  const items=Array.isArray(productOrItems)?productOrItems:[{id:productOrItems.id,quantity:1}];
-  const quote=quoteOrder(items);
-  if(!quote.items.length)return toast('先选几件喜欢的商品吧');
-  order.items=quote.items.map(item=>({id:item.id,quantity:item.quantity}));order.submitted=false;order.fromCart=fromCart;
-  openSheet('确认订单','<div class="beauty-checkout-offer">每满 ¥200 减 ¥20 <span>可叠加</span></div><form id="beautyOrderForm"><div id="beautyOrderItems">'+orderItemsHTML()+'</div><div class="beauty-order-fields">'+
-    '<label>收货人<input name="name" autocomplete="name" placeholder="请输入姓名" required maxlength="30"></label>'+
-    '<label>手机号码<input name="mobile" autocomplete="tel" inputmode="tel" placeholder="请输入手机号码" pattern="1[3-9][0-9]{9}" maxlength="11" required></label>'+
-    '<label>收货地址<textarea name="address" autocomplete="street-address" rows="2" placeholder="省市区、街道与详细门牌号" minlength="8" maxlength="120" required></textarea></label></div>'+
-    '<div id="beautyOrderTotals" class="beauty-order-totals" aria-live="polite"></div><p class="beauty-form-error" id="beautyOrderError" role="alert" hidden></p><button type="submit" class="beauty-primary" id="beautySubmitOrder">提交订单</button></form>','order');
-  updateOrderTotal();
+function miniProgramSheet(product) {
+  // Demonstrate the single-product handoff. No destination is configured yet.
+  // A future integration should open this product in the merchant mini program.
+  const storeIcon='<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 10v10h16V10M3 10l2-6h14l2 6M3 10c0 3 4 3 4 0 0 3 5 3 5 0 0 3 5 3 5 0 0 3 4 3 4 0M9 20v-6h6v6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  openSheet('前往小程序购买','<section class="beauty-mini-program" data-mini-product="'+product.id+'"><div class="beauty-mini-route">'+storeIcon+'<span>商家小程序</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'+
+    '<article class="beauty-mini-product">'+productImage(product)+'<div><h3>'+esc(product.name)+'</h3><p>'+esc(product.shade)+'</p><span class="beauty-product-prices"><span class="beauty-price"><small>¥</small>'+money(product.price)+'</span><del>¥'+money(product.originalPrice)+'</del></span></div></article>'+
+    '<h3>在商家小程序中完成下单</h3><p class="beauty-mini-note">跳转展示 · 小程序暂未接入</p><button type="button" class="beauty-primary" data-action="continue">返回报告</button></section>','mini-program');
 }
 
 async function posterSheet() {
@@ -574,18 +522,14 @@ page.addEventListener('click',event=>{
   if(target.dataset.reportTab)return selectChapter(target.dataset.reportTab);
   if(target.dataset.areaTab)return selectArea(target.dataset.areaTab);
   if(target.dataset.foundation)return selectFoundation(target.dataset.foundation,{focus:true});
-  if(target.dataset.cartToggle)return toggleProduct(target.dataset.cartToggle);
-  if(target.dataset.orderRemove){order.items=order.items.filter(item=>item.id!==target.dataset.orderRemove);$('beautyOrderItems').innerHTML=order.items.length?orderItemsHTML():'<p class="beauty-sheet-description">还没有选中的商品，返回报告挑选喜欢的单品吧。</p>';updateOrderTotal();return;}
-  if(target.dataset.orderStep){const item=order.items.find(item=>item.id===target.dataset.orderId);if(item && changeOrderQuantity(item.id,item.quantity+Number(target.dataset.orderStep))){$('beautyOrderItems').innerHTML=orderItemsHTML();}return;}
   if(target.dataset.score){copyVariant=0;clearUpload();return start(Number(target.dataset.score),false);}
   const productId=target.dataset.productDetail||target.dataset.productBuy;
   if(productId){
     const product=PRODUCTS.find(item=>item.id===productId);
-    if(product)return target.dataset.productBuy?orderSheet(product):detailSheet(product);
+    if(product)return target.dataset.productBuy?miniProgramSheet(product):detailSheet(product);
   }
   switch(target.dataset.action){
     case 'cancel-scan':return resetEntry();
-    case 'checkout-cart':return orderSheet(selectedItems(),true);
     case 'read-advice':return selectChapter('advice',{reset:true});
     case 'home':return close();
     case 'new':clearUpload();return resetEntry();
@@ -600,37 +544,12 @@ page.addEventListener('click',event=>{
     case 'continue':return closeSheet();
   }
 });
-page.addEventListener('input',event=>{
-  const id=event.target.dataset?.orderQuantity;
-  if(!id)return;
-  const valid=changeOrderQuantity(id,Number(event.target.value));
-  event.target.setCustomValidity(valid?'':'请输入 1–9 的整数数量');
-  $('beautySubmitOrder').disabled=!valid || [...$('beautyOrderForm').querySelectorAll('[data-order-quantity]')].some(input=>!input.checkValidity());
-  const parent=event.target.parentElement;
-  parent.querySelector('[data-order-step="-1"]').disabled=Number(event.target.value)<=1;
-  parent.querySelector('[data-order-step="1"]').disabled=Number(event.target.value)>=9;
-});
 page.addEventListener('submit',event=>{
   if(event.target.id==='beautyCustomScore'){
     event.preventDefault();
     const score=Number($('beautyScoreInput').value);
     try{createReport(score);}catch{return toast('请输入 0–100 的整数分数');}
     copyVariant=0;clearUpload();start(score,false);
-  }
-  if(event.target.id==='beautyOrderForm'){
-    event.preventDefault();
-    if(order.submitted||!order.items.length)return;
-    const data=new FormData(event.target);
-    const name=String(data.get('name')||'').trim();
-    const mobile=String(data.get('mobile')||'').trim();
-    const address=String(data.get('address')||'').trim();
-    if(!name||!/^1[3-9]\d{9}$/.test(mobile)||address.length<8||!event.target.checkValidity()){
-      $('beautyOrderError').textContent='请填写完整的收货信息与正确的购买数量。';$('beautyOrderError').hidden=false;return;
-    }
-    const quote=quoteOrder(order.items);
-    order.submitted=true;
-    if(order.fromCart){selectedProducts.clear();page.querySelectorAll('[data-cart-toggle]').forEach(control=>control.setAttribute('aria-pressed','false'));updateCartDock();}
-    openSheet('订单详情','<div class="beauty-order-success">'+star+'<h3>下单成功</h3><p>'+quote.items.map(item=>esc(PRODUCTS.find(p=>p.id===item.id).name)+' × '+item.quantity).join('<br>')+'</p><div class="beauty-order-totals"><div><span>商品金额</span><b>¥'+money(quote.subtotal)+'</b></div><div class="beauty-order-discount"><span>满减优惠</span><b>−¥'+money(quote.discount)+'</b></div><div class="beauty-order-payable"><span>实付款</span><strong>¥'+money(quote.total)+'</strong></div></div><p>收货人 '+esc(name.slice(0,1))+'**<br>'+mobile.slice(0,3)+'****'+mobile.slice(-4)+'</p><button type="button" class="beauty-primary" data-action="continue">继续查看我的变美方案</button></div>','success');
   }
 });
 scroll.addEventListener('scroll',syncReading,{passive:true});

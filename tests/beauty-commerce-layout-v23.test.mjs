@@ -14,11 +14,10 @@ const sliceFunction = (start, end) => {
 const renderer = runInNewContext(`
   const esc = value => String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const money = value => Number.isInteger(value) ? String(value) : value.toFixed(2);
-  const selectedProducts = new Map();
   ${sliceFunction('function productImage(', 'function productCard(')}
   ${sliceFunction('function accessoryHTML(', 'function areaHTML(')}
-  ${sliceFunction('function collectionHTML(', 'function selectedItems(')}
-  ({ accessoryHTML, collectionHTML, selectedProducts });
+  ${sliceFunction('function collectionHTML(', 'function priorityArea(')}
+  ({ accessoryHTML, collectionHTML });
 `, { PRODUCTS });
 
 const attributes = value => Object.fromEntries([...value.matchAll(/([\w:-]+)(?:\s*=\s*"([^"]*)")?/g)].map(match => [match[1], match[2] ?? '']));
@@ -59,19 +58,18 @@ test('all five reports build one twelve-item shopping list with complete row con
     assert.equal(rows.length, 12);
     assert.equal(new Set(rows.map(row => attributes(row[1])['data-collection-item'])).size, 12);
     assert.match(html, /共 12 件/);
-    assert.match(html, /满 <b>200<\/b> 减 <b>20<\/b>/);
-    assert.match(html, /优惠可叠加/);
+    assert.doesNotMatch(html, /满减|优惠|beauty-offer|data-cart-toggle|aria-pressed/);
     for (const [, rawAttributes, body] of rows) {
       const id = attributes(rawAttributes)['data-collection-item'];
       const product = PRODUCTS.find(value => value.id === id);
       assert.ok(product);
       const buttons = elements(body, 'button');
-      assert.equal(buttons.length, 2, `${id}: selection and detail remain separate controls`);
-      assert.equal(buttons[0]['data-cart-toggle'], id);
-      assert.equal(buttons[0]['aria-pressed'], 'false');
-      assert.equal(buttons[1]['data-product-detail'], id);
-      assert.match(buttons[0]['aria-label'], /^选择/);
-      assert.match(buttons[1]['aria-label'], /详情$/);
+      assert.equal(buttons.length, 2, `${id}: detail and individual purchase are separate controls`);
+      assert.equal(buttons[0]['data-product-detail'], id);
+      assert.equal(buttons[1]['data-product-buy'], id);
+      assert.match(buttons[0]['aria-label'], /详情$/);
+      assert.ok(buttons.every(button => button.type === 'button'));
+      assert.match(body, /去小程序购买/);
       assert.ok(body.includes(`<strong>${product.shortName || product.name}</strong>`));
       assert.ok(body.includes(`<small>${product.shade}</small>`));
       assert.ok(body.includes(`<b>¥${product.price}</b>`));
@@ -84,18 +82,14 @@ test('all five reports build one twelve-item shopping list with complete row con
   }
 });
 
-test('shopping list renders the selected SKU and removes duplicate recommendations', () => {
+test('shopping list removes duplicate recommendations without creating selection state', () => {
   const report = createReport(90);
   report.areas[0].productIds.push('hair');
-  renderer.selectedProducts.set('hair', 1);
-  try {
-    const html = renderer.collectionHTML(report);
-    const controls = elements(html, 'button').filter(button => button['data-cart-toggle']);
-    assert.equal(controls.length, 12);
-    assert.deepEqual(controls.filter(button => button['aria-pressed'] === 'true').map(button => button['data-cart-toggle']), ['hair']);
-  } finally {
-    renderer.selectedProducts.clear();
-  }
+  const html = renderer.collectionHTML(report);
+  const controls = elements(html, 'button').filter(button => button['data-product-buy']);
+  assert.equal(controls.length, 12);
+  assert.equal(controls.filter(button => button['data-product-buy'] === 'hair').length, 1);
+  assert.doesNotMatch(html, /data-cart-toggle|aria-pressed|checkbox/);
 });
 
 test('each report ends its product collection with one browse-more button without a destination', () => {
@@ -125,7 +119,8 @@ test('browse-more entry uses a full-width gradient touch target and accessible f
   assert.match(button, /width:\s*100%/);
   assert.match(button, /background:\s*linear-gradient/);
   assert.match(css, /\.beauty-collection-more:focus-visible\s*\{[^}]*outline:/);
-  assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)\s*\{[^}]*\.beauty-collection-more[^}]*transition:\s*none/);
+  const reduced = css.slice(css.indexOf('@media(prefers-reduced-motion:reduce)'));
+  assert.match(reduced, /\.beauty-collection-more[^}]*transition:\s*none/);
 });
 
 test('foundation tabs use light text and a gradient underline while keeping touch targets', () => {
@@ -143,8 +138,8 @@ test('accessory details are side by side and product recommendations form compac
   const list = cssBlock('.beauty-collection-list');
   assert.match(list, /display:\s*flex/);
   assert.match(list, /flex-direction:\s*column/);
-  assert.match(cssBlock('.beauty-collection-item'), /grid-template-columns:\s*44px\s+minmax\(0,\s*1fr\)/);
-  assert.match(cssBlock('.beauty-select-product'), /min-height:\s*44px/);
+  assert.match(cssBlock('.beauty-collection-item'), /grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  assert.ok(Number(cssBlock('.beauty-collection-buy').match(/min-height:\s*(\d+)px/)[1]) >= 44);
   assert.match(cssBlock('.beauty-collection-link'), /grid-template-columns:\s*\d+px\s+minmax\(0,\s*1fr\)/);
   assert.match(css, /prefers-reduced-motion:\s*reduce/);
 });

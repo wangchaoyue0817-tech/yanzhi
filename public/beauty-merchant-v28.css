@@ -1,0 +1,31 @@
+/* The merchant destination has its own page and scroll position, not a bottom sheet. */
+.beauty-merchant { position:absolute;inset:0;z-index:30;overflow:auto;overscroll-behavior:contain;scrollbar-width:none;background:#11132b;color:#f1f0ff;isolation:isolate; }
+.beauty-merchant[hidden] { display:none!important; }
+.beauty-merchant::-webkit-scrollbar { display:none; }
+.beauty-merchant-header { position:sticky;top:0;z-index:2;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;min-height:62px;padding:5px 14px;border-bottom:1px solid #a6bce321;background:#14162ff5;backdrop-filter:blur(16px); }
+.beauty-page .beauty-merchant-back { display:grid;place-items:center;width:44px;min-height:44px;padding:0;border:0;border-radius:12px;background:transparent;color:#e2dcef;transition:background .18s ease; }
+.beauty-merchant-back svg { width:22px;height:22px; }
+.beauty-page .beauty-merchant-back:hover,.beauty-page .beauty-merchant-back:active { background:#a892df18; }
+.beauty-page .beauty-merchant-back:focus-visible { outline:2px solid #c9b6f1;outline-offset:-3px; }
+.beauty-merchant-brand { display:flex;align-items:center;justify-content:center;gap:8px;min-width:0; }
+.beauty-merchant-brand strong { font-size:15px;font-weight:500;line-height:1.5; }
+.beauty-merchant-brand small { padding:1px 5px;border:1px solid #b8a9ff40;border-radius:5px;color:#c8b8e5;font-size:10px;line-height:1.5; }
+.beauty-merchant-content { width:100%;max-width:520px;margin:0 auto;padding:16px 20px calc(28px + env(safe-area-inset-bottom,0px)); }
+.beauty-merchant-image { width:100%;aspect-ratio:1;border:1px solid #e8dfd240;border-radius:16px;background-color:#f1e9dc;background-repeat:no-repeat; }
+.beauty-merchant-summary { padding:20px 0 18px; }
+.beauty-merchant-label { margin:0 0 6px;color:#b6a7ce;font-size:12px;line-height:1.5; }
+.beauty-merchant-summary #beautyMerchantTitle { margin:0;font-size:21px;font-weight:500;line-height:1.5;overflow-wrap:anywhere; }
+.beauty-merchant-summary #beautyMerchantTitle:focus { outline:none; }
+.beauty-merchant-spec { margin:7px 0 0;color:#b7b0c7;font-size:13px;line-height:1.65;overflow-wrap:anywhere; }
+.beauty-merchant-prices { display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-top:14px;font-variant-numeric:tabular-nums; }
+.beauty-merchant-prices strong { color:#e4cda2;font-size:28px;font-weight:500;line-height:1.25; }
+.beauty-merchant-prices strong small { margin-right:3px;font-size:15px; }
+.beauty-merchant-prices del { color:#a49aae;font-size:13px; }
+.beauty-merchant-notice { margin:0;padding:11px 12px;border:1px solid #b8a9ff26;border-radius:10px;background:#b09fe909;color:#bcb4cf;font-size:12px;line-height:1.65; }
+.beauty-merchant-details { margin-top:22px;padding-top:19px;border-top:1px solid #a6bce31f; }
+.beauty-merchant-details h2 { margin:0 0 11px;font-size:15px;font-weight:500;line-height:1.5; }
+.beauty-merchant-details ul { display:flex;flex-wrap:wrap;gap:8px;margin:0;padding:0;list-style:none; }
+.beauty-merchant-details li { padding:5px 9px;border:1px solid #b6a0da25;border-radius:7px;color:#cfc6de;font-size:12px;line-height:1.6;overflow-wrap:anywhere; }
+.beauty-merchant-details p { margin:0;color:#c2bace;font-size:13px;line-height:1.85;overflow-wrap:anywhere; }
+@media(max-width:350px) { .beauty-merchant-content { padding:14px 16px calc(24px + env(safe-area-inset-bottom,0px)); } .beauty-merchant-summary #beautyMerchantTitle { font-size:20px; } }
+@media(prefers-reduced-motion:reduce) { .beauty-page .beauty-merchant-back { transition:none; } }

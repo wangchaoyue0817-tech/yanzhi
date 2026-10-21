@@ -55,23 +55,6 @@
 .beauty-collection-more:focus-visible { outline:2px solid #e2d6ff;outline-offset:3px; }
 .beauty-collection-link:focus-visible,.beauty-accessory-detail:focus-visible { outline:2px solid #c2a5ef;outline-offset:-3px;border-radius:9px; }
 .beauty-page .beauty-collection-buy:focus-visible { outline:2px solid #e1d5ff;outline-offset:3px; }
-.beauty-detail-footer .beauty-product-prices { flex:none;justify-items:start; }
-.beauty-detail-footer .beauty-primary { min-width:0; }
-/* A compact destination preview explains where the single item will be bought. */
-.beauty-mini-program { padding:6px 0 2px; }
-.beauty-mini-route { display:flex;align-items:center;gap:10px;padding:0 0 17px;margin-bottom:18px;border-bottom:1px solid #b6a2df26;color:#e1d8f1;font-size:14px;line-height:1.5; }
-.beauty-mini-route>svg:first-child { flex:none;width:36px;height:36px;padding:7px;border:1px solid #b8a9ff40;border-radius:10px;background:linear-gradient(135deg,#5b68ed20,#a660d120);color:#c7baff; }
-.beauty-mini-route>svg:last-child { margin-left:auto;width:18px;height:18px;color:#b3a1ce; }
-.beauty-mini-product { display:grid;grid-template-columns:72px minmax(0,1fr);align-items:center;gap:14px;padding:14px;border:1px solid #b4a3d427;border-radius:14px;background:linear-gradient(125deg,#20213a,#17192e); }
-.beauty-mini-product>.beauty-product-image { width:72px;border-radius:10px; }
-.beauty-mini-product>div { min-width:0; }
-.beauty-mini-product h3 { margin:0;font-size:15px;font-weight:500;line-height:1.5;overflow-wrap:anywhere;color:#eee6fa; }
-.beauty-mini-product p { margin:5px 0 8px;color:#b6abc8;font-size:12px;line-height:1.5; }
-.beauty-mini-product .beauty-product-prices { display:flex;flex-wrap:wrap;align-items:baseline;justify-content:flex-start;gap:8px; }
-.beauty-mini-product .beauty-price { font-size:19px;font-weight:500; }
-.beauty-mini-program>h3 { margin:24px 0 7px;color:#eee8fa;font-size:17px;font-weight:500;line-height:1.5;text-align:center; }
-.beauty-mini-note { margin:0 0 24px;color:#aaa4bd;font-size:12px;line-height:1.6;text-align:center; }
-.beauty-mini-program>.beauty-primary { margin:0; }
 @keyframes beauty-product-in { from{opacity:.5;transform:translateX(5px)}to{opacity:1;transform:none} }
 @media(max-width:350px) {
  .beauty-reader .beauty-product-compact .beauty-product-link { grid-template-columns:42px minmax(0,1fr) auto;gap:6px; }
@@ -85,8 +68,6 @@
  .beauty-collection-link { grid-template-columns:44px minmax(0,1fr);gap:7px; }
  .beauty-collection-link .beauty-product-image { width:44px; }
  .beauty-collection>header h2 { font-size:19px; }
- .beauty-mini-product { grid-template-columns:60px minmax(0,1fr);gap:10px;padding:12px; }
- .beauty-mini-product>.beauty-product-image { width:60px; }
 }
 @media(prefers-reduced-motion:reduce) { .beauty-foundation-picker [role=tabpanel] { animation:none; } .beauty-foundation-tabs button,.beauty-foundation-tabs button:after,.beauty-page .beauty-collection-buy>span,.beauty-collection-more { transition:none; } .beauty-collection-more:active,.beauty-page .beauty-collection-buy:active>span { transform:none; } }
 

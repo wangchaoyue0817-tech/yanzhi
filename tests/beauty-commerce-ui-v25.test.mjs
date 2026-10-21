@@ -3,6 +3,8 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import test from 'node:test';
 import { PRODUCTS, createReport, getFoundationProducts } from '../public/beauty-model.js';
+import { resolvePurchaseTarget } from '../public/beauty-purchase.js';
+import { merchantHTML } from '../public/beauty-merchant.js';
 
 const source = readFileSync(new URL('../public/beauty-analysis.js', import.meta.url), 'utf8');
 // Run the shipped functions and listeners, with small DOM/event adapters. No
@@ -16,20 +18,23 @@ const executable = [
   between('function productImage(', 'function resultCopy('),
   between('function foundationHTML(', 'function priorityArea('),
   between('function openSheet(', 'function menuSheet('),
-  between('function detailSheet(', 'async function posterSheet('),
+  between('function openPurchase(', 'async function posterSheet('),
+  between('function reportReady(', 'function contentTop('),
   between("page.addEventListener('click',event=>{", "scroll.addEventListener('scroll',syncReading"),
   between('// Foundation swipes stay inside their picker', '// A fresh gesture must begin at the end;'),
+  between("document.addEventListener('keydown'", "motion.addEventListener('change'"),
+  between("window.addEventListener?.('popstate'", 'window.beautyExperience='),
 ].join('\n');
 const attributes = text => Object.fromEntries([...text.matchAll(/([\w:-]+)(?:\s*=\s*"([^"]*)")?/g)].map(match => [match[1], match[2] ?? '']));
 const plain = value => JSON.parse(JSON.stringify(value));
 
-function harness(score = 90) {
-  const nodes = new Map(), productControls = new Map(), timers = new Map();
-  const effects = { sheets: [], toasts: [], chapters: [], starts: [], clearedUploads: 0 };
+function harness(score = 90, { links, failNavigation = false } = {}) {
+  const nodes = new Map(), productControls = new Map(), timers = new Map(), windowHandlers = new Map(), documentHandlers = new Map();
+  const effects = { sheets: [], toasts: [], chapters: [], starts: [], clearedUploads: 0, navigation: [], history: [] };
   let document, serial = 0, timerSerial = 0, now = 1000;
   const node = id => {
     if (nodes.has(id)) return nodes.get(id);
-    const attrs = {}, handlers = new Map(), classes = new Set();
+    const attrs = {}, handlers = new Map(), classes = new Set(), controls = [];
     let html = '';
     const el = {
       id, dataset: {}, hidden: false, disabled: false, inert: false, value: '', textContent: '', tabIndex: 0,
@@ -51,7 +56,11 @@ function harness(score = 90) {
       },
       removeEventListener(type, fn) { handlers.set(type, (handlers.get(type) || []).filter(listener => listener.fn !== fn)); },
       querySelector(selector) { return node(`${id}:${selector}`); },
-      querySelectorAll() { return []; },
+      querySelectorAll() {
+        if (id === 'beautyPage' && !node('beautyMerchant').hidden) return node('beautyMerchant').querySelectorAll();
+        return controls;
+      },
+      getClientRects() { return el.hidden ? [] : [{}]; },
       getBoundingClientRect() { return { top: 0, left: 0, right: 390, bottom: 800, height: 800, width: 390 }; },
       closest() { return null; },
     };
@@ -59,6 +68,7 @@ function harness(score = 90) {
       get: () => html,
       set(value) {
         html = value;
+        controls.length = 0;
         if (id === 'beautySheetBody') {
           effects.sheets.push(value);
         }
@@ -69,6 +79,7 @@ function harness(score = 90) {
             child.setAttribute(key, val);
             if (key.startsWith('data-')) child.dataset[key.slice(5).replace(/-([a-z])/g, (_, c) => c.toUpperCase())] = val;
           }
+          if (['button', 'input', 'textarea'].includes(match[1])) controls.push(child);
           child.value = data.value ?? '';
           child.hidden = Object.hasOwn(data, 'hidden');
           child.disabled = Object.hasOwn(data, 'disabled');
@@ -79,9 +90,23 @@ function harness(score = 90) {
     nodes.set(id, el);
     return el;
   };
-  document = { getElementById: node, querySelector: node, activeElement: null };
+  document = { getElementById: node, querySelector: node, activeElement: null, addEventListener(type, listener) { documentHandlers.set(type, listener); } };
+  const historyStack = [{ homepage: 'preserved' }];
+  let historyIndex = 0;
+  const history = {
+    get state() { return historyStack[historyIndex]; },
+    pushState(state, title, url) { historyStack.splice(++historyIndex, Infinity, state); effects.history.push({ type: 'push', state: plain(state), url }); },
+    replaceState(state) { historyStack[historyIndex] = state; effects.history.push({ type: 'replace', state: plain(state) }); },
+    back() { history.go(-1); },
+    go(delta) { const next = historyIndex + delta; if (next < 0 || next >= historyStack.length) return; historyIndex = next; windowHandlers.get('popstate')?.({ state: history.state }); },
+  };
+  const window = {
+    addEventListener(type, listener) { windowHandlers.set(type, listener); },
+    location: { assign(url) { if (failNavigation) throw new Error('Navigation unavailable'); effects.navigation.push(url); } },
+  };
   const ctx = {
-    document, PRODUCTS, getFoundationProducts, createReport,
+    document, PRODUCTS, getFoundationProducts, createReport, history, window, merchantHTML,
+    resolvePurchaseTarget: id => resolvePurchaseTarget(id, links),
     Date: { now: () => now },
     URL: { revokeObjectURL() {} },
     effectToast: message => effects.toasts.push(message),
@@ -97,15 +122,16 @@ function harness(score = 90) {
     const star='<svg></svg>',money=value=>Number.isInteger(value)?String(value):value.toFixed(2);
     let currentReport=createReport(${score}),reader={tab:'advice'},foundationSwipe=null,swipeStart=null,wheelGesture=null,touchStart=null;
     let sheetFocus=null,overlayGeneration=0,modalKind='',posterPreviewUrl='',copyVariant=0;
+    let merchantProduct=null,merchantFocus=null,merchantScrollTop=0,generation=1;
     const start=(...args)=>effectStart(...args),clearUpload=()=>effectClearUpload();
     const toast=message=>effectToast(message),inert=(el,value)=>{if(el)el.inert=value;};
     const later=(fn,delay)=>setTimeout(fn,delay);
-    const reportReady=()=>!!currentReport&&!page.hidden;
     const selectChapter=id=>{reader.tab=id;effectChapter(id);};
     ${executable}
-    ({ init(){page.hidden=false;$('beautyOverlay').hidden=true;page.innerHTML=collectionHTML(currentReport)+foundationHTML();},
-      detailSheet,miniProgramSheet,closeSheet,selectFoundation,
-      state(){return {reader,modalKind};},
+    ({ init(){page.hidden=false;$('beautyReport').hidden=false;$('beautyOverlay').hidden=true;$('beautyMerchant').hidden=true;page.innerHTML=collectionHTML(currentReport)+foundationHTML();},
+      openPurchase,showMerchant,hideMerchant,returnFromMerchant,clearMerchant,openSheet,closeSheet,selectFoundation,
+      state(){return {reader,modalKind,merchantProduct,generation};},
+      invalidateReport(){clearMerchant();generation++;currentReport=null;},
       setChapter(id){reader.tab=id;} });
   `, ctx);
   api.init();
@@ -120,9 +146,14 @@ function harness(score = 90) {
     }
     return event;
   };
-  const click = dataset => {
-    const button = { dataset, hasAttribute: () => false };
+  const click = (dataset, attrs = []) => {
+    const button = { dataset, hasAttribute: name => attrs.includes(name) };
     return dispatch('click', { target: { closest: selector => selector === 'button' ? button : null } });
+  };
+  const key = (value, { shiftKey = false } = {}) => {
+    const event = { key: value, shiftKey, target: document.activeElement, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
+    documentHandlers.get('keydown')(event);
+    return event;
   };
   const pointer = ({ fromX = 280, toX = 90, fromY = 300, toY = 302, duration = 100, picker = true, primary = true, endId = 1, cancel = false } = {}) => {
     const target = { closest(selector) {
@@ -136,97 +167,174 @@ function harness(score = 90) {
     if (cancel) dispatch('pointercancel');
     dispatch('pointerup', { target, pointerId: endId, clientX: toX, clientY: toY });
   };
-  return { api, node, document, click, pointer, dispatch, effects, productControls, timers, state: () => plain(api.state()), flushTimers() { for (const [id, fn] of [...timers]) { timers.delete(id); fn(); } } };
+  return { api, node, document, click, key, pointer, dispatch, effects, productControls, timers, history, windowHandlers, state: () => plain(api.state()), flushTimers() { for (const [id, fn] of [...timers]) { timers.delete(id); fn(); } } };
 }
 
-test('each of the twelve collection entries hands off exactly its own product without internal checkout', () => {
+test('each of the twelve collection entries directly opens its own merchant page without a sheet', () => {
   const h = harness();
   assert.equal(h.productControls.size, 12);
   for (const product of PRODUCTS) {
     const trigger = h.productControls.get(product.id);
     trigger.focus();
+    h.node('beautyScroll').scrollTop = 2370;
     h.click({ productBuy: trigger.dataset.productBuy });
-    assert.equal(h.state().modalKind, 'mini-program');
-    assert.equal(h.node('beautySheetTitle').textContent, '前往小程序购买');
-    const html = h.node('beautySheetBody').innerHTML;
-    assert.match(html, new RegExp(`data-mini-product="${product.id}"`));
-    assert.equal((html.match(/data-mini-product=/g) || []).length, 1);
-    assert.ok(html.includes(product.name));
-    assert.ok(html.includes(product.shade));
-    assert.ok(html.includes(product.image));
-    assert.ok(html.includes(`<small>¥</small>${product.price}`));
-    assert.ok(html.includes(`<del>¥${product.originalPrice}</del>`));
-    assert.match(html, /在商家小程序中完成下单/);
-    assert.match(html, /跳转展示 · 小程序暂未接入/);
-    assert.doesNotMatch(html, /<form|<input|<textarea|满减|优惠|收货|下单成功|支付成功/);
-    h.click({ action: 'continue' });
+    assert.equal(h.state().merchantProduct.id, product.id);
+    assert.equal(h.state().modalKind, '');
     assert.equal(h.node('beautyOverlay').hidden, true);
+    assert.equal(h.node('beautyMerchant').hidden, false);
+    const html = h.node('beautyMerchant').innerHTML;
+    for (const value of [product.name, product.shade, product.image]) assert.ok(html.includes(value), value);
+    assert.match(html, /演示/);
+    assert.doesNotMatch(html, /role="dialog"|aria-modal|<form|<input|<textarea|满减|优惠|收货|下单成功|支付成功/);
+    assert.equal(h.document.activeElement, h.node('beautyMerchantTitle'));
+    h.click({}, ['data-merchant-back']);
+    assert.equal(h.node('beautyMerchant').hidden, true);
+    assert.equal(h.node('beautyMerchant').innerHTML, '');
+    assert.equal(h.node('beautyScroll').scrollTop, 2370);
     assert.equal(h.document.activeElement, trigger);
   }
+  assert.equal(h.effects.sheets.length, 0);
+  assert.equal(h.effects.starts.length, 0);
 });
 
-test('product details retain their facts and route the same SKU to the external purchase demonstration', () => {
-  const h = harness();
-  for (const product of PRODUCTS) {
-    h.click({ productDetail: product.id });
-    assert.equal(h.state().modalKind, 'product');
-    const detail = h.node('beautySheetBody').innerHTML;
-    for (const value of [product.name, product.brand, product.shade, product.reason, product.usage, ...product.features]) assert.ok(detail.includes(value));
-    assert.ok(detail.includes(`<del>¥${product.originalPrice}</del>`));
-    assert.match(detail, /立即购买/);
-    assert.doesNotMatch(detail, />去小程序购买/);
-    const attrs = attributes(detail.match(/<button\b([^>]*data-product-buy[^>]*)>/)[1]);
-    assert.equal(attrs['data-product-buy'], product.id);
-    assert.equal(attrs.type, 'button');
-    h.click({ productBuy: attrs['data-product-buy'] });
-    assert.equal(h.state().modalKind, 'mini-program');
-    assert.match(h.node('beautySheetBody').innerHTML, new RegExp(`data-mini-product="${product.id}"`));
-    h.api.closeSheet();
-  }
+test('all existing product controls use one direct-buy action and no product detail route survives', () => {
+  assert.doesNotMatch(source, /data-product-detail|productDetail|detailSheet|miniProgramSheet|case 'continue'/);
+  const buyHandler = between('const productId=target.dataset.productBuy;', 'switch(target.dataset.action)');
+  assert.match(buyHandler, /openPurchase\(product\)/);
+  assert.doesNotMatch(buyHandler, /openSheet/);
 });
 
-test('unknown and empty product IDs are ignored without replacing the current sheet', () => {
+test('unknown and empty product IDs are ignored without opening or replacing a destination', () => {
   const h = harness();
-  for (const id of ['missing', '', '__proto__', '<script>']) {
-    h.click({ productBuy: id });
-    h.click({ productDetail: id });
-    assert.equal(h.effects.sheets.length, 0);
-    assert.equal(h.node('beautyOverlay').hidden, true);
-  }
+  for (const id of ['missing', '', '__proto__', '<script>']) h.click({ productBuy: id });
+  assert.equal(h.effects.sheets.length, 0);
+  assert.equal(h.node('beautyMerchant').hidden, true);
+  assert.equal(h.effects.history.length, 0);
   h.click({ productBuy: 'hair' });
-  const prior = h.node('beautySheetBody').innerHTML;
+  const prior = h.node('beautyMerchant').innerHTML;
   h.click({ productBuy: 'missing' });
-  assert.equal(h.node('beautySheetBody').innerHTML, prior);
+  assert.equal(h.node('beautyMerchant').innerHTML, prior);
 });
 
-test('detail to handoff retains the original report focus target and keeps the background inert', () => {
+test('merchant destination blocks background gestures and restores report focus, chapter and scroll on browser back', () => {
   const h = harness();
   const original = h.node('report-product');
   original.focus();
-  h.click({ productDetail: 'lip' });
-  h.node('detail-buy').focus();
+  h.node('beautyScroll').scrollTop = 3150;
   h.click({ productBuy: 'lip' });
   for (const id of ['beautyScroll', '.beauty-header', 'beautyComposer']) assert.equal(h.node(id).inert, true);
-  assert.equal(h.document.activeElement, h.node('beautySheet:[data-beauty-close]'));
   h.pointer({ picker: false, fromX: 90, toX: 280 });
   h.pointer();
   assert.deepEqual(h.effects.chapters, []);
   assert.equal(h.node('foundationTab-base-normal').getAttribute('aria-selected'), 'true');
-  h.click({ action: 'continue' });
-  assert.equal(h.state().modalKind, '');
+  assert.equal(h.history.state.homepage, 'preserved');
+  h.history.back();
+  assert.equal(h.state().merchantProduct, null);
+  assert.equal(h.state().reader.tab, 'advice');
   for (const id of ['beautyScroll', '.beauty-header', 'beautyComposer']) assert.equal(h.node(id).inert, false);
+  assert.equal(h.node('beautyScroll').scrollTop, 3150);
+  assert.equal(h.document.activeElement, original);
+  assert.equal(h.effects.starts.length, 0, 'returning does not rerun loading');
+  h.history.go(1);
+  assert.equal(h.state().merchantProduct.id, 'lip', 'forward restores the matching product for the same report');
+  h.history.back();
   assert.equal(h.document.activeElement, original);
 });
 
-test('reopening another SKU replaces the prior handoff and never accumulates a purchase selection', () => {
+test('merchant history forward dismisses an intervening menu or poster before restoring the destination', () => {
+  for (const kind of ['menu', 'poster']) {
+    const h = harness();
+    const purchaseOpener = h.productControls.get('lip');
+    purchaseOpener.focus();
+    h.node('beautyScroll').scrollTop = 2910;
+    h.click({ productBuy: 'lip' });
+    h.history.back();
+    assert.equal(h.document.activeElement, purchaseOpener);
+    const sheetOpener = h.node(`${kind}-opener`);
+    sheetOpener.focus();
+    h.api.openSheet(kind, '<p>Content</p>', kind);
+    assert.equal(h.node('beautyOverlay').hidden, false);
+    assert.equal(h.document.activeElement, h.node('beautySheet:[data-beauty-close]'));
+    h.history.go(1);
+    assert.equal(h.node('beautyOverlay').hidden, true, `${kind}: forward closes the old sheet`);
+    assert.equal(h.state().modalKind, '');
+    assert.equal(h.state().merchantProduct.id, 'lip');
+    assert.equal(h.document.activeElement, h.node('beautyMerchantTitle'));
+    for (const id of ['beautyScroll', '.beauty-header', 'beautyComposer']) assert.equal(h.node(id).inert, true);
+    h.history.back();
+    assert.equal(h.node('beautyMerchant').hidden, true);
+    assert.equal(h.node('beautyOverlay').hidden, true);
+    assert.equal(h.document.activeElement, sheetOpener, `${kind}: back restores the report control, not a hidden sheet control`);
+    assert.equal(h.node('beautyScroll').scrollTop, 2910);
+    assert.equal(h.state().reader.tab, 'advice');
+    for (const id of ['beautyScroll', '.beauty-header', 'beautyComposer']) assert.equal(h.node(id).inert, false);
+    assert.equal(h.effects.starts.length, 0);
+  }
+});
+
+test('initial merchant heading focus enters and stays within its return control on Tab and Shift Tab', () => {
+  for (const shiftKey of [false, true]) {
+    const h = harness();
+    h.click({ productBuy: 'hair' });
+    assert.equal(h.document.activeElement, h.node('beautyMerchantTitle'));
+    const controls = h.node('beautyMerchant').querySelectorAll();
+    assert.equal(controls.length, 1);
+    assert.equal(controls[0].hasAttribute('data-merchant-back'), true);
+    assert.equal(h.key('Tab', { shiftKey }).defaultPrevented, true, 'heading focus is directed to the visible control');
+    assert.equal(h.document.activeElement, controls[0]);
+    assert.equal(h.key('Tab', { shiftKey }).defaultPrevented, true, 'single-control traversal stays in the page');
+    assert.equal(h.document.activeElement, controls[0]);
+    assert.equal(h.node('beautyOverlay').hidden, true);
+  }
+});
+
+test('opening another SKU after return replaces the destination without accumulating a selection', () => {
   const h = harness();
   h.click({ productBuy: 'hair' });
-  h.api.closeSheet();
+  h.history.back();
   h.click({ productBuy: 'earrings' });
-  const html = h.node('beautySheetBody').innerHTML;
-  assert.match(html, /data-mini-product="earrings"/);
-  assert.doesNotMatch(html, /data-mini-product="hair"|已选|合并|打包|勾选/);
-  assert.equal((html.match(/data-mini-product=/g) || []).length, 1);
+  const html = h.node('beautyMerchant').innerHTML;
+  assert.equal(h.state().merchantProduct.id, 'earrings');
+  assert.ok(html.includes(PRODUCTS.find(product => product.id === 'earrings').name));
+  assert.ok(!html.includes(PRODUCTS.find(product => product.id === 'hair').name));
+  assert.doesNotMatch(html, /已选|合并|打包|勾选/);
+});
+
+test('configured HTTPS links navigate directly without rendering an internal destination or a sheet', () => {
+  const links = Object.fromEntries(PRODUCTS.map(product => [product.id, `https://merchant.example/purchase?sku=${product.id}`]));
+  const h = harness(90, { links });
+  for (const product of PRODUCTS) h.click({ productBuy: product.id });
+  assert.deepEqual(h.effects.navigation, PRODUCTS.map(product => links[product.id]));
+  assert.equal(h.effects.history.length, 0);
+  assert.equal(h.effects.sheets.length, 0);
+  assert.equal(h.node('beautyMerchant').hidden, true);
+});
+
+test('invalid or failed external navigation stays on the report and reports an actionable error', () => {
+  for (const configured of ['javascript:alert(1)', 'http://merchant.example', 'https://user:secret@merchant.example', 42]) {
+    const h = harness(90, { links: { hair: configured } });
+    h.click({ productBuy: 'hair' });
+    assert.equal(h.effects.toasts.at(-1), '购买链接暂不可用，请稍后再试');
+    assert.deepEqual(h.effects.navigation, []);
+    assert.equal(h.node('beautyMerchant').hidden, true);
+  }
+  const h = harness(90, { links: { hair: 'https://merchant.example/hair' }, failNavigation: true });
+  h.click({ productBuy: 'hair' });
+  assert.equal(h.effects.toasts.at(-1), '暂时无法打开购买页面，请重试');
+  assert.equal(h.node('beautyMerchant').hidden, true);
+});
+
+test('stale history cannot reopen a merchant page after its report has been reset', () => {
+  const h = harness();
+  h.click({ productBuy: 'hair' });
+  const stale = h.history.state;
+  h.api.invalidateReport();
+  assert.equal(h.node('beautyMerchant').hidden, true);
+  assert.equal(h.history.state.beautyMerchant, undefined);
+  assert.equal(h.history.state.homepage, 'preserved');
+  h.windowHandlers.get('popstate')({ state: stale });
+  assert.equal(h.node('beautyMerchant').hidden, true);
+  assert.equal(h.state().merchantProduct, null);
 });
 
 test('shipped beauty assets have no discount, selection, cart, shipping or internal order remnants', () => {
@@ -257,10 +365,11 @@ test('foundation swipes stay within foundation tabs and suppress the resulting p
   h.pointer();
   assert.equal(h.node('foundationTab-base-dry').getAttribute('aria-selected'), 'true');
   assert.deepEqual(h.effects.chapters, []);
-  assert.equal(h.click({ productDetail: 'base-dry' }).defaultPrevented, true);
+  assert.equal(h.click({ productBuy: 'base-dry' }).defaultPrevented, true);
   assert.equal(h.state().modalKind, '');
-  h.click({ productDetail: 'base-dry' });
-  assert.equal(h.state().modalKind, 'product');
+  h.click({ productBuy: 'base-dry' });
+  assert.equal(h.state().merchantProduct.id, 'base-dry');
+  assert.equal(h.effects.sheets.length, 0);
 });
 
 test('vertical, short, cancelled, multi-pointer, and stale foundation gestures do not switch panels', () => {

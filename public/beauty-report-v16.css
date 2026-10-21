@@ -108,6 +108,5 @@
 @media(prefers-reduced-motion:reduce){.beauty-page *, .beauty-page *:before,.beauty-page *:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.beauty-reveal:not(.is-visible){opacity:1;transform:none;filter:none}.beauty-reveal-halo{display:none}.beauty-page .beauty-aurora{display:block;opacity:.3}.beauty-page .beauty-sparkles{display:block}.beauty-coronation{opacity:1;transform:none}.beauty-area.is-visible .beauty-product,.beauty-area.is-visible .beauty-area-pair,.beauty-area.is-visible .beauty-area-summary{opacity:1;transform:none}}
 
 .beauty-report[data-tier=spotlight] .beauty-coronation{width:55px;height:55px;margin-top:0;margin-bottom:0;padding:9px;border:1px solid #f2d598;border-radius:16px;background:linear-gradient(140deg,#76576b,#2a2344 55%,#786143);box-shadow:0 0 0 4px #d7b2e31c,inset 0 0 0 3px #ebcc9c19,0 0 23px #e8b77e30;color:#ffe3a5}
-.beauty-detail-image{width:145px}
 
 .beauty-preset-image{position:relative;display:grid;place-items:center;flex:none;width:78px;height:95px;overflow:hidden;border-radius:10px;background:radial-gradient(circle,#7660b433,#11152e);border:1px solid #ad94d22b;color:#ad8ae5}.beauty-preset-image>svg{width:30px;height:30px}.beauty-preset-image img{position:absolute;inset:0;width:100%;height:100%;border-radius:0}.beauty-upload-preset button:disabled{cursor:wait;opacity:.55}

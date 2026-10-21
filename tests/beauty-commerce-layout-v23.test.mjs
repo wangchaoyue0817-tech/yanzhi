@@ -28,15 +28,15 @@ const cssBlock = selector => {
   return css.slice(css.indexOf('{', from) + 1, css.indexOf('}', from));
 };
 
-test('accessories render two wearable close-ups with independent product detail entries', () => {
+test('accessories render two wearable close-ups with independent direct purchase entries', () => {
   const html = renderer.accessoryHTML({ before: 'assets/beauty-earring-detail-v23.png', after: 'assets/beauty-necklace-detail-v23.png' });
   const images = elements(html, 'img'), buttons = elements(html, 'button');
   assert.equal(elements(html, 'figure').length, 2);
   assert.equal(images.length, 2);
   assert.deepEqual(images.map(image => image.src), ['assets/beauty-earring-detail-v23.png', 'assets/beauty-necklace-detail-v23.png']);
   assert.deepEqual(images.map(image => image.alt), ['耳部佩戴珍珠耳钉的局部特写', '锁骨处佩戴珍珠细链项链的局部特写']);
-  assert.deepEqual(buttons.map(button => button['data-product-detail']), ['earrings', 'style']);
-  assert.ok(buttons.every(button => button.type === 'button' && button['aria-label'].includes('详情')));
+  assert.deepEqual(buttons.map(button => button['data-product-buy']), ['earrings', 'style']);
+  assert.ok(buttons.every(button => button.type === 'button' && button['aria-label'].startsWith('立即购买')));
   assert.ok(images.every(image => image.loading === 'lazy' && image.draggable === 'false'));
   assert.doesNotMatch(html, /beauty-accessory-(?:natural|fresh|radiant|spotlight|icon)-v22|调整前|调整后|原来|之后/);
 });
@@ -64,12 +64,12 @@ test('all five reports build one twelve-item shopping list with complete row con
       const product = PRODUCTS.find(value => value.id === id);
       assert.ok(product);
       const buttons = elements(body, 'button');
-      assert.equal(buttons.length, 2, `${id}: detail and individual purchase are separate controls`);
-      assert.equal(buttons[0]['data-product-detail'], id);
+      assert.equal(buttons.length, 2, `${id}: product row and purchase button both lead to the same SKU`);
+      assert.equal(buttons[0]['data-product-buy'], id);
       assert.equal(buttons[1]['data-product-buy'], id);
-      assert.match(buttons[0]['aria-label'], /详情$/);
+      assert.equal(buttons[0]['aria-label'], `立即购买${product.name}`);
       assert.ok(buttons.every(button => button.type === 'button'));
-      const buyMarkup = [...body.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)].find(match => attributes(match[1])['data-product-buy']);
+      const buyMarkup = [...body.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)].find(match => attributes(match[1]).class === 'beauty-collection-buy');
       assert.equal(buyMarkup[2].replace(/<[^>]+>/g, '').trim(), '立即购买');
       assert.equal((buyMarkup[2].match(/<span/g) || []).length, 1);
       assert.doesNotMatch(buyMarkup[2], /<br|<svg|↗|去小程序/);
@@ -89,7 +89,7 @@ test('shopping list removes duplicate recommendations without creating selection
   const report = createReport(90);
   report.areas[0].productIds.push('hair');
   const html = renderer.collectionHTML(report);
-  const controls = elements(html, 'button').filter(button => button['data-product-buy']);
+  const controls = elements(html, 'button').filter(button => button.class === 'beauty-collection-buy');
   assert.equal(controls.length, 12);
   assert.equal(controls.filter(button => button['data-product-buy'] === 'hair').length, 1);
   assert.doesNotMatch(html, /data-cart-toggle|aria-pressed|checkbox/);

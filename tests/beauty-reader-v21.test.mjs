@@ -94,7 +94,7 @@ function readerHarness({ reducedMotion = false } = {}) {
   };
   const api = runInNewContext(controller.replace(/^import .*;$/gm, '') + `
     ({ show:showReport, selectChapter, selectArea, reset:resetEntry,
-       openSheet, closeSheet, poster:posterSheet, detail:detailSheet,
+       openSheet, closeSheet, poster:posterSheet, purchase:openPurchase,
        state(){ return { reader, currentReport, photos, frameCount:frames.size }; } });
   `, {
     document, TIERS, PRODUCTS, createReport, getFoundationProducts, history, window: { addEventListener(type, fn) { windowHandlers.set(type, fn); } },
@@ -218,7 +218,10 @@ test('chapter switching preserves report DOM, facts, photos and each chapter rea
   assert.equal(h.api.state().currentReport,original.report);
   assert.equal(h.api.state().photos,original.photos);
   assert.deepEqual(h.effects.history,[],'chapter navigation never adds or mutates browser history');
-  assert.equal(h.windowHandlers.has('popstate'),false,'the offline router retains ownership of browser navigation');
+  const markup=h.node('beautyReport').innerHTML;
+  h.windowHandlers.get('popstate')({state:{homepage:'preserved'}});
+  assert.deepEqual(h.effects.history,[],'unrelated history does not change report navigation');
+  assert.equal(h.node('beautyReport').innerHTML,markup);
 });
 
 test('chapter and area controls reject invalid IDs and missing reports', () => {
@@ -318,8 +321,8 @@ test('chapter swipes ignore area navigation, controls, cover, edges and cancelle
   }
 });
 
-test('a product or poster modal blocks all background navigation and closing it retains the reading position', () => {
-  for(const kind of ['product','poster']){
+test('a menu or poster modal blocks all background navigation and closing it retains the reading position', () => {
+  for(const kind of ['menu','poster']){
     const h=readerHarness({reducedMotion:true}); show(h); h.api.selectChapter('advice'); h.scrollTo(2370);
     const area=h.api.state().reader.area, markup=h.node('beautyReport').innerHTML;
     const opener=h.node(kind+'-opener'); h.document.activeElement=opener;
@@ -342,7 +345,7 @@ test('main chapter keyboard navigation remains accessible and ordinary keys do n
   h.key('Home',h.node('beautyTab-advice')); assertChapter(h,'overview');
   h.key('End',h.node('beautyTab-overview')); assertChapter(h,'advice');
   assert.equal(h.key('ArrowLeft',{dataset:{}}).prevented,false); assertChapter(h,'advice');
-  h.api.openSheet('product','<p>Details</p>','product');
+  h.api.openSheet('menu','<p>Menu</p>','menu');
   assert.equal(h.key('ArrowLeft',h.node('beautyTab-advice')).prevented,false); assertChapter(h,'advice');
 });
 
@@ -381,7 +384,7 @@ test('switching score scenes resets reading state without introducing history en
 });
 
 test('an open sheet prevents bottom auto-advance and releasing a gesture after opening it is harmless', () => {
-  for(const kind of ['product','poster']){
+  for(const kind of ['menu','poster']){
     const h=readerHarness({reducedMotion:true}); show(h); h.scrollTo(h.bottom());
     h.api.openSheet(kind,'<p>Details</p>',kind);
     h.touch(); h.wheel({deltaY:150,wait:1200});

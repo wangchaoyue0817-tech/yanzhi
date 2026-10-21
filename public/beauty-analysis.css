@@ -214,15 +214,6 @@
 .beauty-custom-score button { flex:1;min-height:40px;border:1px solid #b1a0cb3d;border-radius:9px;background:#9a7dc717;color:#d8c9ec;font-size:12px; }
 .beauty-scene-tools { display:flex;gap:10px;margin-top:18px; }
 .beauty-scene-tools button { flex:1; }
-.beauty-detail-image { width:145px;aspect-ratio:1;margin:0 auto 19px; }
-.beauty-detail-title { text-align:center;margin:0 0 20px; }
-.beauty-detail-title h3 { font-size:21px;line-height:1.6; }
-.beauty-detail-title p { color:#bdaecc;font-size:12px; }
-.beauty-detail-block { padding:16px 0;border-top:1px solid var(--beauty-line); }
-.beauty-detail-block h4 { font-size:12px;color:#d9c0b1;font-weight:500;margin:0 0 8px; }
-.beauty-detail-block p { font-size:13px;line-height:1.85;color:#c2b5ce;margin:0; }
-.beauty-detail-footer { display:flex;align-items:center;gap:15px;margin-top:18px; }
-.beauty-detail-footer .beauty-primary { flex:1; }
 .beauty-form-error { color:#fac6cb;font-size:12px;line-height:1.7;margin:10px 0; }
 .beauty-poster-image { display:block;max-width:100%;width:auto;max-height:54vh;margin:0 auto 17px;border:1px solid #a590c148;border-radius:12px;box-shadow:0 14px 40px #0004; }
 .beauty-poster-status { font-size:12px;color:#c9bcda;line-height:1.7;text-align:center;min-height:20px;margin:13px 0 0; }

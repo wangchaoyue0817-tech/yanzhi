@@ -4,6 +4,8 @@ import { inflateSync } from 'node:zlib';
 import { runInNewContext } from 'node:vm';
 import test from 'node:test';
 import { TIERS, PRODUCTS, createReport, getFoundationProducts } from '../public/beauty-model.js';
+import { resolvePurchaseTarget } from '../public/beauty-purchase.js';
+import { merchantHTML } from '../public/beauty-merchant.js';
 
 const publicRoot = new URL('../public/', import.meta.url);
 const read = path => readFileSync(new URL(path, publicRoot), 'utf8');
@@ -61,7 +63,7 @@ test('the browser receives the feature as a module with resolvable named depende
   const entry = staticElements.find(element => element.tag === 'script' && element.src?.split('?')[0] === 'beauty-analysis.js');
   assert.ok(entry, 'feature entry script must be included by the homepage');
   assert.equal(entry.type, 'module', 'named imports require browser module loading');
-  assert.equal(entry.src, 'beauty-analysis.js?v=26');
+  assert.equal(entry.src, 'beauty-analysis.js?v=28');
   for (const [filename, version] of [['beauty-model.js', 22], ['beauty-poster.js', 23]]) {
     assert.ok(controller.includes(`from './${filename}?v=${version}'`), `${filename} must use the current version's cache key`);
   }
@@ -84,7 +86,7 @@ test('controller ID references are backed by a unique static element or a render
   assert.equal(new Set(staticIds).size, staticIds.length, 'duplicate static IDs can route events to the wrong screen');
   const harness = reportHarness({ reducedMotion: true });
   harness.api.show(createReport(90), reportPhotos());
-  const renderedElements = elements(harness.node('beautyReport').innerHTML);
+  const renderedElements = elements(harness.node('beautyReport').innerHTML + merchantHTML(PRODUCTS[0]));
   const definedIds = new Set([...staticIds, ...dynamicElements.filter(element => element.id).map(element => element.id), ...renderedElements.filter(element => element.id).map(element => element.id)]);
   const referencedIds = [...controller.matchAll(/\$\(['"]([^'"]+)['"]\)/g)].map(match => match[1]);
   assert.ok(referencedIds.length > 0);
@@ -298,14 +300,15 @@ function reportHarness({ reducedMotion = false } = {}) {
   const api = runInNewContext(controller.replace(/^import .*;$/gm, '') + `
     ({
       show: showReport, cycle: cycleCopy, reset: resetEntry, formatCopy: resultCopy,
-      cancel: cancelPresentation, poster: posterSheet, closeSheet, scenes: sceneSheet, miniProgramSheet,
+      cancel: cancelPresentation, poster: posterSheet, closeSheet, scenes: sceneSheet, purchase: openPurchase,
       setPosterCache(value) { posterCache = value; },
       setPreviewURL(value) { posterPreviewUrl = value; },
       addPendingFrame(id) { frames.add(id); },
-      state() { return { currentReport, photos, posterCache, copyVariant, generation, modalKind, timerCount: timers.size, frameCount: frames.size }; }
+      state() { return { currentReport, photos, posterCache, copyVariant, generation, modalKind, merchantProduct, timerCount: timers.size, frameCount: frames.size }; }
     });
   `, {
-    document, TIERS, PRODUCTS, createReport, getFoundationProducts,
+    document, TIERS, PRODUCTS, createReport, getFoundationProducts, resolvePurchaseTarget, merchantHTML,
+    history: { state: {}, pushState(state) { this.state = state; }, replaceState(state) { this.state = state; } },
     matchMedia: () => ({ matches: reducedMotion, addEventListener() {} }),
     window: {}, location: { search: '' }, URLSearchParams,
     URL: {
@@ -387,9 +390,9 @@ test('v21 keeps a short result cover and mounts complete report chapters directl
     assert.ok(rendered.includes(`src="${photos.parts[report.areas[index].id].after}"`));
   }
   assert.equal((rendered.match(/class="beauty-product beauty-product-compact"/g) || []).length, 12);
-  assert.doesNotMatch(rendered.slice(0, rendered.indexOf('<section class="beauty-collection"')), /beauty-product-purchase|data-product-buy=/);
-  assert.equal((rendered.match(/data-product-buy=/g) || []).length, 12);
-  assert.equal((rendered.match(/data-product-detail=/g) || []).length, 26);
+  assert.doesNotMatch(rendered, /beauty-product-purchase|data-product-detail=/);
+  assert.equal((rendered.match(/data-product-buy=/g) || []).length, 38);
+  assert.equal((rendered.match(/class="beauty-collection-buy"/g) || []).length, 12);
   assert.equal((rendered.match(/class="beauty-product-reason"/g) || []).length, 12);
 });
 
@@ -521,7 +524,7 @@ test('strength and focus retain their analysis in separately styled cards with d
   }
 });
 
-test('all twelve recommendation cards have one detail action, paired prices and no purchase action', () => {
+test('all twelve recommendation cards directly purchase their own SKU and retain paired prices', () => {
   const harness = reportHarness({ reducedMotion: true });
   harness.api.show(createReport(90), reportPhotos());
   const markup = harness.node('beautyReport').innerHTML;
@@ -532,11 +535,11 @@ test('all twelve recommendation cards have one detail action, paired prices and 
     const controls = elements(card).filter(element => element.tag === 'button');
     assert.equal(controls.length, 1);
     const detail = controls[0];
-    const product = PRODUCTS.find(item => item.id === detail['data-product-detail']);
+    const product = PRODUCTS.find(item => item.id === detail['data-product-buy']);
     assert.ok(product);
     ids.add(product.id);
-    assert.equal(detail['aria-label'], `查看${product.name}详情`);
-    assert.doesNotMatch(card, /data-product-buy|购买|beauty-product-purchase/);
+    assert.equal(detail['aria-label'], `立即购买${product.name}`);
+    assert.doesNotMatch(card, /data-product-detail|beauty-product-purchase/);
     assert.ok(card.includes(`aria-label="现价${product.price}元"`));
     assert.ok(card.includes(`<del aria-label="原价${product.originalPrice}元">¥${product.originalPrice}</del>`));
     assert.ok(card.includes(product.shortReason));
@@ -692,13 +695,17 @@ test('celebration starts after the score reveal and is omitted when motion is re
 });
 
 
-test('restarting from a purchase handoff clears the report and sheet before a fresh scene', () => {
+test('restarting from a purchase destination clears the report and merchant page before a fresh scene', () => {
   const h = reportHarness({ reducedMotion: true });
   h.api.show(createReport(90), reportPhotos());
-  h.api.miniProgramSheet(PRODUCTS.find(product => product.id === 'hair'));
-  assert.equal(h.api.state().modalKind, 'mini-program');
+  h.api.purchase(PRODUCTS.find(product => product.id === 'hair'));
+  assert.equal(h.api.state().merchantProduct.id, 'hair');
+  assert.equal(h.api.state().modalKind, '');
   assert.equal(h.node('beautyScroll').inert, true);
   h.click('restart');
+  assert.equal(h.node('beautyMerchant').hidden, true);
+  assert.equal(h.node('beautyMerchant').innerHTML, '');
+  assert.equal(h.api.state().merchantProduct, null);
   assert.equal(h.api.state().modalKind, '');
   assert.equal(h.api.state().currentReport, null);
   assert.equal(h.api.state().photos, null);
@@ -709,8 +716,9 @@ test('restarting from a purchase handoff clears the report and sheet before a fr
   for (const id of ['beautyScroll', '.beauty-header', 'beautyComposer']) assert.equal(h.node(id).inert, false);
   assert.equal(h.document.activeElement, h.node('beautyUpload'));
   h.api.show(createReport(68), reportPhotos());
-  h.api.miniProgramSheet(PRODUCTS.find(product => product.id === 'lip'));
-  assert.match(h.node('beautySheetBody').innerHTML, /data-mini-product="lip"/);
-  assert.doesNotMatch(h.node('beautySheetBody').innerHTML, /data-mini-product="hair"/);
+  h.api.purchase(PRODUCTS.find(product => product.id === 'lip'));
+  assert.equal(h.api.state().merchantProduct.id, 'lip');
+  assert.ok(h.node('beautyMerchant').innerHTML.includes(PRODUCTS.find(product => product.id === 'lip').name));
+  assert.ok(!h.node('beautyMerchant').innerHTML.includes(PRODUCTS.find(product => product.id === 'hair').name));
   assert.equal(h.api.state().currentReport.score, 68);
 });

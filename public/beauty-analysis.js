@@ -2,6 +2,8 @@ import { mountBeautyLoading } from './beauty-loading.js?v=22';
 import { TIERS, PRODUCTS, createReport, getFoundationProducts } from './beauty-model.js?v=22';
 import { renderBeautyPoster } from './beauty-poster.js?v=23';
 import { startBeautyCelebration } from './beauty-celebration.js?v=17';
+import { resolvePurchaseTarget } from './beauty-purchase.js?v=28';
+import { merchantHTML } from './beauty-merchant.js?v=28';
 
 const $ = id => document.getElementById(id);
 const page = $('beautyPage');
@@ -39,6 +41,9 @@ let posterPreviewUrl = '';
 let modalKind = '';
 let loadingExperience = null;
 let foundationSwipe = null;
+let merchantProduct = null;
+let merchantFocus = null;
+let merchantScrollTop = 0;
 const timers = new Set();
 const frames = new Set();
 const money = value => Number.isInteger(value) ? String(value) : value.toFixed(2);
@@ -125,6 +130,7 @@ function clearUpload() {
   uploadedUrl = '';
 }
 function resetEntry() {
+  clearMerchant();
   clearReader();
   copyVariant = 0;
   cancelPresentation();
@@ -165,6 +171,7 @@ function close() {
   if (returnFocus?.isConnected) returnFocus.focus({preventScroll:true});
 }
 async function start(score = selectedScore) {
+  clearMerchant();
   clearReader();closeSheet(false);cancelPresentation();
   const token = generation;
   selectedScore = score;currentReport = null;photos = null;posterCache = null;
@@ -201,7 +208,7 @@ function productImage(product, more = '') {
 }
 function productCard(product) {
   return '<article class="beauty-product beauty-product-compact">'+
-    '<button type="button" class="beauty-product-link" data-product-detail="'+product.id+'" aria-label="查看'+esc(product.name)+'详情">'+productImage(product)+
+    '<button type="button" class="beauty-product-link" data-product-buy="'+product.id+'" aria-label="立即购买'+esc(product.name)+'">'+productImage(product)+
     '<span class="beauty-product-copy"><small>'+esc(product.brand)+' · '+esc(product.shade)+'</small><strong>'+esc(product.shortName || product.name)+'</strong><span class="beauty-product-features">'+(product.shortFeatures || product.features.slice(0,2)).map(feature=>'<span>'+esc(feature)+'</span>').join('')+'</span></span>'+
     '<span class="beauty-product-prices"><span class="beauty-price" aria-label="现价'+product.price+'元"><small>¥</small>'+product.price+'</span><del aria-label="原价'+product.originalPrice+'元">¥'+product.originalPrice+'</del></span>'+
     '<span class="beauty-product-reason"><b>推荐理由</b><span>'+esc(product.shortReason || product.reason)+'</span><i aria-hidden="true">↗</i></span></button></article>';
@@ -248,7 +255,7 @@ function accessoryHTML(parts){
   return '<div class="beauty-accessory-grid">'+[
     {id:'earrings',src:parts.before,label:'珍珠耳钉',alt:'耳部佩戴珍珠耳钉的局部特写'},
     {id:'style',src:parts.after,label:'细链项链',alt:'锁骨处佩戴珍珠细链项链的局部特写'}
-  ].map(item=>'<figure class="beauty-accessory-look"><button type="button" class="beauty-accessory-detail" data-product-detail="'+item.id+'" aria-label="查看'+item.label+'详情"><img draggable="false" loading="lazy" src="'+esc(item.src)+'" alt="'+item.alt+'"><span>'+item.label+'<i aria-hidden="true">↗</i></span></button></figure>').join('')+'</div>';
+  ].map(item=>'<figure class="beauty-accessory-look"><button type="button" class="beauty-accessory-detail" data-product-buy="'+item.id+'" aria-label="立即购买'+item.label+'"><img draggable="false" loading="lazy" src="'+esc(item.src)+'" alt="'+item.alt+'"><span>'+item.label+'<i aria-hidden="true">↗</i></span></button></figure>').join('')+'</div>';
 }
 function areaHTML(area,index) {
   const parts = photos.parts[area.id];
@@ -261,7 +268,7 @@ const areaNames={hair:'发型',brows:'眉形',eyes:'眼妆',skin:'底妆',lips:'
 function collectionHTML(report){
   const products=[...new Set(report.areas.flatMap(area=>area.productIds))].map(id=>PRODUCTS.find(p=>p.id===id));
   return '<section class="beauty-collection" id="beautyCollection" aria-labelledby="beautyCollectionTitle"><header><h2 id="beautyCollectionTitle">我的专属产品</h2><small>共 '+products.length+' 件</small></header><div class="beauty-collection-list">'+products.map(product=>
-    '<article class="beauty-collection-item" data-collection-item="'+product.id+'"><button type="button" class="beauty-collection-link" data-product-detail="'+product.id+'" aria-label="查看'+esc(product.name)+'详情">'+productImage(product)+'<span class="beauty-collection-copy"><strong>'+esc(product.shortName || product.name)+'</strong><small>'+esc(product.shade)+'</small><span><b>¥'+money(product.price)+'</b><del>¥'+money(product.originalPrice)+'</del></span></span></button><button type="button" class="beauty-collection-buy" data-product-buy="'+product.id+'" aria-label="立即购买'+esc(product.name)+'"><span>立即购买</span></button></article>'
+    '<article class="beauty-collection-item" data-collection-item="'+product.id+'"><button type="button" class="beauty-collection-link" data-product-buy="'+product.id+'" aria-label="立即购买'+esc(product.name)+'">'+productImage(product)+'<span class="beauty-collection-copy"><strong>'+esc(product.shortName || product.name)+'</strong><small>'+esc(product.shade)+'</small><span><b>¥'+money(product.price)+'</b><del>¥'+money(product.originalPrice)+'</del></span></span></button><button type="button" class="beauty-collection-buy" data-product-buy="'+product.id+'" aria-label="立即购买'+esc(product.name)+'"><span>立即购买</span></button></article>'
   ).join('')+'</div><button type="button" class="beauty-collection-more"><span>逛逛更多好物</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></section>';
 }
 
@@ -273,7 +280,7 @@ function readerNav(report){
 function areaTabs(report){
   return '<nav class="beauty-area-tabs" id="beautyAreaNavigation" aria-label="变美部位定位" hidden>'+report.areas.map(area=>'<button type="button" id="beautyAreaTab-'+area.id+'" aria-controls="beautyArea-'+area.id+'" aria-current="'+(area.id===reader.area)+'" tabindex="'+(area.id===reader.area?'0':'-1')+'" data-area-tab="'+area.id+'"><b>'+esc(areaNames[area.id])+'</b></button>').join('')+'</nav>';
 }
-function reportReady(){return !!currentReport && !page.hidden && !$('beautyReport').hidden;}
+function reportReady(){return !!currentReport && !merchantProduct && !page.hidden && !$('beautyReport').hidden;}
 function contentTop(el){return el.getBoundingClientRect().top-scroll.getBoundingClientRect().top+scroll.scrollTop;}
 function readerTop(){return contentTop($('beautyDetail'));}
 function readerNavHeight(){return $('beautyDetail').querySelector('.beauty-reader-nav').getBoundingClientRect().height;}
@@ -465,21 +472,52 @@ function sceneSheet() {
     '<form id="beautyCustomScore" class="beauty-custom-score"><label for="beautyScoreInput">指定分数</label><input id="beautyScoreInput" type="number" min="0" max="100" step="1" required value="'+selectedScore+'"><button type="submit">查看结果</button></form>'+
     '<div class="beauty-scene-tools"><button type="button" class="beauty-inline-button" data-action="replay">重播揭晓动画</button><button type="button" class="beauty-inline-button" data-action="copy-next" '+(currentReport?'':'disabled')+'>换条评价</button><button type="button" class="beauty-inline-button" data-action="poster" '+(currentReport?'':'disabled')+'>预览本档海报</button></div>','scenes');
 }
-function detailSheet(product) {
-  openSheet('为你甄选', productImage(product,'beauty-detail-image')+
-    '<div class="beauty-detail-title"><h3>'+esc(product.name)+'</h3><p>'+esc(product.brand)+' · '+esc(product.shade)+'</p></div>'+
-    '<div class="beauty-detail-block"><h4>推荐理由</h4><p>'+esc(product.reason)+'</p></div>'+
-    '<div class="beauty-detail-block"><h4>产品特点</h4><p>'+product.features.map(esc).join(' · ')+'</p></div>'+
-    '<div class="beauty-detail-block"><h4>这样用，更适合你</h4><p>'+esc(product.usage)+'</p></div>'+
-    '<div class="beauty-detail-footer"><span class="beauty-product-prices"><span class="beauty-price"><small>¥</small>'+money(product.price)+'</span><del>¥'+money(product.originalPrice)+'</del></span><button type="button" class="beauty-primary" data-product-buy="'+product.id+'">立即购买</button></div>','product');
+function openPurchase(product) {
+  if(!reportReady() || !$('beautyOverlay').hidden)return;
+  const target=resolvePurchaseTarget(product.id);
+  if(!target)return;
+  if(target.type==='unavailable')return toast('购买链接暂不可用，请稍后再试');
+  if(target.type==='external'){
+    try{window.location.assign(target.url);}catch{toast('暂时无法打开购买页面，请重试');}
+    return;
+  }
+  showMerchant(product);
 }
-function miniProgramSheet(product) {
-  // Demonstrate the single-product handoff. No destination is configured yet.
-  // A future integration should open this product in the merchant mini program.
-  const storeIcon='<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 10v10h16V10M3 10l2-6h14l2 6M3 10c0 3 4 3 4 0 0 3 5 3 5 0 0 3 5 3 5 0 0 3 4 3 4 0M9 20v-6h6v6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  openSheet('前往小程序购买','<section class="beauty-mini-program" data-mini-product="'+product.id+'"><div class="beauty-mini-route">'+storeIcon+'<span>商家小程序</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'+
-    '<article class="beauty-mini-product">'+productImage(product)+'<div><h3>'+esc(product.name)+'</h3><p>'+esc(product.shade)+'</p><span class="beauty-product-prices"><span class="beauty-price"><small>¥</small>'+money(product.price)+'</span><del>¥'+money(product.originalPrice)+'</del></span></div></article>'+
-    '<h3>在商家小程序中完成下单</h3><p class="beauty-mini-note">跳转展示 · 小程序暂未接入</p><button type="button" class="beauty-primary" data-action="continue">返回报告</button></section>','mini-program');
+function showMerchant(product,{push=true}={}) {
+  if(!$('beautyOverlay').hidden)closeSheet();
+  if(!merchantProduct){merchantFocus=document.activeElement;merchantScrollTop=scroll.scrollTop;}
+  if(push)history.pushState({...history.state,beautyMerchant:product.id,beautyMerchantGeneration:generation},'');
+  merchantProduct=product;
+  wheelGesture=null;touchStart=null;swipeStart=null;foundationSwipe=null;
+  $('beautyMerchant').innerHTML=merchantHTML(product);
+  $('beautyMerchant').hidden=false;
+  $('beautyMerchant').scrollTop=0;
+  inert(scroll,true);inert(document.querySelector('.beauty-header'),true);inert($('beautyComposer'),true);
+  $('beautyMerchantTitle').focus({preventScroll:true});
+}
+function hideMerchant({restore=true}={}) {
+  if(!merchantProduct)return;
+  merchantProduct=null;
+  $('beautyMerchant').hidden=true;
+  $('beautyMerchant').innerHTML='';
+  inert(scroll,false);inert(document.querySelector('.beauty-header'),false);inert($('beautyComposer'),false);
+  scroll.scrollTop=merchantScrollTop;
+  if(restore && merchantFocus?.isConnected)merchantFocus.focus({preventScroll:true});
+  merchantFocus=null;
+}
+function returnFromMerchant() {
+  if(!merchantProduct)return;
+  if(history.state?.beautyMerchant===merchantProduct.id)history.back();
+  else hideMerchant();
+}
+function clearMerchant() {
+  if(!merchantProduct)return;
+  hideMerchant({restore:false});
+  if(history.state?.beautyMerchant){
+    const state={...history.state};
+    delete state.beautyMerchant;delete state.beautyMerchantGeneration;
+    history.replaceState(state,'');
+  }
 }
 
 async function posterSheet() {
@@ -518,15 +556,16 @@ async function downloadPoster() {
 page.addEventListener('click',event=>{
   const target=event.target.closest('button');
   if(!target)return;
+  if(target.hasAttribute('data-merchant-back'))return returnFromMerchant();
   if(target.hasAttribute('data-beauty-close'))return closeSheet();
   if(target.dataset.reportTab)return selectChapter(target.dataset.reportTab);
   if(target.dataset.areaTab)return selectArea(target.dataset.areaTab);
   if(target.dataset.foundation)return selectFoundation(target.dataset.foundation,{focus:true});
   if(target.dataset.score){copyVariant=0;clearUpload();return start(Number(target.dataset.score));}
-  const productId=target.dataset.productDetail||target.dataset.productBuy;
+  const productId=target.dataset.productBuy;
   if(productId){
     const product=PRODUCTS.find(item=>item.id===productId);
-    if(product)return target.dataset.productBuy?miniProgramSheet(product):detailSheet(product);
+    if(product)return openPurchase(product);
   }
   switch(target.dataset.action){
     case 'cancel-scan':return resetEntry();
@@ -541,7 +580,6 @@ page.addEventListener('click',event=>{
     case 'download':return downloadPoster();
     case 'restart':clearUpload();return resetEntry();
     case 'replay':return start(selectedScore);
-    case 'continue':return closeSheet();
   }
 });
 page.addEventListener('submit',event=>{
@@ -573,6 +611,7 @@ document.addEventListener('keydown',event=>{
   if(page.hidden)return;
   if(event.key==='Escape'){
     event.preventDefault();
+    if(merchantProduct)return returnFromMerchant();
     if(!$('beautyOverlay').hidden)closeSheet();
     else if(!$('beautyScanning').hidden)resetEntry();
     else close();
@@ -592,11 +631,12 @@ document.addEventListener('keydown',event=>{
     }
   }
   if(event.key!=='Tab')return;
-  const root=$('beautyOverlay').hidden?page:$('beautySheet');
+  const root=merchantProduct?$('beautyMerchant'):$('beautyOverlay').hidden?page:$('beautySheet');
   const controls=[...root.querySelectorAll('button:not([disabled]),input:not([disabled]):not([type=file]),textarea')].filter(el=>el.tabIndex>=0&&!el.closest('[hidden],[inert]')&&el.getClientRects().length);
   if(!controls.length)return;
   const first=controls[0],last=controls.at(-1);
-  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+  if(merchantProduct&&!controls.includes(document.activeElement)){event.preventDefault();(event.shiftKey?last:first).focus();}
+  else if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
   else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
 });
 motion.addEventListener('change',()=>{
@@ -617,7 +657,7 @@ page.addEventListener('pointerup',event=>{
   const products=getFoundationProducts(currentReport.skinType);
   const i=products.findIndex(p=>$('foundationTab-'+p.id).getAttribute('aria-selected')==='true');
   selectFoundation(products[(i+(dx<0?1:2))%3].id);
-  // A swipe over a product must not also open its detail on the synthetic click.
+  // A swipe over a product must not also trigger purchase on the synthetic click.
   const block=event=>{event.preventDefault();event.stopImmediatePropagation();};
   page.addEventListener('click',block,{capture:true,once:true});
   later(()=>page.removeEventListener('click',block,true),350);
@@ -667,6 +707,11 @@ scroll.addEventListener('touchend',event=>{
   if(start.fromBottom && start.tab==='overview' && reader.tab==='overview' && atReadingBottom() && dy<=-60 && Math.abs(dy)>Math.abs(dx)*1.5 && Date.now()-start.time<=1500)advanceChapter();
 },{passive:true});
 window.addEventListener?.('resize',()=>{if(reportReady())syncReading();});
+window.addEventListener?.('popstate',event=>{
+  const product=PRODUCTS.find(item=>item.id===event.state?.beautyMerchant);
+  if(product && event.state.beautyMerchantGeneration===generation && currentReport && !page.hidden && !$('beautyReport').hidden)showMerchant(product,{push:false});
+  else hideMerchant();
+});
 window.beautyExperience={open,close};
 // The query opens only the development scene selector; it never changes exported posters.
 if(new URLSearchParams(location.search).get('beauty')==='scenes'){open();sceneSheet();}

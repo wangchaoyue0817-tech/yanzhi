@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" fill="none" stroke="url(#beauty-blue)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+  <defs>
+    <linearGradient id="beauty-blue" gradientUnits="userSpaceOnUse" x1="50" y1="16" x2="206" y2="240">
+      <stop offset="0" stop-color="#F2EFFF"/>
+      <stop offset="0.32" stop-color="#C1C6FF"/>
+      <stop offset="0.72" stop-color="#65AAFF"/>
+      <stop offset="1" stop-color="#E5D5FF"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(-8 0)">
+    <path d="M128 48c-42 0-70 34-70 78v27c0 38 30 67 68 67h4c38 0 68-29 68-67v-27c0-44-28-78-70-78Z"/>
+    <path d="M100 121h1m54 0h1M103 155c7 9 15 13 25 13s18-4 25-13"/>
+    <path d="M216 20 224 36 240 44 224 52 216 68 208 52 192 44 208 36Z"/>
+  </g>
+</svg>

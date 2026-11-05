@@ -1,0 +1,112 @@
+.beauty-ranking { --rank-text:#f1f0ff;--rank-body:#bec3d2;--rank-muted:#a5aec4;--rank-line:#a6bce321;position:absolute;z-index:12;inset:0;display:flex;flex-direction:column;background:radial-gradient(ellipse at 50% 17%,#6056bd1c,transparent 45%),linear-gradient(180deg,#10132d,#090d20 52%,#080c1b);color:var(--rank-text);isolation:isolate; }
+.beauty-ranking[hidden] { display:none!important; }
+.beauty-ranking button,.beauty-ranking summary,.beauty-ranking a { -webkit-tap-highlight-color:transparent; }
+.beauty-ranking button:focus-visible,.beauty-ranking a:focus-visible,.beauty-ranking summary:focus-visible { outline:2px solid #a4dbff;outline-offset:3px; }
+.beauty-ranking svg,.beauty-rank-entry svg { width:20px;height:20px;flex:none; }
+.beauty-rank-header { display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;flex:none;min-height:80px;padding:20px 14px 8px;border-bottom:1px solid #ffffff08; }
+.beauty-rank-header h1 { text-align:center;font-size:18px;font-weight:600;letter-spacing:.02em; }
+.beauty-rank-header h1:focus { outline:none; }
+.beauty-ranking .beauty-rank-header>button,.beauty-ranking summary { display:grid;place-items:center;width:44px;height:44px;border:0;background:none;color:#c8cde0; }
+.beauty-rank-rules { position:relative; }
+.beauty-rank-rules summary { cursor:pointer;list-style:none; }
+.beauty-rank-rules summary::-webkit-details-marker { display:none; }
+.beauty-rank-rules>div { position:absolute;right:0;top:49px;z-index:5;width:min(280px,calc(100vw - 52px));padding:16px;border:1px solid #a6bce32e;border-radius:14px;background:#1b2032;box-shadow:0 10px 30px #0005; }
+.beauty-rank-rules strong { font-size:14px;font-weight:600; }
+.beauty-rank-rules p { color:#bec3d2;font-size:12px;line-height:1.8;margin-top:7px; }
+.beauty-rank-scroll { overflow:auto;overscroll-behavior:contain;flex:1;min-height:0;padding:0 20px 24px;scrollbar-width:none; }
+.beauty-rank-scroll::-webkit-scrollbar { display:none; }
+.beauty-rank-podium { display:grid;grid-template-columns:1fr 1.12fr 1fr;gap:10px;align-items:end;position:relative;margin:26px 0 22px;min-height:217px; }
+.beauty-rank-podium:before { content:"";position:absolute;inset:48% 0 -12%;z-index:-1;background:radial-gradient(ellipse,#7265eb24,transparent 68%);pointer-events:none; }
+.beauty-rank-winner { position:relative;display:flex;align-items:center;flex-direction:column;padding:0 1px 17px;min-width:0; }
+.beauty-rank-avatar { flex:none;display:grid;place-items:center;width:38px;height:38px;overflow:hidden;border-radius:50%;border:1px solid #a8b6db38;box-shadow:inset 0 1px 0 #ffffff1a;background:linear-gradient(145deg,#364663,#192439);font-size:15px;font-weight:500;color:#e6edff; }
+.beauty-rank-avatar.tone-1 { background:linear-gradient(145deg,#495174,#22283d);color:#e5e5ff; }
+.beauty-rank-avatar.tone-2 { background:linear-gradient(145deg,#335662,#1c303b);color:#d2e9ee; }
+.beauty-rank-avatar.tone-3 { background:linear-gradient(145deg,#5b4c58,#302b3d);color:#f0e1e9; }
+.beauty-rank-avatar.tone-4 { background:linear-gradient(145deg,#555041,#2a2c36);color:#efdfbc; }
+.beauty-rank-avatar.tone-5 { background:linear-gradient(145deg,#3c4c58,#1e2d3b);color:#d4e4e8; }
+.beauty-rank-avatar img { width:100%;height:100%;object-fit:cover;object-position:center 30%; }
+.beauty-rank-avatar.is-large { position:relative;width:57px;height:57px;font-size:24px;background:linear-gradient(145deg,#3b3e69,#1c2942);border-color:#a7b6e67a;box-shadow:0 0 0 5px #8999d008,inset 0 1px #ffffff33; }
+.beauty-rank-winner.place-1 .beauty-rank-avatar { width:72px;height:72px;font-size:28px;border-color:#dfc498;background:linear-gradient(145deg,#615746,#323247);box-shadow:0 0 0 5px #dfc4980e,inset 0 1px #fff4; }
+.beauty-rank-winner>strong { margin-top:13px;font-size:13px;font-weight:500;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.beauty-rank-winner>b { font-size:24px;line-height:1.4;font-weight:600;color:#c1caff;font-variant-numeric:tabular-nums; }
+.beauty-rank-winner>b small { font-size:11px;margin-left:3px;color:#a5aec4;font-weight:400; }
+.beauty-rank-winner.place-1>b { color:#efd9aa;font-size:30px; }
+.beauty-rank-medal { display:flex;align-items:center;justify-content:center;height:25px;margin-bottom:9px;color:#acb9dd;font-size:12px;gap:5px;font-variant-numeric:tabular-nums; }
+.place-1 .beauty-rank-medal { color:#e9d0a0; }
+.beauty-rank-medal svg { width:23px;height:23px; }
+.beauty-rank-plinth { position:absolute;z-index:-1;inset:106px 0 0;border:1px solid #9aabda1f;border-bottom-color:transparent;border-radius:14px 14px 3px 3px;background:linear-gradient(180deg,#7d91cd13,#667db006); }
+.place-1 .beauty-rank-plinth { inset:122px 0 0;background:linear-gradient(180deg,#c9ab7220,#8c78ba08);border-color:#d3bb862b;border-bottom-color:transparent; }
+.beauty-rank-self { border:1px solid #9aa7d32d;border-radius:16px;padding:16px 18px;background:radial-gradient(ellipse at 100% 0,#8b70e516,transparent 60%),linear-gradient(120deg,#1b2037,#15192c);box-shadow:inset 0 1px #ffffff08; }
+.beauty-rank-self-top { display:flex;align-items:center;justify-content:space-between;color:#bac2d9;font-size:12px; }
+.beauty-rank-self-top>span:last-child { font-variant-numeric:tabular-nums;color:#d0c9ff;font-size:17px; }
+.beauty-rank-self-top small { font-size:11px;color:#a9b0c9; }
+.beauty-rank-self-main { display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:3px; }
+.beauty-rank-self-main>strong { font-size:36px;font-weight:600;letter-spacing:-.03em;white-space:nowrap;font-variant-numeric:tabular-nums; }
+.beauty-rank-self-main>strong small { font-size:12px;letter-spacing:0;font-weight:400;color:#bdc4d8; }
+.beauty-rank-self-main>span { font-size:11px;color:#adb7cb;text-align:right; }
+.beauty-rank-self-main>span b { color:#d2caff;font-weight:500; }
+.beauty-rank-before { display:flex;align-items:center;gap:14px; }
+.beauty-rank-before-icon { display:grid;place-items:center;width:43px;height:48px;color:#ddc395;background:#dfc49808;border:1px solid #dfc49821;border-radius:12px; }
+.beauty-rank-before-icon svg { width:28px;height:28px; }
+.beauty-rank-before h2 { font-size:15px;font-weight:500; }
+.beauty-rank-before button { display:flex;align-items:center;gap:8px;padding:5px 0 0;border:0;background:none;min-height:35px;color:#b9b5ff;font-size:12px; }
+.beauty-rank-before button svg { width:17px; }
+.beauty-rank-section-heading { display:flex;align-items:center;justify-content:space-between;gap:12px; }
+.beauty-rank-section-heading h2 { font-size:15px;font-weight:600; }
+.beauty-rank-section-heading>span { color:var(--rank-muted);font-size:11px; }
+.beauty-rank-section-heading>span b { color:#c2baff;font-weight:500; }
+.beauty-rank-distribution { margin:23px 0 26px; }
+.beauty-rank-chart { position:relative;height:66px;margin-top:17px;border-bottom:1px solid #a6bce32b; }
+.beauty-rank-bars { display:flex;align-items:end;gap:5px;height:100%;padding:0 1px; }
+.beauty-rank-bars>i { flex:1;min-width:0;height:var(--bar-height);border-radius:4px 4px 0 0;background:linear-gradient(180deg,#6d75a777,#4351753b); }
+.beauty-rank-bars>i.is-current { background:linear-gradient(180deg,#c2b8ff,#7466de); }
+.beauty-rank-marker { position:absolute;top:-7px;bottom:-5px;left:var(--marker);width:1px;background:#bbb1ffbd; }
+.beauty-rank-marker i { position:absolute;left:-2px;top:0;width:5px;height:5px;border-radius:50%;background:#d0c4ff; }
+.beauty-rank-axis { display:flex;justify-content:space-between;margin-top:7px;color:#a0abc2;font-size:10px;font-variant-numeric:tabular-nums; }
+.beauty-rank-list-section { min-width:0; }
+.beauty-rank-list { padding:0;margin-top:10px;list-style:none; }
+.beauty-rank-row { display:flex;align-items:center;gap:11px;min-height:76px;border-bottom:1px solid #a6bce314; }
+.beauty-rank-row.is-me { background:#8e7bf010;border-radius:10px; }
+.beauty-rank-number { flex:none;min-width:20px;text-align:center;color:#abb6cf;font-size:13px;font-variant-numeric:tabular-nums; }
+.beauty-rank-person { flex:1;min-width:0;display:grid;gap:4px; }
+.beauty-rank-person>strong { display:flex;align-items:center;gap:7px;font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.beauty-rank-person>strong small { font-size:10px;font-weight:400;padding:1px 5px;border-radius:4px;color:#c7bcff;background:#9684ee1c; }
+.beauty-rank-person>span { color:#a6b1c7;font-size:11px; }
+.beauty-rank-score { color:#d4d6ec;font-size:23px;font-weight:500;font-variant-numeric:tabular-nums; }
+.beauty-rank-score small { color:#a5aec4;font-size:10px;font-weight:400;margin-left:3px; }
+.beauty-rank-more { display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:48px;border:0;background:none;color:#b4bdd4;font-size:12px; }
+.beauty-rank-more svg { width:16px;height:16px; }
+.beauty-rank-footer { display:flex;gap:10px;padding:12px 20px max(16px,env(safe-area-inset-bottom));border-top:1px solid #a6bce318;background:#0e1227f5;flex:none; }
+.beauty-ranking .beauty-rank-primary { flex:1;display:flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:10px 12px;border:1px solid #c7b6ff36;border-radius:13px;background:linear-gradient(112deg,#5b68ed 0%,#7753dd 58%,#a660d1 100%);box-shadow:inset 0 1px #ffffff2b;color:#fff;font-size:14px;font-weight:500;text-decoration:none; }
+.beauty-ranking .beauty-rank-secondary { flex:0 1 43%;padding:10px 8px;border:1px solid #9aaad12b;border-radius:13px;background:#1b2032;color:#d0d6e5;font-size:13px; }
+.beauty-rank-entry { cursor:pointer; }
+.beauty-page .beauty-percentile.beauty-rank-entry { display:flex;align-items:center;justify-content:center;gap:12px;color:inherit; }
+.beauty-rank-entry-label { display:flex;align-items:center;gap:3px;font-size:11px;color:#d8d6f2; }
+.beauty-rank-entry-label svg { width:14px;height:14px; }
+.beauty-page .beauty-header .beauty-ranking-entry { display:flex;align-items:center;justify-content:end;gap:4px;min-width:68px;min-height:44px;padding:0;border:0;background:none;color:#c4c8e7;font-size:12px; }
+.beauty-ranking-entry svg { width:16px;height:16px; }
+.beauty-page .beauty-header:has(.beauty-ranking-entry) .beauty-menu { margin-right:28px; }
+.beauty-rank-share { position:absolute;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:20px;background:#030611c9;backdrop-filter:blur(10px); }
+.beauty-rank-share>section { width:100%;max-width:330px;max-height:100%;overflow:auto;padding:14px;border:1px solid #a6bce330;border-radius:20px;background:#171c31; }
+.beauty-rank-share header { display:flex;align-items:center;justify-content:space-between;margin-bottom:8px; }
+.beauty-rank-share h2 { font-size:15px;font-weight:500; }
+.beauty-rank-share header button { display:grid;place-items:center;width:44px;height:44px;border:0;background:none;color:#cbd0e1;font-size:24px; }
+.beauty-rank-share img { display:block;width:100%;max-height:58vh;object-fit:contain;border-radius:12px;margin-bottom:14px; }
+.beauty-rank-status { position:absolute;left:0;top:0;width:1px;height:1px;overflow:hidden;clip-path:inset(50%); }
+@media(max-width:350px) {
+ .beauty-rank-scroll { padding-inline:16px; }
+ .beauty-rank-podium { gap:7px;margin-top:20px;min-height:200px; }
+ .beauty-rank-winner>strong { font-size:12px; }
+ .beauty-rank-self { padding:14px; }
+ .beauty-rank-self-main { gap:8px; }
+ .beauty-rank-self-main>strong { font-size:30px; }
+ .beauty-rank-self-main>span { max-width:119px; }
+ .beauty-rank-bars { gap:4px; }
+ .beauty-rank-footer { padding-inline:16px;gap:8px; }
+ .beauty-ranking .beauty-rank-primary { font-size:13px; }
+ .beauty-page .beauty-percentile.beauty-rank-entry { padding-inline:13px;gap:8px; }
+}
+@media(prefers-reduced-motion:no-preference) {
+ .beauty-ranking .beauty-rank-primary,.beauty-ranking .beauty-rank-secondary { transition:filter .2s ease,transform .2s ease; }
+ .beauty-ranking .beauty-rank-primary:active,.beauty-ranking .beauty-rank-secondary:active { transform:scale(.985); }
+}

@@ -1,5 +1,5 @@
 import { mountBeautyLoading } from './beauty-loading.js?v=22';
-import { TIERS, PRODUCTS, createReport, getFoundationProducts } from './beauty-model.js?v=22';
+import { TIERS, PRODUCTS, createReport, getFoundationProducts } from './beauty-model.js?v=2901';
 import { renderBeautyPoster } from './beauty-poster.js?v=23';
 import { startBeautyCelebration } from './beauty-celebration.js?v=17';
 import { resolvePurchaseTarget } from './beauty-purchase.js?v=28';
@@ -130,6 +130,8 @@ function clearUpload() {
   uploadedUrl = '';
 }
 function resetEntry() {
+  window.beautyRankingExperience?.close({restore:false,cleanHistory:true});
+  $('beautyRankingEntry').disabled=false;
   clearMerchant();
   clearReader();
   copyVariant = 0;
@@ -176,6 +178,7 @@ async function start(score = selectedScore) {
   const token = generation;
   selectedScore = score;currentReport = null;photos = null;posterCache = null;
   const nextReport = createReport(score, copyVariant);
+  $('beautyRankingEntry').disabled=true;
   $('beautyEntry').hidden = true;page.classList.remove('is-entry');
   $('beautyComposer').hidden = true;$('beautyReport').hidden = true;
   $('beautyScanning').hidden = false;scroll.scrollTop = 0;
@@ -350,6 +353,7 @@ function advanceChapter(){
 }
 function showReport(report,readyPhotos,{celebrate=true}={}) {
   if (page.hidden) return;
+  $('beautyRankingEntry').disabled=false;
   clearReader();
   reader.area=report.areas[0].id;
   currentReport = report;
@@ -372,7 +376,7 @@ function showReport(report,readyPhotos,{celebrate=true}={}) {
       '<div class="beauty-sparkles" aria-hidden="true">'+sparks+'</div><div class="beauty-coronation" aria-label="'+report.tier.name+'等级徽章">'+(tierIndex===4?crown:star)+'</div>'+
       '<div class="beauty-portrait-stage"><div class="beauty-portrait-orbits" aria-hidden="true"><i></i><i></i><i></i></div><div class="beauty-portrait-window"><img draggable="false" class="beauty-hero-photo" src="'+photos.before+'" alt="你的当前照片"></div><span class="beauty-portrait-seal">'+honorCaption+'</span></div>'+
       '<div class="beauty-hero-content"><div class="beauty-title-group"><h1 tabindex="-1">'+esc(report.title)+'</h1></div><div class="beauty-score-row"><span class="beauty-score-caption">综合<br>颜值</span><div class="beauty-score-value"><strong data-count="'+report.score+'">'+report.score+'</strong><small>/ 100</small></div>'+star+'</div>'+
-      '<div class="beauty-percentile"><span>超过 <b data-count="'+report.percentile+'">'+report.percentile+'</b><b>%</b> 的人</span><i aria-hidden="true"><span style="width:'+report.percentile+'%"></span></i></div></div>'+
+      '<button type="button" class="beauty-percentile beauty-rank-entry" data-action="ranking" aria-label="查看我的颜值上分榜排名"><span>超过 <b data-count="'+report.percentile+'">'+report.percentile+'</b><b>%</b> 的人</span><span class="beauty-rank-entry-label">看看我的排位 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m9 5 7 7-7 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button></div>'+
       '<p class="beauty-result-copy"><strong class="beauty-copy-lead">'+esc(coverCopy(report.copy))+'</strong></p>'+
       '<div class="beauty-hero-bottom-glow" aria-hidden="true"></div></section>'+
     '<button type="button" class="beauty-primary beauty-cover-share" data-action="poster">'+star+'查看我的颜值海报</button></div>'+
@@ -389,6 +393,7 @@ function showReport(report,readyPhotos,{celebrate=true}={}) {
       '<div class="beauty-insights"><div class="beauty-insight beauty-insight-strength"><small><i aria-hidden="true">'+star+'</i>你的优势</small><p>'+esc(report.strength)+'</p></div><div class="beauty-insight beauty-insight-focus"><small><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 18 6-6m-3-5 3-3m4 4 3-3m-4 9 6-6M5 21l-2-2 9-9 2 2Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>优先调整</small><p>'+esc(report.focus)+'</p></div></div><p class="beauty-reader-copy">'+resultCopy(report.copy)+'</p><div class="beauty-chapter-end" id="beautyChapterEnd"><span>继续上滑，查看我的变美思路</span><button type="button" data-action="read-advice" aria-label="查看我的变美思路">↓</button></div></section>'+
     '<section class="beauty-advice-panel" id="beautyAdvice" role="tabpanel" aria-labelledby="beautyTab-advice" hidden><div class="beauty-advice-intro"><h2>我的变美思路</h2><p>从发型到妆容，找到适合你的改变。</p></div>'+report.areas.map(areaHTML).join('')+collectionHTML(report)+'</section></div>' ;
   scroll.scrollTop = 0;
+  document.dispatchEvent?.(new CustomEvent('beauty:report-ready',{detail:{score:report.score}}));
   animateReport(celebrate);
   container.querySelector('h1').focus({preventScroll:true});
 }
@@ -609,6 +614,7 @@ $('beautyPhotoInput').addEventListener('change',async event=>{
 });
 document.addEventListener('keydown',event=>{
   if(page.hidden)return;
+  if($('beautyRanking')?.dataset?.active==='true')return;
   if(event.key==='Escape'){
     event.preventDefault();
     if(merchantProduct)return returnFromMerchant();
@@ -712,6 +718,6 @@ window.addEventListener?.('popstate',event=>{
   if(product && event.state.beautyMerchantGeneration===generation && currentReport && !page.hidden && !$('beautyReport').hidden)showMerchant(product,{push:false});
   else hideMerchant();
 });
-window.beautyExperience={open,close};
+window.beautyExperience={open,close,upload:uploadSheet,closePanel:closeSheet,notify:toast,readAdvice:()=>selectChapter('advice',{reset:true})};
 // The query opens only the development scene selector; it never changes exported posters.
 if(new URLSearchParams(location.search).get('beauty')==='scenes'){open();sceneSheet();}

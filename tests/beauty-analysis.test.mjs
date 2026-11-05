@@ -63,8 +63,8 @@ test('the browser receives the feature as a module with resolvable named depende
   const entry = staticElements.find(element => element.tag === 'script' && element.src?.split('?')[0] === 'beauty-analysis.js');
   assert.ok(entry, 'feature entry script must be included by the homepage');
   assert.equal(entry.type, 'module', 'named imports require browser module loading');
-  assert.equal(entry.src, 'beauty-analysis.js?v=28');
-  for (const [filename, version] of [['beauty-model.js', 22], ['beauty-poster.js', 23]]) {
+  assert.equal(entry.src, 'beauty-analysis.js?v=2901');
+  for (const [filename, version] of [['beauty-model.js', 2901], ['beauty-poster.js', 23]]) {
     assert.ok(controller.includes(`from './${filename}?v=${version}'`), `${filename} must use the current version's cache key`);
   }
   assert.ok(staticElements.some(element => element.tag === 'link' && element.rel === 'stylesheet' && element.href?.split('?')[0] === 'beauty-analysis.css'));
@@ -264,7 +264,7 @@ function reportHarness({ reducedMotion = false } = {}) {
   const nodes = new Map();
   const timers = new Map();
   const frames = new Map();
-  const effects = { celebrations: [], stopped: 0, observers: [], revoked: [], posterRequests: [], blobCount: 0 };
+  const effects = { celebrations: [], stopped: 0, observers: [], revoked: [], posterRequests: [], blobCount: 0, rankingEvents:[] };
   let timerId = 0;
   let frameId = 0;
   let resolvePoster;
@@ -296,7 +296,7 @@ function reportHarness({ reducedMotion = false } = {}) {
     }
     return nodes.get(id);
   };
-  document = { getElementById: node, querySelector: selector => node(selector), addEventListener() {}, activeElement: null };
+  document = { getElementById: node, querySelector: selector => node(selector), addEventListener() {}, dispatchEvent(event) { effects.rankingEvents.push(event); }, activeElement: null };
   const api = runInNewContext(controller.replace(/^import .*;$/gm, '') + `
     ({
       show: showReport, cycle: cycleCopy, reset: resetEntry, formatCopy: resultCopy,
@@ -308,6 +308,7 @@ function reportHarness({ reducedMotion = false } = {}) {
     });
   `, {
     document, TIERS, PRODUCTS, createReport, getFoundationProducts, resolvePurchaseTarget, merchantHTML,
+    CustomEvent: class { constructor(type,options){this.type=type;this.detail=options.detail;} },
     history: { state: {}, pushState(state) { this.state = state; }, replaceState(state) { this.state = state; } },
     matchMedia: () => ({ matches: reducedMotion, addEventListener() {} }),
     window: {}, location: { search: '' }, URLSearchParams,
@@ -343,6 +344,18 @@ function reportHarness({ reducedMotion = false } = {}) {
 const reportPhotos = () => ({
   before: 'photo-before', after: 'photo-after',
   parts: Object.fromEntries(['hair', 'brows', 'eyes', 'skin', 'lips', 'style'].map(id => [id, { before: `${id}-before`, after: `${id}-after` }])),
+});
+
+test('rendering a completed report emits only its original score for leaderboard insertion', () => {
+  const h=reportHarness({reducedMotion:true});
+  const report=createReport(80);
+  h.api.show(report,reportPhotos());
+  assert.equal(h.node('beautyRankingEntry').disabled,false);
+  assert.equal(h.effects.rankingEvents.length,1);
+  assert.equal(h.effects.rankingEvents[0].type,'beauty:report-ready');
+  assert.equal(h.effects.rankingEvents[0].detail.score,80);
+  assert.notEqual(h.effects.rankingEvents[0].detail.score,report.afterScore);
+  assert.ok(!Object.hasOwn(h.effects.rankingEvents[0].detail,'photo'));
 });
 
 function markupText(markup) {

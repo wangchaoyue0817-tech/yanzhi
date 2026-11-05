@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { AREAS, PRODUCTS, TIERS, SKIN_TYPES, createReport, getFoundationProducts, getPercentile, getTier } from '../public/beauty-model.js';
+import { RANKING_SEEDS } from '../public/beauty-ranking-model.js';
 
 test('tier boundaries cover every score without gaps and switch on the agreed thresholds', () => {
   const cases = [[0, 'natural'], [59, 'natural'], [60, 'fresh'], [74, 'fresh'], [75, 'radiant'], [84, 'radiant'], [85, 'spotlight'], [94, 'spotlight'], [95, 'icon'], [100, 'icon']];
@@ -21,11 +22,11 @@ test('all public score functions reject invalid values instead of silently coerc
   assert.equal(createReport().score, 90);
 });
 
-test('the five preview scenarios have their agreed results and improvement scores', () => {
-  const cases = [[52, 32, 70, 'natural'], [68, 58, 80, 'fresh'], [80, 82, 88, 'radiant'], [90, 96, 95, 'spotlight'], [97, 99.6, 99, 'icon']];
-  for (const [score, percentile, afterScore, id] of cases) {
+test('the five preview scenarios use leaderboard percentiles and preserve improvement scores', () => {
+  const cases = [[52, 70, 'natural'], [68, 80, 'fresh'], [80, 88, 'radiant'], [90, 95, 'spotlight'], [97, 99, 'icon']];
+  for (const [score, afterScore, id] of cases) {
     const report = createReport(score);
-    assert.equal(report.percentile, percentile);
+    assert.equal(report.percentile, Math.round(RANKING_SEEDS.filter(row => row.score < score).length / RANKING_SEEDS.length * 1000) / 10);
     assert.equal(report.afterScore, afterScore);
     assert.equal(report.tier.id, id);
     assert.equal(report.afterTier.id, getTier(afterScore).id);

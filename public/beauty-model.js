@@ -1,3 +1,4 @@
+import { rankingPercentile } from './beauty-ranking-model.js?v=2901';
 // Fixed preview fixtures. No photo analysis or population data is requested here.
 const freeze = value => {
   Object.values(value).forEach(child => {
@@ -202,8 +203,7 @@ export function getTier(score) {
 
 export function getPercentile(score) {
   validateScore(score);
-  const value = interpolate(score, [[0, 0], [52, 32], [68, 58], [80, 82], [90, 96], [97, 99.6], [100, 99.9]]);
-  return Math.round(value * 10) / 10;
+  return rankingPercentile(score);
 }
 
 function createDimensions(score) {

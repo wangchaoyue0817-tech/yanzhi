@@ -1,0 +1,20 @@
+[
+  {
+    "clientWidth": 320,
+    "headingOutline": "none",
+    "scrollWidth": 320,
+    "width": 320
+  },
+  {
+    "clientWidth": 390,
+    "headingOutline": "none",
+    "scrollWidth": 390,
+    "width": 390
+  },
+  {
+    "clientWidth": 430,
+    "headingOutline": "none",
+    "scrollWidth": 430,
+    "width": 430
+  }
+]

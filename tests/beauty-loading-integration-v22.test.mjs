@@ -90,7 +90,7 @@ test('upload starts the loading UI before photos resolve and passes the original
   assert.equal(h.experiences[0].options.duration, 15000);
   assert.equal(h.experiences[0].options.photo, 'blob:uploaded-photo');
   assert.equal(h.node('beautyScanning').hidden, false);
-  assert.equal(h.node('beautyRankingEntry').disabled, true, 'rank entry is unavailable while a measurement is still loading');
+  assert.equal(h.node('beautyRankingEntry').disabled, false, 'uploaded users can browse the daily board during loading');
   assert.equal(h.node('beautyReport').hidden, true);
   assert.equal(h.node('beautyEntry').hidden, true);
   const photos = pair('upload'); h.requests[0].resolve(photos); await pending;

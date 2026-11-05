@@ -111,6 +111,14 @@ test('poster exports a compact infographic with both portraits, six illustrated 
   }
 });
 
+test('a report without ranking authorization exports no percentile in any poster position', async t=>{
+  const environment=withCanvasEnvironment(t);
+  await renderBeautyPoster({report:{...report(),rankingVisible:false},beforeSrc:'/before.webp',afterSrc:'/after.webp'});
+  assert.equal(environment.captions.filter(value=>value==='排名待授权').length,3);
+  assert.ok(!environment.captions.some(value=>/超过.*%/.test(value)));
+  assert.ok(environment.captions.includes('90'));
+});
+
 test('five rendered tiers keep both photos and data while increasing the actual ring geometry', async t => {
   const ellipseCounts = [];
   for (const [score, edition, ringCount] of [[52, 'NATURAL BEAUTY', 0], [68, 'FRESH BEAUTY', 1], [80, 'RADIANT BEAUTY', 2], [90, 'THE SPOTLIGHT', 2], [97, 'THE BEAUTY ICON', 3]]) {

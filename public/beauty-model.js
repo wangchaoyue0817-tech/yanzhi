@@ -1,4 +1,4 @@
-import { rankingPercentile } from './beauty-ranking-model.js?v=2901';
+import { rankingPercentile } from './beauty-ranking-model.js?v=3001';
 // Fixed preview fixtures. No photo analysis or population data is requested here.
 const freeze = value => {
   Object.values(value).forEach(child => {

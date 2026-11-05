@@ -63,7 +63,7 @@ export function normalizeBeautyPosterReport(report) {
   const sourceDimensions = Array.isArray(report.dimensions) ? report.dimensions : [];
   const palette = Array.isArray(report.palette) ? report.palette.filter(value => /^#[0-9a-f]{6}$/i.test(value?.color || '')).map(value => ({color: value.color, label: cleanText(value.label, '妆容色调')})) : [];
   return {
-    score, percentile, afterScore, afterPercentile, level,
+    score, percentile, afterScore, afterPercentile, level, rankingVisible:report.rankingVisible!==false,
     title: cleanText(report.title, THEMES[level].heading),
     copy: cleanText(report.copy, '保留你的五官特点，让妆容、发型与整体风格更合拍。往下看看，这一次可以从哪些细节开始。'),
     scrollHint: cleanText(report.scrollHint), copyVariant: report.copyVariant,
@@ -467,7 +467,7 @@ function drawPoster(ctx, before, after, parts, report, layout) {
     ctx.font=`600 62px ${FONT}`;
     text(ctx,'/ 100',x+23+ctx.measureText(format(score)).width,photoY+632,25,'#A7B0CC');
     text(ctx,tierName,x+photoWidth-8,photoY+628,25,'#CCD0E1',500,'right');
-    text(ctx,`超过 ${format(percentile)}% 的人`,x+9,photoY+674,27,'#CBD1E3');
+    text(ctx,report.rankingVisible?`超过 ${format(percentile)}% 的人`:'排名待授权',x+9,photoY+674,27,'#CBD1E3');
   }
   const difference=Math.round((report.afterScore-report.score)*10)/10;
   const differenceText=`预计增加${format(difference)}分`;
@@ -483,7 +483,7 @@ function drawPoster(ctx, before, after, parts, report, layout) {
   ctx.save();ctx.shadowColor=level>=3?'#CC9B54':'#806EDB';ctx.shadowBlur=level===4?23:level===3?16:4;
   text(ctx,format(report.score),railCenter,layout.scoreY,110,metal,600,'center');ctx.restore();
   text(ctx,`当前颜值 / 100 · ${report.tierName}`,railCenter,layout.scoreY+37,23,'#CCD0E1',500,'center');
-  text(ctx,`超过 ${format(report.percentile)}% 的人`,railCenter,layout.scoreY+80,29,theme.light,600,'center');
+  text(ctx,report.rankingVisible?`超过 ${format(report.percentile)}% 的人`:'排名待授权',railCenter,layout.scoreY+80,29,theme.light,600,'center');
   line(ctx,railX,layout.copyY-32,1508,layout.copyY-32,gradient(ctx,railX,0,1508,0,[theme.accent+'55',theme.accent+'0C']));
   drawLines(ctx,layout.copy,railX,layout.copyY,27,'#C8CDE0',40);
   drawLines(ctx,layout.keywordLines,railX,layout.keywordY,25,theme.light,37,600);

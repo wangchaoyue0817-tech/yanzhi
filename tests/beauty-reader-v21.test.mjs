@@ -368,7 +368,7 @@ test('sharing anywhere exports the complete original report and all six pairs', 
     const before=h.node('beautyScroll').scrollTop;
     await h.click({action:'poster'});
     const request=h.effects.posterRequests[0];
-    assert.equal(h.effects.posterRequests.length,1); assert.equal(request.report,report); assert.equal(request.parts,photos.parts);
+    assert.equal(h.effects.posterRequests.length,1); assert.equal(request.report.score,report.score); assert.equal(request.report.rankingVisible,false); assert.equal(request.parts,photos.parts);
     assert.equal(Object.keys(request.parts).length,6); assert.equal(request.beforeSrc,photos.before); assert.equal(request.afterSrc,photos.after);
     h.api.closeSheet(); assert.equal(h.node('beautyScroll').scrollTop,before);
     assertChapter(h,scope==='advice'?'advice':'overview');

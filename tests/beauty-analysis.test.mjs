@@ -63,8 +63,8 @@ test('the browser receives the feature as a module with resolvable named depende
   const entry = staticElements.find(element => element.tag === 'script' && element.src?.split('?')[0] === 'beauty-analysis.js');
   assert.ok(entry, 'feature entry script must be included by the homepage');
   assert.equal(entry.type, 'module', 'named imports require browser module loading');
-  assert.equal(entry.src, 'beauty-analysis.js?v=2901');
-  for (const [filename, version] of [['beauty-model.js', 2901], ['beauty-poster.js', 23]]) {
+  assert.equal(entry.src, 'beauty-analysis.js?v=3001');
+  for (const [filename, version] of [['beauty-model.js', 3001], ['beauty-poster.js', 3001]]) {
     assert.ok(controller.includes(`from './${filename}?v=${version}'`), `${filename} must use the current version's cache key`);
   }
   assert.ok(staticElements.some(element => element.tag === 'link' && element.rel === 'stylesheet' && element.href?.split('?')[0] === 'beauty-analysis.css'));
@@ -260,7 +260,7 @@ test('a dismissed upload preset cannot write into a later sheet when its fixture
   }
 });
 
-function reportHarness({ reducedMotion = false } = {}) {
+function reportHarness({ reducedMotion = false, rankingAllowed = true } = {}) {
   const nodes = new Map();
   const timers = new Map();
   const frames = new Map();
@@ -308,10 +308,10 @@ function reportHarness({ reducedMotion = false } = {}) {
     });
   `, {
     document, TIERS, PRODUCTS, createReport, getFoundationProducts, resolvePurchaseTarget, merchantHTML,
-    CustomEvent: class { constructor(type,options){this.type=type;this.detail=options.detail;} },
+    CustomEvent: class { constructor(type,options={}){this.type=type;this.detail=options.detail;} },
     history: { state: {}, pushState(state) { this.state = state; }, replaceState(state) { this.state = state; } },
     matchMedia: () => ({ matches: reducedMotion, addEventListener() {} }),
-    window: {}, location: { search: '' }, URLSearchParams,
+    window: {beautyRankingExperience:{canReveal:()=>rankingAllowed,close(){}}}, location: { search: '' }, URLSearchParams,
     URL: {
       createObjectURL() { return `blob:poster-${++effects.blobCount}`; },
       revokeObjectURL(url) { effects.revoked.push(url); },
@@ -355,7 +355,7 @@ test('rendering a completed report emits only its original score for leaderboard
   assert.equal(h.effects.rankingEvents[0].type,'beauty:report-ready');
   assert.equal(h.effects.rankingEvents[0].detail.score,80);
   assert.notEqual(h.effects.rankingEvents[0].detail.score,report.afterScore);
-  assert.ok(!Object.hasOwn(h.effects.rankingEvents[0].detail,'photo'));
+  assert.equal(h.effects.rankingEvents[0].detail.photo,'photo-before');
 });
 
 function markupText(markup) {
@@ -365,6 +365,16 @@ function markupText(markup) {
 function renderedCopy(markup) {
   return markupText(markup.match(/<p class="beauty-result-copy">([\s\S]*?)<\/p>/)?.[1] ?? '');
 }
+
+test('unapproved reports keep all three percentile positions free of real values',()=>{
+  const h=reportHarness({reducedMotion:true,rankingAllowed:false});
+  h.api.show(createReport(90),reportPhotos());
+  const html=h.node('beautyReport').innerHTML;
+  assert.equal((html.match(/data-ranking-percentile=/g)||[]).length,3);
+  assert.ok(html.includes('授权查看排名'));
+  assert.doesNotMatch(html,/超过 <b>[\d.]+%/);
+  assert.ok(!html.includes('data-count="96.1"'));
+});
 
 test('v21 keeps a short result cover and mounts complete report chapters directly below it', () => {
   const harness = reportHarness({ reducedMotion: true });
@@ -462,7 +472,7 @@ test('all tiers and boundary scores connect before and after photos with one acc
       const figure = comparison.match(new RegExp(`<figure class="beauty-compare-${side}">([\\s\\S]*?)<\\/figure>`))?.[1];
       assert.ok(figure && figure.includes(`src="${src}"`) && figure.includes(label), `${score}: ${side} image is retained`);
     }
-    const scores = [...comparison.matchAll(/<div class="beauty-compare-score"><strong>(\d+)<small>分<\/small><\/strong><span>([^<]+)<\/span><\/div><p>超过 <b>([\d.]+)%<\/b> 的人<\/p>/g)];
+    const scores = [...comparison.matchAll(/<div class="beauty-compare-score"><strong>(\d+)<small>分<\/small><\/strong><span>([^<]+)<\/span><\/div><p data-ranking-percentile="(?:before|after)">超过 <b>([\d.]+)%<\/b> 的人<\/p>/g)];
     assert.equal(scores.length, 2);
     assert.deepEqual(scores.map(([, score, tier, percentile]) => [Number(score), tier, Number(percentile)]), [
       [report.score, report.tier.name, report.percentile],
@@ -655,7 +665,8 @@ test('poster generation receives the current wording and all six before/after pa
   const pending = harness.click('poster');
   assert.equal(harness.effects.posterRequests.length, 1);
   const request = harness.effects.posterRequests[0];
-  assert.equal(request.report, report);
+  assert.equal(request.report.score, report.score);
+  assert.equal(request.report.rankingVisible,true);
   assert.equal(request.parts, photos.parts);
   assert.equal(request.beforeSrc, photos.before);
   assert.equal(request.afterSrc, photos.after);

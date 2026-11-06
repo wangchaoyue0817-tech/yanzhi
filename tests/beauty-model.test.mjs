@@ -40,7 +40,7 @@ test('ranks and improvements remain monotonic and bounded across all 101 scores'
   for (let score = 0; score <= 100; score++) {
     const report = createReport(score);
     assert.ok(report.percentile >= previousRank);
-    assert.ok(report.percentile >= 0 && report.percentile < 100);
+    assert.ok(report.percentile >= 0 && report.percentile <= 100);
     assert.ok(report.afterScore >= score && report.afterScore <= 100);
     assert.ok(report.afterScore >= previousAfterScore);
     assert.ok(report.afterPercentile >= report.percentile);

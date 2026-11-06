@@ -20,6 +20,8 @@ test('daily seeds are reproducible, bounded and approximately normal, and change
 test('competition ties stay deterministic and percentiles exclude equal scores',()=>{
  assert.deepEqual(rankRecords([{id:'c',score:80},{id:'a',score:90},{id:'d',score:70},{id:'b',score:80},{id:'a',score:100}]).map(r=>[r.id,r.rank]),[['a',1],['b',2],['c',2],['d',4]]);
  assert.equal(rankingPercentile(80,[{score:70},{score:80},{score:90}]),33.3);
+ assert.equal(rankingPercentile(100,[{score:99}]),100,'a score above every record reaches the 100th percentile');
+ assert.equal(rankingPercentile(0,[{score:0}]),0,'equal scores never count as surpassed');
  for(const invalid of [-1,101,NaN,90.5,'90'])assert.throws(()=>rankingPercentile(invalid),RangeError);
 });
 test('upload and report completion alone never reveal a ranking or insert a public record',()=>{

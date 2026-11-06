@@ -103,3 +103,17 @@ test('daily consent dialog explains the public portrait and user ID; reject, con
  h.click('withdraw');assert.equal(h.window.beautyRankingExperience.canReveal(),false);assert.ok(!h.items.get(RANKING_STORAGE_KEY).includes('YWJj'));
  h.advance();assert.match(h.node('beautyRanking').innerHTML,/今日新榜，等你上分/);assert.doesNotMatch(h.node('beautyRanking').innerHTML,/beauty-rank-row/);
 });
+test('distribution expands 25–100 across the chart without changing ranking calculations',()=>{
+ for(const [score,position] of [[25,0],[50,33.333],[75,66.667],[90,86.667],[100,100],[24,null]]){
+  const h=harness();h.handlers['beauty:measurement-start']({detail:{id:1}});h.handlers['beauty:report-ready']({detail:{id:1,score,photo}});h.window.beautyRankingExperience.open();h.click('authorize');
+  const html=h.node('beautyRanking').innerHTML,chart=html.match(/<section class="beauty-rank-distribution"[\s\S]*?<\/section>/)[0];
+  assert.equal((chart.match(/--bar-height:/g)||[]).length,15);
+  assert.match(chart,/显示25至100分/);assert.doesNotMatch(chart,/<span>0<\/span>/);
+  assert.equal((chart.match(/--tick:/g)||[]).length,4);
+  if(position===null){assert.doesNotMatch(chart,/beauty-rank-marker|is-current/);assert.match(chart,/低于显示范围/);}
+  else {assert.match(chart,new RegExp('--marker:'+String(position).replace('.','\\.')+'%'));assert.equal((chart.match(/class="is-current"/g)||[]).length,1);}
+  const expected=dailyRankingSnapshot(authorizeRanking(completed(score),true,now),'unused',now);
+  assert.ok(html.includes('第</small> '+expected.me.rank+' <small>名'));
+  assert.ok(html.includes('超过 <b>'+expected.percentile+'%</b>'));
+ }
+});

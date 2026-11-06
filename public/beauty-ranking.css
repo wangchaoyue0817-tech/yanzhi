@@ -56,7 +56,10 @@
 .beauty-rank-bars>i.is-current { background:linear-gradient(180deg,#c2b8ff,#7466de); }
 .beauty-rank-marker { position:absolute;top:-7px;bottom:-5px;left:var(--marker);width:1px;background:#bbb1ffbd; }
 .beauty-rank-marker i { position:absolute;left:-2px;top:0;width:5px;height:5px;border-radius:50%;background:#d0c4ff; }
-.beauty-rank-axis { display:flex;justify-content:space-between;margin-top:7px;color:#a0abc2;font-size:10px;font-variant-numeric:tabular-nums; }
+.beauty-rank-axis { position:relative;min-height:14px;margin-top:7px;color:#a0abc2;font-size:10px;font-variant-numeric:tabular-nums; }
+.beauty-rank-axis>span { position:absolute;left:var(--tick);transform:translateX(-50%);white-space:nowrap; }
+.beauty-rank-axis>span:first-child { transform:none; }
+.beauty-rank-axis>span:last-child { transform:translateX(-100%); }
 .beauty-rank-list-section { min-width:0; }
 .beauty-rank-list { padding:0;margin-top:10px;list-style:none; }
 .beauty-rank-row { display:flex;align-items:center;gap:11px;min-height:76px;border-bottom:1px solid #a6bce314; }

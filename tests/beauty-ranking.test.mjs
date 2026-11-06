@@ -17,8 +17,9 @@ test('daily seeds are reproducible, bounded and approximately normal, and change
  assert.notDeepEqual(model.dailyRankingSeeds('2026-11-05'),model.dailyRankingSeeds('2026-11-06'));
  assert.throws(()=>createRankingSeeds(0),RangeError);
 });
-test('competition ties stay deterministic and percentiles exclude equal scores',()=>{
- assert.deepEqual(rankRecords([{id:'c',score:80},{id:'a',score:90},{id:'d',score:70},{id:'b',score:80},{id:'a',score:100}]).map(r=>[r.id,r.rank]),[['a',1],['b',2],['c',2],['d',4]]);
+test('tied scores have unique deterministic positions while percentiles exclude equal scores',()=>{
+ assert.deepEqual(rankRecords([{id:'c',score:80},{id:'a',score:90},{id:'d',score:70},{id:'b',score:80},{id:'a',score:100}]).map(r=>[r.id,r.rank]),[['a',1],['b',2],['c',3],['d',4]]);
+ assert.deepEqual(rankRecords([{id:'late',score:90,measuredAt:20},{id:'early',score:90,measuredAt:10}]).map(r=>[r.id,r.rank]),[['early',1],['late',2]]);
  assert.equal(rankingPercentile(80,[{score:70},{score:80},{score:90}]),33.3);
  assert.equal(rankingPercentile(100,[{score:99}]),100,'a score above every record reaches the 100th percentile');
  assert.equal(rankingPercentile(0,[{score:0}]),0,'equal scores never count as surpassed');
@@ -36,7 +37,7 @@ test('explicit consent adds one self record with original photo; withdrawal remo
  const ready=completed(100),allowed=authorizeRanking(ready,true,now);
  assert.equal(mayRevealRanking(allowed,now),true);
  const board=dailyRankingSnapshot(allowed,'JX12345678',now);
- assert.equal(board.total,1001);assert.equal(board.me.rank,1);assert.equal(board.me.photo,photo);assert.equal(board.me.userId,'JX12345678');
+ assert.equal(board.total,1001);assert.equal(board.me.rank,1+model.dailyRankingSeeds(beijingDay(now)).filter(row=>row.score===100).length);assert.equal(board.me.photo,photo);assert.equal(board.me.userId,'JX12345678');
  assert.equal(board.topTen.length,10);assert.ok(board.topTen.every(r=>r.photo&&r.userId));
  const revoked=authorizeRanking(allowed,false,now),hidden=dailyRankingSnapshot(revoked,'JX12345678',now);
  assert.equal(hidden.total,1000);assert.equal(hidden.me,null);assert.ok(!hidden.topTen.some(r=>r.id==='self'));
@@ -85,7 +86,7 @@ function harness(){
  }
  scope.beijingDay=()=>beijingDay(time);
  runInNewContext(readFileSync(new URL('../public/beauty-ranking.js',import.meta.url),'utf8').replace(/^import .*;$/gm,''),scope);
- return {node,handlers,calls,items,window,history,advance(){time=tomorrow;handlers['window:focus']();},click(action){handlers['beautyPage:click']({target:{closest:s=>s==='[data-rank]'?{dataset:{rank:action}}:null}});}};
+ return {node,handlers,calls,items,window,history,advance(){time=tomorrow;handlers['window:focus']();},click(action,record){handlers['beautyPage:click']({target:{closest:s=>s==='[data-rank]'?{dataset:{rank:action,record}}:null}});}};
 }
 test('all entry routes require an upload; pending users can browse without any own rank or chart marker',()=>{
  const h=harness();h.window.beautyRankingExperience.open();assert.ok(h.calls.includes('upload'));assert.equal(h.node('beautyRanking').hidden,true);
@@ -116,4 +117,25 @@ test('distribution expands 25–100 across the chart without changing ranking ca
   assert.ok(html.includes('第</small> '+expected.me.rank+' <small>名'));
   assert.ok(html.includes('超过 <b>'+expected.percentile+'%</b>'));
  }
+});
+
+test('the podium names first, second and third, with ten accessible full-photo actions',()=>{
+ const h=harness();h.handlers['beauty:measurement-start']({detail:{id:1}});h.window.beautyRankingExperience.open();
+ const html=h.node('beautyRanking').innerHTML,podium=html.match(/<section class="beauty-rank-podium"[\s\S]*?<\/section>/)[0];
+ assert.deepEqual([...podium.matchAll(/<span>第(\d)名<\/span>/g)].map(m=>m[1]),['2','1','3']);
+ assert.equal((html.match(/data-rank="photo"/g)||[]).length,10);assert.equal((html.match(/aria-haspopup="dialog"/g)||[]).length,10);
+});
+test('large photos stay limited to today’s visible top ten and show the original portrait',()=>{
+ const h=harness();h.handlers['beauty:measurement-start']({detail:{id:1}});h.window.beautyRankingExperience.open();
+ const first=dailyRankingSnapshot(freshRankingState(now),'unused',now).topTen[0];
+ h.click('photo',first.id);const panel=h.node('beautyRanking:.beauty-rank-share');
+ assert.equal(panel.hidden,false);assert.match(panel.innerHTML,/role="dialog"/);assert.match(panel.innerHTML,/关闭照片大图/);
+ assert.ok(panel.innerHTML.includes(first.userId));assert.ok(panel.innerHTML.includes(first.photo));assert.match(panel.innerHTML,/beauty-rank-original-crop/);
+ h.handlers.keydown({key:'Escape',preventDefault(){}});assert.equal(panel.hidden,true);
+ h.click('photo','self');assert.equal(panel.hidden,true,'unapproved self record has no public photo');
+ h.click('photo','seed-does-not-exist');assert.equal(panel.hidden,true);
+ h.handlers['beauty:report-ready']({detail:{id:1,score:100,photo}});h.click('authorize');h.click('photo','self');
+ assert.equal(panel.hidden,false);assert.ok(panel.innerHTML.includes(photo));assert.match(panel.innerHTML,/beauty-rank-original-photo/);assert.doesNotMatch(panel.innerHTML,/beauty-rank-original-crop/);
+ h.click('withdraw');assert.equal(panel.hidden,true);h.click('photo','self');assert.equal(panel.hidden,true);
+ h.click('photo',first.id);h.advance();assert.equal(panel.hidden,true,'a new day closes the old photo viewer');
 });

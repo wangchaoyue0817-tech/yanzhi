@@ -111,11 +111,7 @@ export function rankRecords(records) {
     if (!row || typeof row.id !== 'string' || ids.has(row.id) || !Number.isInteger(row.score) || row.score < 0 || row.score > 100) return false;
     ids.add(row.id); return true;
   }).map(row => ({...row})).sort((a,b) => b.score - a.score || (a.measuredAt??0)-(b.measuredAt??0) || a.id.localeCompare(b.id));
-  let rank = 0;
-  return sorted.map((row,index) => {
-    if (index === 0 || row.score !== sorted[index - 1].score) rank = index + 1;
-    return {...row,rank};
-  });
+  return sorted.map((row,index) => ({...row,rank:index + 1}));
 }
 
 export function rankingSnapshot(score = null, seeds = RANKING_SEEDS, meta = {}) {

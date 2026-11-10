@@ -107,6 +107,11 @@
 .beauty-rank-date { margin:16px 0 -10px;color:#a9b4ce;font-size:12px;text-align:center; }
 .beauty-rank-avatar.is-sheet img { width:200%;max-width:none;height:100%;object-fit:cover;justify-self:start; }
 .beauty-rank-mask { display:inline-block;filter:blur(4px);user-select:none;letter-spacing:5px;color:#c9c5ed; }
+.beauty-rank-self-guest { display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px; }
+.beauty-rank-self-guest>div { display:grid;gap:7px; }
+.beauty-rank-self-guest span { color:var(--rank-body);font-size:12px; }
+.beauty-rank-self-guest strong { font-size:16px;font-weight:550; }
+.beauty-ranking .beauty-rank-self-guest>button { min-height:44px;padding:8px 14px; }
 .beauty-rank-self-locked>span { color:#bec3d2;font-size:12px; }
 .beauty-rank-self-locked>div { display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:54px; }
 .beauty-rank-self-locked .beauty-rank-mask { font-size:32px; }
@@ -119,12 +124,6 @@
 .beauty-rank-consent>p { margin:0 0 18px;color:#c7cddd;font-size:13px;line-height:1.8; }
 .beauty-rank-consent .beauty-rank-primary { width:100%; }
 .beauty-rank-consent-skip { display:block;min-height:44px;width:100%;padding:12px 0 0;border:0;background:none;color:#bac2d8;font-size:13px; }
-.beauty-rank-daily-gate { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;flex:1;padding:24px;text-align:center; }
-.beauty-rank-daily-gate>span { display:grid;place-items:center;width:70px;height:70px;border:1px solid #b7a1dd33;border-radius:22px;background:#1b2037;color:#dfc498; }
-.beauty-rank-daily-gate>span svg { width:32px;height:32px; }
-.beauty-rank-daily-gate h2 { font-size:22px;font-weight:500; }
-.beauty-rank-daily-gate p { color:#b4bfd5;font-size:13px;line-height:1.8; }
-.beauty-rank-daily-gate .beauty-rank-primary { flex:none;width:100%;margin-top:12px; }
 @media(max-width:350px) { .beauty-rank-self-locked>div>span:last-child { max-width:140px;text-align:right; } .beauty-rank-winner-info>strong { font-size:10px; } }
 
 .beauty-rank-winner.place-1 .beauty-rank-winner-info { background:linear-gradient(180deg,#c9ab7220,#8c78ba08);border-color:#d3bb862b;border-bottom-color:transparent; }

@@ -63,7 +63,7 @@ test('the browser receives the feature as a module with resolvable named depende
   const entry = staticElements.find(element => element.tag === 'script' && element.src?.split('?')[0] === 'beauty-analysis.js');
   assert.ok(entry, 'feature entry script must be included by the homepage');
   assert.equal(entry.type, 'module', 'named imports require browser module loading');
-  assert.equal(entry.src, 'beauty-analysis.js?v=3001');
+  assert.equal(entry.src, 'beauty-analysis.js?v=3301');
   for (const [filename, version] of [['beauty-model.js', 3001], ['beauty-poster.js', 3001]]) {
     assert.ok(controller.includes(`from './${filename}?v=${version}'`), `${filename} must use the current version's cache key`);
   }
@@ -414,8 +414,9 @@ test('v21 keeps a short result cover and mounts complete report chapters directl
   }
   assert.equal((rendered.match(/class="beauty-product beauty-product-compact"/g) || []).length, 12);
   assert.doesNotMatch(rendered, /beauty-product-purchase|data-product-detail=/);
-  assert.equal((rendered.match(/data-product-buy=/g) || []).length, 38);
-  assert.equal((rendered.match(/class="beauty-collection-buy"/g) || []).length, 12);
+  assert.equal((rendered.match(/data-product-buy=/g) || []).length, 14);
+  assert.doesNotMatch(rendered, /beautyCollection|我的专属产品|逛逛更多好物/);
+  assert.ok(rendered.indexOf('<footer class="beauty-report-finish"') > rendered.lastIndexOf('</article>'));
   assert.equal((rendered.match(/class="beauty-product-reason"/g) || []).length, 12);
 });
 

@@ -121,6 +121,7 @@ function harness(score = 90, { links, failNavigation = false } = {}) {
     const esc=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     const star='<svg></svg>',money=value=>Number.isInteger(value)?String(value):value.toFixed(2);
     let currentReport=createReport(${score}),reader={tab:'advice'},foundationSwipe=null,swipeStart=null,wheelGesture=null,touchStart=null;
+    const photos={parts:Object.fromEntries(currentReport.areas.map(area=>[area.id,{before:'before.jpg',after:'after.jpg'}]))};
     let sheetFocus=null,overlayGeneration=0,modalKind='',posterPreviewUrl='',copyVariant=0;
     let merchantProduct=null,merchantFocus=null,merchantScrollTop=0,generation=1;
     const start=(...args)=>effectStart(...args),clearUpload=()=>effectClearUpload();
@@ -128,7 +129,7 @@ function harness(score = 90, { links, failNavigation = false } = {}) {
     const later=(fn,delay)=>setTimeout(fn,delay);
     const selectChapter=id=>{reader.tab=id;effectChapter(id);};
     ${executable}
-    ({ init(){page.hidden=false;$('beautyReport').hidden=false;$('beautyOverlay').hidden=true;$('beautyMerchant').hidden=true;page.innerHTML=collectionHTML(currentReport)+foundationHTML();},
+    ({ init(){page.hidden=false;$('beautyReport').hidden=false;$('beautyOverlay').hidden=true;$('beautyMerchant').hidden=true;page.innerHTML=currentReport.areas.map(areaHTML).join('');},
       openPurchase,showMerchant,hideMerchant,returnFromMerchant,clearMerchant,openSheet,closeSheet,selectFoundation,
       state(){return {reader,modalKind,merchantProduct,generation};},
       invalidateReport(){clearMerchant();generation++;currentReport=null;},
@@ -170,7 +171,7 @@ function harness(score = 90, { links, failNavigation = false } = {}) {
   return { api, node, document, click, key, pointer, dispatch, effects, productControls, timers, history, windowHandlers, state: () => plain(api.state()), flushTimers() { for (const [id, fn] of [...timers]) { timers.delete(id); fn(); } } };
 }
 
-test('each of the twelve collection entries directly opens its own merchant page without a sheet', () => {
+test('each of the twelve products in the six advice areas opens its own merchant page', () => {
   const h = harness();
   assert.equal(h.productControls.size, 12);
   for (const product of PRODUCTS) {

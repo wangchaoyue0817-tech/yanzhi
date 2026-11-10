@@ -72,14 +72,14 @@ test('session persistence never stores a face before consent and rejects old, co
  assert.equal(saveDailyRanking({setItem(){throw Error('quota');}},state,now),false);
 });
 
-function harness(){
+function harness(search=''){
  const handlers={},nodes=new Map(),items=new Map(),calls=[];let document,time=now;
  function node(id){if(!nodes.has(id)){const attrs=new Map();nodes.set(id,{id,dataset:{},hidden:id==='beautyRanking'||id==='beautyReport',innerHTML:'',isConnected:true,
  addEventListener(type,fn){handlers[id+':'+type]=fn;},setAttribute:(key,val)=>attrs.set(key,val),removeAttribute:key=>attrs.delete(key),getAttribute:key=>attrs.get(key),classList:{add(){},remove(){}},querySelector:s=>node(id+':'+s),querySelectorAll:()=>[],focus(){document.activeElement=this;},closest(){return null;}});}return nodes.get(id);}
  document={getElementById:node,querySelector:node,activeElement:node('entry'),addEventListener:(t,fn)=>handlers[t]=fn,dispatchEvent(e){calls.push(e);}};
- const window={addEventListener:(t,fn)=>handlers['window:'+t]=fn,beautyExperience:{closePanel(){},upload(){calls.push('upload');},readAdvice(){calls.push('advice');}}};
+ const window={addEventListener:(t,fn)=>handlers['window:'+t]=fn,beautyExperience:{open(){calls.push('open');},closePanel(){},upload(){calls.push('upload');},readAdvice(){calls.push('advice');}}};
  const history={state:null,pushState(s){this.state=s;},replaceState(s){this.state=s;},back(){this.state=null;handlers['window:popstate']({state:null});}};
- const scope={document,window,history,URLSearchParams,location:{search:''},setTimeout:()=>0,clearTimeout(){},Date:{now:()=>time,parse:Date.parse},Math,URL:{revokeObjectURL(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},sessionStorage:{getItem:key=>items.get(key)||null,setItem:(key,val)=>items.set(key,val)},localStorage:{getItem:()=>null,setItem(){}}};
+ const scope={document,window,history,URLSearchParams,location:{search},setTimeout:()=>0,clearTimeout(){},Date:{now:()=>time,parse:Date.parse},Math,URL:{revokeObjectURL(){}},CustomEvent:class{constructor(type,{detail}={}){this.type=type;this.detail=detail;}},sessionStorage:{getItem:key=>items.get(key)||null,setItem:(key,val)=>items.set(key,val)},localStorage:{getItem:()=>null,setItem(){}}};
  for(const name of ['freshRankingState','currentRankingState','beginMeasurement','finishMeasurement','cancelMeasurement','authorizeRanking','mayRevealRanking','dailyRankingSnapshot','loadDailyRanking','saveDailyRanking']){
   const arities={freshRankingState:0,currentRankingState:1,beginMeasurement:2,finishMeasurement:2,cancelMeasurement:1,authorizeRanking:2,mayRevealRanking:1,dailyRankingSnapshot:2,loadDailyRanking:1,saveDailyRanking:2};
   scope[name]=(...args)=>model[name](...args.slice(0,arities[name]),time);
@@ -88,10 +88,29 @@ function harness(){
  runInNewContext(readFileSync(new URL('../public/beauty-ranking.js',import.meta.url),'utf8').replace(/^import .*;$/gm,''),scope);
  return {node,handlers,calls,items,window,history,advance(){time=tomorrow;handlers['window:focus']();},click(action,record){handlers['beautyPage:click']({target:{closest:s=>s==='[data-rank]'?{dataset:{rank:action,record}}:null}});}};
 }
-test('all entry routes require an upload; pending users can browse without any own rank or chart marker',()=>{
- const h=harness();h.window.beautyRankingExperience.open();assert.ok(h.calls.includes('upload'));assert.equal(h.node('beautyRanking').hidden,true);
+test('header and direct URL show the full daily board before a test, and only the personal card starts upload',()=>{
+ for(const search of ['', '?beauty=ranking']) {
+  const h=harness(search);
+  if (!search) {
+   h.handlers['beautyPage:click']({target:{closest:selector=>selector==='[data-action="ranking"]'?{}:null}});
+  }
+  const board=h.node('beautyRanking');
+  assert.equal(board.hidden,false);
+  assert.equal(h.calls.includes('upload'),false);
+  assert.equal((board.innerHTML.match(/data-rank="photo"/g)||[]).length,10);
+  assert.match(board.innerHTML,/今日尚未鉴定/);
+  assert.match(board.innerHTML,/<section class="beauty-rank-self"[^>]*>[\s\S]*?data-rank="test">去鉴颜值/);
+  assert.doesNotMatch(board.innerHTML,/beauty-rank-marker|分享我的排名|超过 <b>|data-rank="consent"/);
+  h.click('test');
+  assert.equal(board.hidden,true);
+  assert.ok(h.calls.includes('upload'));
+  assert.equal(h.window.beautyRankingExperience.hasUploaded(),false);
+ }
+});
+test('while generating a report the daily board hides the personal score and chart marker',()=>{
+ const h=harness();
  h.handlers['beauty:measurement-start']({detail:{id:1}});h.window.beautyRankingExperience.open();
- const html=h.node('beautyRanking').innerHTML;assert.match(html,/报告生成后解锁排名/);assert.doesNotMatch(html,/beauty-rank-marker|分享我的排名|超过 <b>/);
+ const html=h.node('beautyRanking').innerHTML;assert.match(html,/报告生成中/);assert.doesNotMatch(html,/beauty-rank-marker|分享我的排名|超过 <b>|去鉴颜值/);
  assert.equal((html.match(/<li class="beauty-rank-row/g)||[]).length,7);assert.doesNotMatch(html,/查看更多|我的附近|个人高光详情/);
 });
 test('daily consent dialog explains the public portrait and user ID; reject, consent and revoke change visibility',()=>{
@@ -102,7 +121,11 @@ test('daily consent dialog explains the public portrait and user ID; reject, con
  h.click('authorize');assert.equal(h.window.beautyRankingExperience.canReveal(),true);assert.match(h.node('beautyRanking').innerHTML,/分享我的排名/);
  assert.ok(h.items.get(RANKING_STORAGE_KEY).includes('YWJj'));
  h.click('withdraw');assert.equal(h.window.beautyRankingExperience.canReveal(),false);assert.ok(!h.items.get(RANKING_STORAGE_KEY).includes('YWJj'));
- h.advance();assert.match(h.node('beautyRanking').innerHTML,/今日新榜，等你上分/);assert.doesNotMatch(h.node('beautyRanking').innerHTML,/beauty-rank-row/);
+ h.advance();
+ const tomorrowBoard=h.node('beautyRanking').innerHTML;
+ assert.match(tomorrowBoard,/今日尚未鉴定/);assert.match(tomorrowBoard,/去鉴颜值/);
+ assert.equal((tomorrowBoard.match(/data-rank="photo"/g)||[]).length,10);
+ assert.doesNotMatch(tomorrowBoard,/beauty-rank-marker|超过 <b>|分享我的排名/);
 });
 test('distribution expands 25–100 across the chart without changing ranking calculations',()=>{
  for(const [score,position] of [[25,0],[50,33.333],[75,66.667],[90,86.667],[100,100],[24,null]]){
@@ -126,7 +149,7 @@ test('the podium names first, second and third, with ten accessible full-photo a
  assert.equal((html.match(/data-rank="photo"/g)||[]).length,10);assert.equal((html.match(/aria-haspopup="dialog"/g)||[]).length,10);
 });
 test('large photos stay limited to today’s visible top ten and show the original portrait',()=>{
- const h=harness();h.handlers['beauty:measurement-start']({detail:{id:1}});h.window.beautyRankingExperience.open();
+ const h=harness();h.window.beautyRankingExperience.open();
  const first=dailyRankingSnapshot(freshRankingState(now),'unused',now).topTen[0];
  h.click('photo',first.id);const panel=h.node('beautyRanking:.beauty-rank-share');
  assert.equal(panel.hidden,false);assert.match(panel.innerHTML,/role="dialog"/);assert.match(panel.innerHTML,/关闭照片大图/);
@@ -134,6 +157,7 @@ test('large photos stay limited to today’s visible top ten and show the origin
  h.handlers.keydown({key:'Escape',preventDefault(){}});assert.equal(panel.hidden,true);
  h.click('photo','self');assert.equal(panel.hidden,true,'unapproved self record has no public photo');
  h.click('photo','seed-does-not-exist');assert.equal(panel.hidden,true);
+ h.handlers['beauty:measurement-start']({detail:{id:1}});
  h.handlers['beauty:report-ready']({detail:{id:1,score:100,photo}});h.click('authorize');h.click('photo','self');
  assert.equal(panel.hidden,false);assert.ok(panel.innerHTML.includes(photo));assert.match(panel.innerHTML,/beauty-rank-original-photo/);assert.doesNotMatch(panel.innerHTML,/beauty-rank-original-crop/);
  h.click('withdraw');assert.equal(panel.hidden,true);h.click('photo','self');assert.equal(panel.hidden,true);

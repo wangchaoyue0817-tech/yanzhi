@@ -13,25 +13,55 @@ function announce(){document.dispatchEvent(new CustomEvent('beauty:ranking-priva
 function syncDay(){const next=currentRankingState(state);if(next!==state){state=next;persist();closeDialog();announce();if(visible)render();}return state;}
 function snapshot(){syncDay();return dailyRankingSnapshot(state,userId);}
 function avatar(row,large=false){return `<button type="button" class="beauty-rank-avatar tone-${row.tone}${large?' is-large':''}${row.sheet?' is-sheet':''}" data-rank="photo" data-record="${esc(row.id)}" aria-label="查看用户${esc(row.userId)}的照片大图" aria-haspopup="dialog"><img src="${esc(row.photo)}" alt="" draggable="false"></button>`;}
-function locked(){return `<span class="beauty-rank-mask" aria-hidden="true">••••</span><span>${state.pending?'报告生成后解锁排名':'授权展示形象，查看排名'}</span>`;}
-function header(){return `<header class="beauty-rank-header"><button type="button" data-rank="back" aria-label="返回鉴颜值">${back}</button><h1 id="beautyRankingTitle" tabindex="-1">颜值上分榜</h1><details class="beauty-rank-rules"><summary aria-label="查看排名规则">${info}</summary><div><strong>今日上榜规则</strong><p>每天北京时间 00:00 开启新榜，需当天重新鉴定并授权。每位用户取当天最高有效分，同分按首次达到该分数的先后排序。前十个展示位公开原照片和用户ID，妆后预计分不入榜。</p>${state.authorized?'<button type="button" data-rank="withdraw">撤回形象展示授权</button>':''}</div></details></header>`;}
+function personalRanking(snapshot) {
+ if (snapshot.allowed) {
+  return {
+   card: `<div class="beauty-rank-self-top"><span>我的名次</span><span>${snapshot.me.score}<small> 分</small></span></div>
+    <div class="beauty-rank-self-main"><strong><small>第</small> ${snapshot.me.rank} <small>名</small></strong><span>超过 <b>${snapshot.percentile}%</b> 的上榜成绩</span></div>`,
+   footer: `<button type="button" class="beauty-rank-secondary" data-rank="${hasReport()?'advice':'test'}">${hasReport()?'我的变美思路':'再测一次'}</button>
+    <button type="button" class="beauty-rank-primary" data-rank="share">分享我的排名 ${arrow}</button>`
+  };
+ }
+ if (!state.pending && state.bestScore === null) {
+  return {
+   card: `<div class="beauty-rank-self-guest"><div><span>我的名次</span><strong>今日尚未鉴定</strong></div>
+    <button type="button" class="beauty-rank-primary" data-rank="test">去鉴颜值 ${arrow}</button></div>`,
+   footer: ''
+  };
+ }
+ const mask = '<span class="beauty-rank-mask" aria-hidden="true">••••</span>';
+ if (state.pending) {
+  return {
+   card: `<div class="beauty-rank-self-locked"><span>我的名次</span><div>${mask}<span>报告生成中</span></div></div>`,
+   footer: '<button type="button" class="beauty-rank-primary" data-rank="back">返回报告生成页</button>'
+  };
+ }
+ const action = state.bestPhoto ? 'consent' : 'test';
+ const cardLabel = state.bestPhoto ? '授权查看我的排名' : '重新上传，授权展示';
+ const label = state.bestPhoto ? '授权展示，查看排名' : '重新上传，授权展示';
+ return {
+  card: `<div class="beauty-rank-self-locked"><span>我的名次</span><div>${mask}<span>待授权展示形象</span></div>
+   <button type="button" data-rank="${action}">${cardLabel} ${arrow}</button></div>`,
+  footer: `<button type="button" class="beauty-rank-primary" data-rank="${action}">${label} ${arrow}</button>`
+ };
+}
+function header(){return `<header class="beauty-rank-header"><button type="button" data-rank="back" aria-label="返回鉴颜值">${back}</button><h1 id="beautyRankingTitle" tabindex="-1">颜值上分榜</h1><details class="beauty-rank-rules"><summary aria-label="查看排名规则">${info}</summary><div><strong>今日上榜规则</strong><p>每天北京时间 00:00 开启新榜，参与排名需当天鉴定并授权。每位用户取当天最高有效分，同分按首次达到该分数的先后排序。前十个展示位公开原照片和用户ID，妆后预计分不入榜。</p>${state.authorized?'<button type="button" data-rank="withdraw">撤回形象展示授权</button>':''}</div></details></header>`;}
 function render(){
  const s=snapshot();
- if(!state.uploaded){root.innerHTML=header()+`<div class="beauty-rank-daily-gate"><span>${crown}</span><h2>今日新榜，等你上分</h2><p>每天重新鉴定后，才可以查看今日榜单和参与排名。</p><button type="button" class="beauty-rank-primary" data-rank="test">上传照片，开启上分 ${arrow}</button></div><span class="beauty-rank-status" role="status" aria-live="polite"></span>`;return;}
+ const personal = personalRanking(s);
  const podium=[s.topTen[1],s.topTen[0],s.topTen[2]],chartBins=s.bins.filter(bin=>bin.min>=25),max=Math.max(...chartBins.map(bin=>bin.count),1);
  const chartX=score=>Number(((score-25)/75*100).toFixed(3)),markerScore=s.allowed&&s.me.score>=25?s.me.score:null;
  root.innerHTML=header()+`<div class="beauty-rank-scroll"><div class="beauty-rank-date">${s.day.slice(5).replace('-','月')}日 · 今日榜</div>
  <section class="beauty-rank-podium" aria-label="今日榜单前三个展示位">${podium.filter(Boolean).map((row,index)=>`<article class="beauty-rank-winner place-${index===1?1:index===0?2:3}"><span class="beauty-rank-medal">${index===1?crown:''}<span>第${row.rank}名</span></span>${avatar(row,true)}<div class="beauty-rank-winner-info"><strong>${esc(row.userId)}</strong><b>${row.score}<small>分</small></b></div></article>`).join('')}</section>
- <section class="beauty-rank-self" aria-label="我的名次">${s.allowed?`<div class="beauty-rank-self-top"><span>我的名次</span><span>${s.me.score}<small> 分</small></span></div><div class="beauty-rank-self-main"><strong><small>第</small> ${s.me.rank} <small>名</small></strong><span>超过 <b>${s.percentile}%</b> 的上榜成绩</span></div>`:`<div class="beauty-rank-self-locked"><span>我的名次</span><div>${locked()}</div>${state.pending?'':`<button type="button" data-rank="consent">${state.bestPhoto?'授权查看我的排名':'重新上传，授权展示'} ${arrow}</button>`}</div>`}</section>
+ <section class="beauty-rank-self" aria-label="我的名次">${personal.card}</section>
  <section class="beauty-rank-distribution" aria-label="得分分布"><div class="beauty-rank-section-heading"><h2>得分分布</h2>${s.allowed?`<span>你在 <b>${s.me.score}</b> 分</span>`:''}</div><div class="beauty-rank-chart" role="img" aria-label="今日得分分布，显示25至100分${s.allowed?`，你的得分为${s.me.score}分${markerScore===null?'，低于显示范围':''}`:''}"><div class="beauty-rank-bars">${chartBins.map(bin=>`<i style="--bar-height:${Math.max(3,bin.count/max*100)}%"${s.allowed&&s.me.score>=bin.min&&s.me.score<=bin.max?' class="is-current"':''}></i>`).join('')}</div>${markerScore!==null?`<span class="beauty-rank-marker" style="--marker:${chartX(markerScore)}%"><i></i></span>`:''}</div><div class="beauty-rank-axis">${[25,50,75,100].map(score=>`<span style="--tick:${chartX(score)}%">${score}${score===100?' 分':''}</span>`).join('')}</div></section>
  <section class="beauty-rank-list-section"><div class="beauty-rank-section-heading"><h2>今日十强</h2><span>每日 00:00 更新</span></div><ol class="beauty-rank-list" start="4">${s.topTen.slice(3).map(row=>`<li class="beauty-rank-row${row.id==='self'?' is-me':''}" aria-label="第${row.rank}名，用户${esc(row.userId)}，${row.score}分"><span class="beauty-rank-number">${row.rank}</span>${avatar(row)}<span class="beauty-rank-person"><strong>${esc(row.userId)}${row.id==='self'?'<small>我</small>':''}</strong></span><b class="beauty-rank-score">${row.score}<small>分</small></b></li>`).join('')}</ol></section></div>
- <footer class="beauty-rank-footer">${s.allowed?`<button type="button" class="beauty-rank-secondary" data-rank="${hasReport()?'advice':'test'}">${hasReport()?'我的变美思路':'再测一次'}</button><button type="button" class="beauty-rank-primary" data-rank="share">分享我的排名 ${arrow}</button>`:state.pending?'<button type="button" class="beauty-rank-primary" data-rank="back">返回报告生成页</button>':`<button type="button" class="beauty-rank-primary" data-rank="consent">${state.bestPhoto?'授权展示，查看排名':'重新上传，授权展示'} ${arrow}</button>`}</footer><div class="beauty-rank-share" hidden></div><span class="beauty-rank-status" role="status" aria-live="polite"></span>`;
+ ${personal.footer ? `<footer class="beauty-rank-footer">${personal.footer}</footer>` : ''}<div class="beauty-rank-share" hidden></div><span class="beauty-rank-status" role="status" aria-live="polite"></span>`;
 }
 function setUnderlyingInert(value){for(const node of [$('beautyScroll'),document.querySelector('.beauty-header'),$('beautyComposer')]){if(value)node.setAttribute('inert','');else node.removeAttribute('inert');}}
 function open({push=true}={}){
  syncDay();if(visible)return;
- if(!state.uploaded){window.beautyExperience?.upload();return;}
- window.beautyExperience?.closePanel();returnFocus=document.activeElement;visible=true;
+ returnFocus=document.activeElement;window.beautyExperience?.closePanel();visible=true;
  if(push)history.pushState({...history.state,beautyRanking:true},'');
  render();root.hidden=false;root.dataset.active='true';page.classList.add('is-ranking');setUnderlyingInert(true);$('beautyRankingTitle').focus({preventScroll:true});
 }
@@ -47,7 +77,7 @@ function consent(){syncDay();if(state.pending)return;if(!state.bestPhoto){close(
  dialog(`<section class="beauty-rank-consent" role="dialog" aria-modal="true" aria-labelledby="beautyRankConsentTitle"><header><h2 id="beautyRankConsentTitle">授权展示形象</h2><button type="button" data-rank="dialog-close" aria-label="关闭授权面板">×</button></header><img src="${esc(state.bestPhoto)}" alt="将用于今日榜单展示的原照片"><strong>${esc(userId)}</strong><p>授权后，你将参与今日排名；进入前十时，你当天最高分对应的原照片和用户ID将展示在榜单中。你可以随时撤回授权。</p><button type="button" class="beauty-rank-primary" data-rank="authorize">同意展示，查看排名</button><button type="button" class="beauty-rank-consent-skip" data-rank="dialog-close">暂不授权，先看看</button></section>`);
 }
 function photoPreview(id){
- const row=snapshot().topTen.find(item=>item.id===id);if(!state.uploaded||!row)return;
+ const row=snapshot().topTen.find(item=>item.id===id);if(!row)return;
  const photo=`<img${row.sheet?'':' class="beauty-rank-original-photo"'} src="${esc(row.photo)}" alt="用户${esc(row.userId)}上传的原照片" draggable="false">`;
  dialog(`<section class="beauty-rank-photo-viewer" role="dialog" aria-modal="true" aria-labelledby="beautyRankPhotoTitle"><header><div><h2 id="beautyRankPhotoTitle">${esc(row.userId)}</h2><p>第${row.rank}名 · ${row.score}分</p></div><button type="button" data-rank="dialog-close" aria-label="关闭照片大图">×</button></header>${row.sheet?`<div class="beauty-rank-original-crop">${photo}</div>`:photo}</section>`);
 }

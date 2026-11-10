@@ -270,11 +270,21 @@ function areaHTML(area,index) {
     '<div class="beauty-advice-inline"><p class="beauty-area-summary">'+esc(area.summary || area.after)+'</p><ol class="beauty-inline-steps">'+area.steps.map(step=>'<li>'+esc(step)+'</li>').join('')+'</ol></div>'+products+'</article>';
 }
 const areaNames={hair:'发型',brows:'眉形',eyes:'眼妆',skin:'底妆',lips:'唇妆',style:'配饰'};
-function collectionHTML(report){
-  const products=[...new Set(report.areas.flatMap(area=>area.productIds))].map(id=>PRODUCTS.find(p=>p.id===id));
-  return '<section class="beauty-collection" id="beautyCollection" aria-labelledby="beautyCollectionTitle"><header><h2 id="beautyCollectionTitle">我的专属产品</h2><small>共 '+products.length+' 件</small></header><div class="beauty-collection-list">'+products.map(product=>
-    '<article class="beauty-collection-item" data-collection-item="'+product.id+'"><button type="button" class="beauty-collection-link" data-product-buy="'+product.id+'" aria-label="立即购买'+esc(product.name)+'">'+productImage(product)+'<span class="beauty-collection-copy"><strong>'+esc(product.shortName || product.name)+'</strong><small>'+esc(product.shade)+'</small><span><b>¥'+money(product.price)+'</b><del>¥'+money(product.originalPrice)+'</del></span></span></button><button type="button" class="beauty-collection-buy" data-product-buy="'+product.id+'" aria-label="立即购买'+esc(product.name)+'"><span>立即购买</span></button></article>'
-  ).join('')+'</div><button type="button" class="beauty-collection-more"><span>逛逛更多好物</span><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button></section>';
+function reportFooterHTML(report, portrait) {
+  return `<footer class="beauty-report-finish" aria-label="报告与排名">
+    <div class="beauty-finish-preview">
+      <img class="beauty-finish-portrait" src="${esc(portrait)}" alt="" draggable="false" loading="lazy">
+      <div class="beauty-finish-caption">
+        <small>${report.score} 分 · ${esc(report.tier.name)}</small>
+        <strong>${esc(report.title)}</strong>
+        <span>专属报告海报，可保存分享</span>
+      </div>
+    </div>
+    <div class="beauty-finish-actions">
+      <button type="button" class="beauty-finish-report" data-action="poster">查看我的报告</button>
+      <button type="button" class="beauty-finish-ranking" data-action="ranking">查看我的排名</button>
+    </div>
+  </footer>`;
 }
 
 function priorityArea(report){return {natural:'brows',fresh:'eyes',radiant:'hair',spotlight:'hair',icon:'style'}[report.tier.id] || 'hair';}
@@ -402,7 +412,7 @@ function showReport(report,readyPhotos,{celebrate=true}={}) {
       '<div class="beauty-features-heading"><h3>五官表现</h3><span>你的优势，逐一看清</span></div>'+
       '<div class="beauty-radar-wrap">'+radar(report.dimensions)+'<div class="beauty-dimensions">'+report.dimensions.map((d,index) => '<div class="beauty-dimension" data-dimension="'+index+'"><span>'+esc(d.label)+'</span><b>'+d.score+'</b><i><span style="width:'+d.score+'%"></span></i></div>').join('')+'</div></div>'+
       '<div class="beauty-insights"><div class="beauty-insight beauty-insight-strength"><small><i aria-hidden="true">'+star+'</i>你的优势</small><p>'+esc(report.strength)+'</p></div><div class="beauty-insight beauty-insight-focus"><small><i aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 18 6-6m-3-5 3-3m4 4 3-3m-4 9 6-6M5 21l-2-2 9-9 2 2Z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>优先调整</small><p>'+esc(report.focus)+'</p></div></div><p class="beauty-reader-copy">'+resultCopy(report.copy)+'</p><div class="beauty-chapter-end" id="beautyChapterEnd"><span>继续上滑，查看我的变美思路</span><button type="button" data-action="read-advice" aria-label="查看我的变美思路">↓</button></div></section>'+
-    '<section class="beauty-advice-panel" id="beautyAdvice" role="tabpanel" aria-labelledby="beautyTab-advice" hidden><div class="beauty-advice-intro"><h2>我的变美思路</h2><p>从发型到妆容，找到适合你的改变。</p></div>'+report.areas.map(areaHTML).join('')+collectionHTML(report)+'</section></div>' ;
+    '<section class="beauty-advice-panel" id="beautyAdvice" role="tabpanel" aria-labelledby="beautyTab-advice" hidden><div class="beauty-advice-intro"><h2>我的变美思路</h2><p>从发型到妆容，找到适合你的改变。</p></div>'+report.areas.map(areaHTML).join('')+reportFooterHTML(report, photos.before)+'</section></div>' ;
   scroll.scrollTop = 0;
   document.dispatchEvent?.(new CustomEvent('beauty:report-ready',{detail:{id:generation,score:report.score,photo:readyPhotos.before}}));
   animateReport(celebrate);

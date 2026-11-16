@@ -42,30 +42,64 @@
 .appraisal-photo-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
 .appraisal-photo-grid>button{display:block;padding:0;background:none;border-radius:12px;min-width:0}
 .appraisal-user-text{width:fit-content;max-width:85%;margin:0 0 24px auto;padding:12px 16px;border:1px solid #34276b;background:#181641;border-radius:14px 14px 0 14px;color:#fff;font-size:14px;line-height:22px;white-space:pre-wrap}
-.appraisal-process{margin:0 0 22px;color:#74758e;font-size:13px;line-height:1.7}
-.appraisal-process summary{cursor:pointer;list-style:none;position:relative;user-select:none}
-.appraisal-process summary::-webkit-details-marker{display:none}
-.appraisal-process-summary{display:flex;align-items:center;gap:8px;min-height:30px;color:#82829b;margin-bottom:4px}
-.appraisal-process-summary:after{content:'⌄';font-size:13px}
-.appraisal-process:not([open])>.appraisal-process-summary:after{content:'›'}
-.appraisal-process-demo{font-size:10px;color:#9d98ae;font-weight:400;order:2;margin-left:auto;padding:1px 5px;border:1px solid #a9a0c326;border-radius:4px;line-height:16px}
-.appraisal-step>summary,.appraisal-thinking>summary{display:flex;align-items:center;gap:10px;min-height:30px;padding-left:20px}
-.appraisal-step>summary:before,.appraisal-thinking>summary:before{content:'';position:absolute;left:0;top:10px;width:9px;height:9px;border-radius:50%;border:1px solid #6d589657;background:#27203d30}
-.appraisal-step>summary>span{display:block;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1}
-.appraisal-step>summary:after{content:'›';color:#74758e;padding-left:8px;font-size:16px}
-.appraisal-step[open]>summary:after{content:'⌄'}
-.appraisal-step>p{color:#8d8b9f;margin:3px 0 12px 20px;font-size:12px;line-height:1.8}
-.appraisal-thinking{margin-top:1px}
-.appraisal-thinking>summary{min-height:32px;color:#dbd8e9}
-.appraisal-thinking>summary:before{width:10px;height:10px;top:10px;border:1px solid #80c8f183;background:#8edfff;box-shadow:inset 0 0 0 2px #152039,0 0 0 4px #598dca14,0 0 0 7px #598dca0b,0 0 11px #64c7ff38}
-.appraisal-thinking>summary:after{content:'⌄';font-size:13px;color:#74758e}
-.appraisal-thinking-dots{display:flex;gap:4px;margin-left:auto;align-items:center}
-.appraisal-thinking-dots>i{width:6px;height:6px;border-radius:50%;background:#bcbac8;animation:appraisal-dot 1.5s infinite;opacity:.45}
-.appraisal-thinking-dots>i:nth-child(2){animation-delay:.2s}.appraisal-thinking-dots>i:nth-child(3){animation-delay:.4s}
-.appraisal-thinking>p{margin:4px 0 10px 18px;font-size:13px;line-height:21px;color:#8c8b9f}
+/* One readable status first; the full stage list and technical trace are opt-in. */
+.appraisal-process{margin:0 0 22px;border:1px solid #8f9ec523;border-radius:16px;background:linear-gradient(145deg,#19213788,#12172b66);color:#aeb6cc;font-size:13px;line-height:1.6;overflow:hidden;box-shadow:inset 0 1px 0 #d4e0ff05;transition:border-color .22s ease,background .22s ease}
+.appraisal-process.is-open{border-color:#9c9ed43b}
+.appraisal-process-summary{display:flex;align-items:center;gap:11px;width:100%;min-height:84px;margin:0;padding:15px 14px;text-align:left;border:0;border-radius:15px;background:transparent;color:inherit;cursor:pointer;touch-action:manipulation}
+.appraisal-process-summary:hover{background:#d5ddff03}
+.appraisal-process-summary:active{background:#b3c0ff08}
+.appraisal-process-summary:focus-visible{outline:2px solid #b6a7ff;outline-offset:-3px}
+.appraisal-process-mark{position:relative;display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:10px;background:linear-gradient(140deg,#667bf52e,#7c5bdb18);color:#b9baff;border:1px solid #a8b4ff1c}
+.appraisal-process-mark svg{display:block;width:17px;height:17px}
+.appraisal-process[data-state="running"] .appraisal-process-mark{border-color:transparent;border-radius:50%;background:transparent;overflow:visible}
+.appraisal-process[data-state="running"] .appraisal-process-mark svg{display:none}
+.appraisal-process[data-state="running"] .appraisal-process-mark:before,.appraisal-stage[data-state="active"] .appraisal-stage-mark:after{content:'';position:absolute;left:50%;top:50%;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#d8f9ff 0%,#6ddfff 60%);box-shadow:0 0 7px #6ddfff99;transform:translate(-50%,-50%);z-index:1;pointer-events:none}
+.appraisal-process[data-state="running"] .appraisal-process-mark:after,.appraisal-stage[data-state="active"] .appraisal-stage-mark:before{content:'';position:absolute;box-sizing:border-box;left:50%;top:50%;width:18px;height:18px;border:1px solid #595ff2aa;border-top-color:#6ddfff99;border-right-color:#7b55eacc;border-radius:50%;background:#595ff20f;box-shadow:0 0 0 5px #595ff218,0 0 12px #7b55ea45;transform:translate(-50%,-50%);opacity:.7;animation:appraisal-status-breathe 2.8s ease-in-out infinite;pointer-events:none}
+.appraisal-process-heading{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.appraisal-status-line{display:flex;align-items:center;gap:7px;min-width:0}
+.appraisal-status-title{font-size:14px;line-height:21px;font-weight:550;letter-spacing:.1px;color:#e8ebf8}
+.appraisal-status-detail{display:block;font-size:12px;line-height:18px;color:#a4aec6;overflow-wrap:anywhere}
+.appraisal-elapsed{flex:0 0 auto;font-size:11px;font-weight:400;line-height:20px;font-variant-numeric:tabular-nums;color:#98a3bc;white-space:nowrap}
+.appraisal-process-chevron{display:grid;place-items:center;flex:0 0 16px;width:16px;height:20px;color:#939fbd;transition:transform .24s cubic-bezier(.2,.7,.2,1)}
+.appraisal-process-chevron svg{display:block;width:14px;height:14px}
+.appraisal-process.is-open .appraisal-process-chevron{transform:rotate(180deg)}
+.appraisal-process-body{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows .24s cubic-bezier(.2,.7,.2,1),opacity .18s ease,visibility 0s linear .24s}
+.appraisal-process.is-open .appraisal-process-body{grid-template-rows:1fr;opacity:1;visibility:visible;transition:grid-template-rows .24s cubic-bezier(.2,.7,.2,1),opacity .2s ease,visibility 0s}
+.appraisal-process-inner{min-height:0;overflow:hidden}
+.appraisal-stages{list-style:none;margin:0 14px;padding:5px 0 2px;border-top:1px solid #aebdda12}
+.appraisal-stage{position:relative;display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:start;column-gap:10px;min-height:62px;margin:0;padding:11px 0 10px;list-style:none}
+.appraisal-stage:not(:last-child):before{content:'';position:absolute;left:8px;top:30px;bottom:-8px;width:1px;background:#7f91bd22}
+.appraisal-stage-mark{position:relative;display:grid;place-items:center;width:17px;height:17px;margin-top:2px;border:1px solid #8491b548;border-radius:50%;color:#b6baff;background:#151d32;z-index:1}
+.appraisal-stage[data-state="done"] .appraisal-stage-mark{background:#8e86ef14;border-color:#9296d85e}
+.appraisal-stage[data-state="done"] .appraisal-stage-mark:after{content:'';width:6px;height:3px;border-left:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:translateY(-1px) rotate(-45deg)}
+.appraisal-stage[data-state="active"] .appraisal-stage-mark{border-color:transparent;background:transparent;color:#c9c6ff;overflow:visible}
+.appraisal-stage[data-state="stopped"] .appraisal-stage-mark:after{content:'';height:1px;width:6px;background:#a9b0c3}
+.appraisal-stage-copy{min-width:0}
+.appraisal-stage-copy>strong{display:block;font-weight:500;font-size:13px;line-height:21px;color:#c6cede}
+.appraisal-stage-copy>p{margin:2px 0 0;color:#929eb7;font-size:12px;line-height:18px;overflow-wrap:anywhere}
+.appraisal-stage[data-state="active"] .appraisal-stage-copy>strong{color:#f0edff}
+.appraisal-stage[data-state="pending"] .appraisal-stage-copy>strong{color:#929db7}
+.appraisal-stage[data-state="pending"] .appraisal-stage-copy>p{color:#7f8ba5}
+.appraisal-stage-state{font-size:10px;line-height:21px;white-space:nowrap;color:#8f9ab3}
+.appraisal-stage[data-state="active"] .appraisal-stage-state{color:#c3bbff}
+.appraisal-stage[data-state="done"] .appraisal-stage-state{color:#a3aec8}
+.appraisal-technical{margin:0 14px 12px;border-top:1px solid #aebdda12}
+.appraisal-technical>summary{display:flex;align-items:center;justify-content:space-between;min-height:40px;list-style:none;cursor:pointer;font-size:11px;color:#9ba7c0;user-select:none}
+.appraisal-technical>summary::-webkit-details-marker{display:none}
+.appraisal-technical>summary:after{content:'';width:5px;height:5px;margin-right:3px;border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:rotate(-45deg);transition:transform .2s ease}
+.appraisal-technical[open]>summary:after{transform:rotate(45deg)}
+.appraisal-technical>summary:focus-visible{outline:2px solid #b6a7ff;outline-offset:2px;border-radius:4px}
+.appraisal-technical pre{max-height:196px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;margin:0 0 2px;padding:12px;border:1px solid #889ac51b;border-radius:9px;background:#0e1526;color:#a4b0ca;font:11px/1.8 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;tab-size:2}
+.appraisal-technical code{font:inherit;color:inherit}
+.appraisal-process.is-complete .appraisal-process-summary,.appraisal-process.is-stopped .appraisal-process-summary{min-height:64px;padding-top:12px;padding-bottom:12px}
+.appraisal-process.is-complete .appraisal-status-detail,.appraisal-process.is-stopped .appraisal-status-detail{display:none}
+.appraisal-process.is-complete .appraisal-process-mark{color:#c4c8fa;background:#7f8cc215;border-color:#a1aed023}
+.appraisal-process.is-stopped .appraisal-process-mark{color:#aab4ca;background:#7e8da511;border-color:#a1aed020}
+.appraisal-process.is-stopped .appraisal-status-title{color:#b3bed3}
+@keyframes appraisal-status-breathe{0%,100%{opacity:.65;transform:translate(-50%,-50%) scale(.96)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.04)}}
+@media(max-width:350px){.appraisal-process-summary{gap:8px;padding-left:11px;padding-right:11px}.appraisal-process-mark{flex-basis:27px;width:27px;height:27px;border-radius:9px}.appraisal-status-line{gap:5px}.appraisal-status-title{font-size:13px}.appraisal-status-detail{font-size:11px}.appraisal-elapsed{font-size:10px}.appraisal-stages{margin-left:11px;margin-right:11px}.appraisal-technical{margin-left:11px;margin-right:11px}.appraisal-stage{column-gap:8px}.appraisal-stage-state{font-size:10px}.appraisal-stage-copy>p{font-size:11px}}
 .appraisal-text-reply{font-size:14px;line-height:23px;color:#fff}
 .appraisal-result{font-size:14px;line-height:1.6;color:#fff;outline:none;padding-top:4px}
-.appraisal-result .appraisal-demo-note{margin-bottom:10px;color:#aaa8bc;font-size:11px;line-height:18px}
 .appraisal-result h2{font-size:20px;line-height:1.45;font-weight:650;margin:0 0 24px;text-align:center}
 .appraisal-result h3{font-size:15px;line-height:24px;font-weight:650;margin:10px 0 15px}
 .appraisal-result p{margin:0 0 10px;overflow-wrap:anywhere}
@@ -89,6 +123,5 @@
 .appraisal-photo-stage .appraisal-sample-image{height:auto;aspect-ratio:1;max-height:100%;width:min(100%,65dvh)}
 .appraisal-photo-navigation{display:flex;align-items:center;justify-content:space-between;color:#bcb8cd;font-size:13px}
 .appraisal-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-@keyframes appraisal-dot{50%{opacity:1}}
 @media(max-width:350px){#app.has-appraisal-ui:not(.is-expert):not(.is-beauty) .navbar-content{padding:0 12px}#app.has-appraisal-ui:not(.is-expert):not(.is-beauty) .home-mode-tab-item{min-width:79px;width:79px;flex-basis:79px;font-size:13px}#app.has-appraisal-ui:not(.is-expert):not(.is-beauty) .input-area{padding-left:12px;padding-right:12px}#app.has-appraisal-ui:not(.is-expert):not(.is-beauty) .input-glow-wrapper{padding:13px 11px}#app.has-appraisal-ui:not(.is-expert):not(.is-beauty) .toolbar-btn{font-size:12px;padding:0 9px}#app.has-appraisal-ui:not(.is-expert):not(.is-beauty) .toolbar-left{gap:5px}#app.is-appraisal .messages{padding-left:15px;padding-right:15px}.appraisal-media{padding-right:26px}.appraisal-photo-stack{flex-basis:123px;width:123px;height:123px}.appraisal-result h2{font-size:18px}.appraisal-result th,.appraisal-result td{padding:7px 9px}}
-@media(prefers-reduced-motion:reduce){.appraisal-thinking-dots>i{animation:none}}
+@media(prefers-reduced-motion:reduce){.appraisal-process,.appraisal-process-body,.appraisal-process-chevron,.appraisal-technical>summary:after{transition:none}.appraisal-process-mark:before,.appraisal-process-mark:after,.appraisal-stage-mark:before,.appraisal-stage-mark:after{animation:none!important;opacity:1}}

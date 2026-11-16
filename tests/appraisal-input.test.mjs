@@ -49,12 +49,23 @@ test('homepage integrates the replica before the controller and retains beauty e
   const controller = readFileSync(new URL('public/app.js', root), 'utf8');
   assert.ok(html.indexOf('src="appraisal-conversation.js') < html.indexOf('src="app.js'));
   assert.match(html, /for="inputField">鉴定问题/);
-  assert.match(html, /appraisalUseSample/);
+  assert.doesNotMatch(html, /id="appraisalUseSample"/);
   assert.match(controller, /appraisal\.send\(\{text:value,photos:/);
   assert.match(controller, /!e\.isComposing/);
   assert.match(controller, /appraisal\.close\(\);window\.beautyExperience\.open/);
   assert.match(controller, /appraisal\.reset\(\)/);
   assert.doesNotMatch(controller, /最多选择 3 张照片/);
+});
+
+test('upload dialog offers device photos with concise limits and production copy', () => {
+  const html = readFileSync(new URL('public/index.html', root), 'utf8');
+  const dialog = html.match(/<dialog\b[^>]*id="appraisalUploadDialog"[^>]*>[\s\S]*?<\/dialog>/)?.[0];
+  assert.ok(dialog, 'upload dialog remains available');
+  assert.match(dialog, /id="appraisalChooseFiles"/);
+  assert.match(dialog, /从设备选择照片/);
+  assert.match(dialog, /最多 9 张，每张不超过 12MB/);
+  assert.match(dialog, /图片仅在本机预览/);
+  assert.doesNotMatch(dialog, /演示|示例|示范/);
 });
 
 // Execute the real composer functions without starting homepage timers. These

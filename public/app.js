@@ -177,9 +177,9 @@ function sendMessage(){
 function closeConversation(){appraisal.close();$('inputField').placeholder='请上传图片或输入想聊的话题';suspend();}
 function addScreenshotSample(){
  if(state.photos.length>=appraisalInput.MAX_PHOTOS){toast('每次最多选择 9 张照片');return;}
- state.photos.push({url:'assets/appraisal/sample-reference.png',name:'截图中的气垫示例',sample:true});
+ state.photos.push({url:'assets/appraisal/sample-reference.png',name:'气垫照片',sample:true});
  state.selected='鉴美妆';updateSkillBtn();renderPhotos();suspend();
- toast('已添加截图示例，点击发送查看完整流程');
+ toast('照片已添加，请点击发送');
 }
 createCards();createTicker();renderPopup();updateSkillBtn();setBanner(0);requestAnimationFrame(tick);
 $('skillGrid').onclick=e=>{const card=e.target.closest('[data-index]');if(card)selectSkill(skills[Number(card.dataset.index)].label);};
@@ -199,7 +199,6 @@ const uploadDialog=$('appraisalUploadDialog');
 $('uploadBtn').onclick=()=>uploadDialog.showModal();
 $('appraisalUploadClose').onclick=()=>uploadDialog.close();
 $('appraisalChooseFiles').onclick=()=>{uploadDialog.close();$('photoInput').click();};
-$('appraisalUseSample').onclick=()=>{uploadDialog.close();addScreenshotSample();};
 uploadDialog.addEventListener('click',e=>{if(e.target===uploadDialog){const r=uploadDialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)uploadDialog.close();}});
 $('photoInput').onchange=async e=>{
  const files=[...e.target.files];e.target.value='';

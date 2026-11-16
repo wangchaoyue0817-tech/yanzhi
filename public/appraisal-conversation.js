@@ -4,26 +4,46 @@
   const DURATION_MS = 40000;
   // Screenshot fixtures for the interaction replica, never a real tool trace.
   const STEPS = Object.freeze([
-    { at: 0, title: 'sandbox {"lifecycle":"turn","mode":"new","pr…', detail: '演示记录：建立鉴定会话，准备本次图片。' },
-    { at: 3000, title: '思考了 3 秒', detail: '演示记录：整理上传图片，确认可见的商品信息。' },
-    { at: 6000, title: '阅读了 skill 的第 1-127 行', detail: '演示记录：查看美妆品类的图片要求。' },
-    { at: 9000, title: '阅读了 skill 的第 1-127 行', detail: '演示记录：查看商品点位与图像清晰度要求。' },
-    { at: 12000, title: '读取 {"path":"skills/jianx-ai-appraisal-b…', detail: '演示记录：准备粉扑、内托、底部和正面的点位信息。' },
-    { at: 16000, title: '思考了 4 秒', detail: '演示记录：整理不同点位的可见信息。' },
-    { at: 20000, title: '阅读了 skill', detail: '演示记录：查看点位结果的展示格式。' },
-    { at: 24000, title: '思考了 4 秒', detail: '演示记录：汇总点位分数与照片拍摄条件。' },
-    { at: 28000, title: '阅读了 skill', detail: '演示记录：准备结论和补拍建议。' },
-    { at: 32000, title: '思考了 1 秒', detail: '演示记录：检查结果表格和商品信息。' },
-    { at: 35000, title: '阅读了 skill', detail: '演示记录：准备展示截图中的示范报告。' },
-    { at: 38000, title: '思考了 2 秒', detail: '演示记录：完成报告排版。' }
+    { at: 0, title: 'sandbox {"lifecycle":"turn","mode":"new","pr…', detail: '建立鉴定会话，准备本次图片。' },
+    { at: 3000, title: '思考了 3 秒', detail: '整理上传图片，确认可见的商品信息。' },
+    { at: 6000, title: '阅读了 skill 的第 1-127 行', detail: '查看美妆品类的图片要求。' },
+    { at: 9000, title: '阅读了 skill 的第 1-127 行', detail: '查看商品点位与图像清晰度要求。' },
+    { at: 12000, title: '读取 {"path":"skills/jianx-ai-appraisal-b…', detail: '准备粉扑、内托、底部和正面的点位信息。' },
+    { at: 16000, title: '思考了 4 秒', detail: '整理不同点位的可见信息。' },
+    { at: 20000, title: '阅读了 skill', detail: '查看点位结果的展示格式。' },
+    { at: 24000, title: '思考了 4 秒', detail: '汇总点位分数与照片拍摄条件。' },
+    { at: 28000, title: '阅读了 skill', detail: '准备结论和补拍建议。' },
+    { at: 32000, title: '思考了 1 秒', detail: '检查结果表格和商品信息。' },
+    { at: 35000, title: '阅读了 skill', detail: '整理鉴定结论。' },
+    { at: 38000, title: '思考了 2 秒', detail: '完成报告排版。' }
   ]);
 
+  const PHASES = Object.freeze([
+    { at: 0, name: '检查照片', title: '正在检查照片', detail: '确认照片清晰度与可见细节' },
+    { at: 8000, name: '整理鉴定点位', title: '正在整理鉴定点位', detail: '整理包装、标识及细节位置' },
+    { at: 18000, name: '分析细节', title: '正在分析细节', detail: '对照各处细节，综合照片信息' },
+    { at: 30000, name: '整理结论', title: '正在整理结论', detail: '汇总点位结果与补拍建议' }
+  ]);
+  function processState(elapsed, status = 'running') {
+    const time = Math.max(0, Math.min(Number(elapsed) || 0, DURATION_MS));
+    const resolved = status === 'running' && time >= DURATION_MS ? 'complete' : status;
+    const index = PHASES.reduce((selected, phase, i) => time >= phase.at ? i : selected, 0);
+    const phases = PHASES.map((phase, i) => {
+      const state = resolved === 'complete' || i < index ? 'done' : i > index ? 'pending' : resolved === 'stopped' ? 'stopped' : 'active';
+      return { state, label: { done: '已完成', active: '进行中', pending: '待处理', stopped: '已停止' }[state] };
+    });
+    return {
+      title: resolved === 'complete' ? '分析完成' : resolved === 'stopped' ? '分析已停止' : PHASES[index].title,
+      detail: resolved === 'complete' ? '鉴定结论已生成' : resolved === 'stopped' ? '可重新上传照片发起鉴定' : PHASES[index].detail,
+      elapsedLabel: `${Math.floor(time / 1000)} 秒`, index, phases, status: resolved
+    };
+  }
+
   function sampleReportHTML() {
-    return `<p class="appraisal-demo-note">示例结果，非本次图片的真实鉴定</p>
-      <h2>AI 鉴定结果：真（正品置信度 65 分）</h2>
+    return `<h2>AI 鉴定结果：真（正品置信度 65 分）</h2>
       <p><strong>识别信息：</strong>美妆 · 圣罗兰 YSL · 皮革气垫（LE CUSHION ENCRE DE PEAU，色号 20，批号 78Z33X，韩国制） | 鉴鉴单号 GCCCMT74DB</p>
       <h3>各点位明细</h3>
-      <table><caption class="appraisal-sr-only">截图示例的商品点位鉴定结果</caption><thead><tr><th scope="col">点位</th><th scope="col">结论</th><th scope="col">符合度</th></tr></thead><tbody>
+      <table><caption class="appraisal-sr-only">商品点位鉴定结果</caption><thead><tr><th scope="col">点位</th><th scope="col">结论</th><th scope="col">符合度</th></tr></thead><tbody>
         <tr><th scope="row">粉扑正面</th><td>真</td><td>81%</td></tr>
         <tr><th scope="row">粉扑放置层</th><td>真</td><td>81%</td></tr>
         <tr><th scope="row">气垫底部</th><td>真</td><td>81%</td></tr>
@@ -95,7 +115,7 @@
       const paint = () => {
         dialog.querySelector('.appraisal-photo-stage').replaceChildren(imageElement(photos[index], `上传照片 ${index + 1}`));
         dialog.querySelector('.appraisal-photo-position').textContent = `${index + 1} / ${photos.length}`;
-        dialog.querySelector('.appraisal-photo-navigation span').textContent = photos[index].sample ? '截图示例照片' : `照片 ${index + 1}`;
+        dialog.querySelector('.appraisal-photo-navigation span').textContent = `照片 ${index + 1}`;
         dialog.querySelector('.appraisal-photo-navigation').hidden = photos.length === 1;
       };
       const change = direction => { index = (index + direction + photos.length) % photos.length; paint(); };
@@ -162,49 +182,122 @@
       media.append(stack, grid);
       return media;
     }
-    function activeSummary(elapsed) {
-      if (elapsed < 12000) return '正在查看商品照片中的包装、标识与可见点位。';
-      if (elapsed < 24000) return '正在整理粉扑、内托、底部标签与气垫正面的示例信息。';
-      if (elapsed < 35000) return '正在汇总点位结果，整理反光、清晰度等拍摄条件说明。';
-      return '正在生成点位明细表和结论，随后展示补拍建议。';
+    const markIcons = {
+      running: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2L12 3Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>',
+      complete: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 12 4 4 8-9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+      stopped: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 7v10M15 7v10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
+    };
+    function updateTechnical(turn) {
+      // Technical fixtures are created only after an explicit second-level reveal.
+      if (!turn.technical.open) return;
+      const text = STEPS.filter(step => step.at <= turn.elapsedMs)
+        .map(step => `[${Math.floor(step.at / 1000)}s] ${step.title}`).join('\n');
+      if (turn.technicalCode.textContent !== text) turn.technicalCode.textContent = text;
+    }
+    function setProcessExpanded(turn, expanded) {
+      if (!expanded && turn.body.contains(doc.activeElement)) turn.toggle.focus({ preventScroll: true });
+      turn.process.classList.toggle('is-open', expanded);
+      turn.toggle.setAttribute('aria-expanded', String(expanded));
+      turn.body.setAttribute('aria-hidden', String(!expanded));
+      turn.body.inert = !expanded;
+      if (!expanded) {
+        turn.technical.open = false;
+        turn.technicalCode.textContent = '';
+      }
+    }
+    function updateProcess(turn, elapsed, status = 'running') {
+      const view = processState(elapsed, status);
+      turn.elapsedMs = Math.max(0, Math.min(elapsed, DURATION_MS));
+      turn.process.dataset.state = view.status;
+      turn.process.classList.toggle('is-complete', view.status === 'complete');
+      turn.process.classList.toggle('is-stopped', view.status === 'stopped');
+      turn.title.textContent = view.title;
+      turn.detail.textContent = view.detail;
+      turn.elapsed.textContent = view.elapsedLabel;
+      if (turn.status !== view.status) turn.mark.innerHTML = markIcons[view.status];
+      view.phases.forEach((phase, i) => {
+        turn.stages[i].row.dataset.state = phase.state;
+        turn.stages[i].label.textContent = phase.label;
+      });
+      if (turn.phaseIndex !== view.index && view.status === 'running') announce.textContent = `${view.title}，${view.detail}。`;
+      turn.phaseIndex = view.index;
+      turn.status = view.status;
+      updateTechnical(turn);
     }
     function makeProcess(turn) {
-      const process = doc.createElement('details');
+      const process = doc.createElement('section');
       process.className = 'appraisal-process';
-      process.open = true;
-      const summary = doc.createElement('summary');
-      summary.className = 'appraisal-process-summary';
+      const toggle = doc.createElement('button');
+      toggle.type = 'button';
+      toggle.className = 'appraisal-process-summary';
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.setAttribute('aria-controls', `appraisal-process-body-${sequence}`);
+      const mark = doc.createElement('span');
+      mark.className = 'appraisal-process-mark';
+      mark.setAttribute('aria-hidden', 'true');
+      const heading = doc.createElement('span');
+      heading.className = 'appraisal-process-heading';
+      const line = doc.createElement('span');
+      line.className = 'appraisal-status-line';
+      const title = doc.createElement('strong');
+      title.className = 'appraisal-status-title';
+      line.append(title);
+      const detail = doc.createElement('span');
+      detail.className = 'appraisal-status-detail';
+      heading.append(line, detail);
       const elapsed = doc.createElement('span');
       elapsed.className = 'appraisal-elapsed';
-      elapsed.textContent = '处理过程';
-      const demo = doc.createElement('span');
-      demo.className = 'appraisal-process-demo';
-      demo.textContent = '演示';
-      summary.append(elapsed, demo);
-      process.append(summary);
-      const timeline = doc.createElement('div');
-      timeline.className = 'appraisal-timeline';
-      turn.steps = STEPS.map(step => {
-        const row = doc.createElement('details');
-        row.className = 'appraisal-step';
-        row.hidden = true;
-        const head = doc.createElement('summary');
+      const chevron = doc.createElement('span');
+      chevron.className = 'appraisal-process-chevron';
+      chevron.innerHTML = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      toggle.append(mark, heading, elapsed, chevron);
+      const body = doc.createElement('div');
+      body.className = 'appraisal-process-body';
+      body.id = `appraisal-process-body-${sequence}`;
+      body.setAttribute('aria-hidden', 'true');
+      body.inert = true;
+      const inner = doc.createElement('div');
+      inner.className = 'appraisal-process-inner';
+      const stagesList = doc.createElement('ol');
+      stagesList.className = 'appraisal-stages';
+      stagesList.setAttribute('aria-label', '鉴定处理阶段');
+      const stages = PHASES.map(phase => {
+        const row = doc.createElement('li');
+        row.className = 'appraisal-stage';
+        const dot = doc.createElement('span');
+        dot.className = 'appraisal-stage-mark';
+        dot.setAttribute('aria-hidden', 'true');
+        const copy = doc.createElement('div');
+        copy.className = 'appraisal-stage-copy';
+        const name = doc.createElement('strong');
+        name.textContent = phase.name;
+        const description = doc.createElement('p');
+        description.textContent = phase.detail;
+        copy.append(name, description);
         const label = doc.createElement('span');
-        label.textContent = step.title;
-        head.append(label);
-        const detail = doc.createElement('p');
-        detail.textContent = step.detail;
-        row.append(head, detail);
-        timeline.append(row);
-        return row;
+        label.className = 'appraisal-stage-state';
+        row.append(dot, copy, label);
+        stagesList.append(row);
+        return { row, label };
       });
-      const thinking = doc.createElement('details');
-      thinking.className = 'appraisal-thinking';
-      thinking.open = true;
-      thinking.innerHTML = '<summary><span>正在思考</span><i class="appraisal-thinking-dots" aria-hidden="true"><i></i><i></i><i></i></i></summary><p></p>';
-      timeline.append(thinking);
-      process.append(timeline);
-      Object.assign(turn, { process, elapsed, thinking });
+      const technical = doc.createElement('details');
+      technical.className = 'appraisal-technical';
+      const technicalSummary = doc.createElement('summary');
+      technicalSummary.textContent = '技术详情';
+      const pre = doc.createElement('pre');
+      const technicalCode = doc.createElement('code');
+      pre.append(technicalCode);
+      technical.append(technicalSummary, pre);
+      inner.append(stagesList, technical);
+      body.append(inner);
+      process.append(toggle, body);
+      Object.assign(turn, { process, toggle, body, mark, title, detail, elapsed, stages, technical, technicalCode });
+      toggle.onclick = () => setProcessExpanded(turn, toggle.getAttribute('aria-expanded') !== 'true');
+      technical.addEventListener('toggle', () => {
+        if (technical.open) updateTechnical(turn);
+        else technicalCode.textContent = '';
+      });
+      updateProcess(turn, 0);
       return process;
     }
     function tick() {
@@ -212,29 +305,21 @@
       const turn = active;
       const elapsed = Math.min(Date.now() - turn.startedAt, DURATION_MS);
       const keepFollowing = followTail;
-      turn.elapsed.textContent = `已用 ${Math.floor(elapsed / 1000)} 秒`;
-      turn.steps.forEach((step, index) => { step.hidden = elapsed < STEPS[index].at; });
-      turn.thinking.querySelector('p').textContent = activeSummary(elapsed);
+      updateProcess(turn, elapsed);
       if (elapsed >= DURATION_MS) {
         stopClock();
-        turn.thinking.hidden = true;
-        turn.elapsed.textContent = 'Worked for 40s';
-        turn.process.classList.add('is-complete');
+        setProcessExpanded(turn, false);
         const result = doc.createElement('article');
         result.className = 'appraisal-result';
-        result.setAttribute('aria-label', '示例鉴定结论');
+        result.setAttribute('aria-label', '鉴定结论');
         result.tabIndex = -1;
         result.innerHTML = sampleReportHTML();
         turn.node.append(result);
         setBusy(false);
         active = null;
-        announce.textContent = '处理演示完成，示例鉴定结论已生成。';
-        if (keepFollowing) messages.scrollTop = Math.max(0, result.offsetTop - messages.offsetTop - 14);
-        return;
+        announce.textContent = '分析完成，鉴定结论已生成。';
+        if (keepFollowing) messages.scrollTop = Math.max(0, turn.process.offsetTop - messages.offsetTop - 14);
       }
-      // Keep the uploaded image visible initially, then only follow new rows when
-      // the reader is already at the end. Never pull a reader out of older text.
-      if (keepFollowing && elapsed > 3000) messages.scrollTop = messages.scrollHeight;
     }
     function send({ text = '', photos = [], skill = '' } = {}) {
       if (busy || (!text.trim() && !photos.length)) return false;
@@ -268,7 +353,7 @@
       if (photos.length) {
         active = turn;
         setBusy(true);
-        announce.textContent = '已接收照片，开始 40 秒交互演示。图片仅在本机预览。';
+        announce.textContent = '已接收照片，正在检查照片。';
         tick();
         timer = root.setInterval(tick, 500);
       }
@@ -278,9 +363,8 @@
       closeViewer();
       stopClock();
       if (active) {
-        active.thinking.hidden = true;
-        active.elapsed.textContent = '已停止';
-        active.process.classList.add('is-stopped');
+        updateProcess(active, Date.now() - active.startedAt, 'stopped');
+        setProcessExpanded(active, false);
         active = null;
       }
       if (busy) setBusy(false);
@@ -299,5 +383,5 @@
     return { send, close, reset, get busy() { return busy; } };
   }
 
-  root.AppraisalConversation = Object.freeze({ create, DURATION_MS, STEPS, sampleReportHTML });
+  root.AppraisalConversation = Object.freeze({ create, DURATION_MS, STEPS, PHASES, processState, sampleReportHTML });
 })(window);

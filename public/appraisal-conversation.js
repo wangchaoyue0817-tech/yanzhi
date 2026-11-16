@@ -188,11 +188,24 @@
       stopped: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 7v10M15 7v10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
     };
     function updateTechnical(turn) {
-      // Technical fixtures are created only after an explicit second-level reveal.
-      if (!turn.technical.open) return;
-      const text = STEPS.filter(step => step.at <= turn.elapsedMs)
-        .map(step => `[${Math.floor(step.at / 1000)}s] ${step.title}`).join('\n');
-      if (turn.technicalCode.textContent !== text) turn.technicalCode.textContent = text;
+      turn.stages.forEach((stage, index) => {
+        if (stage.technical.hidden) return;
+        const end = PHASES[index + 1]?.at ?? DURATION_MS;
+        const text = STEPS.filter(step => step.at >= PHASES[index].at && step.at < end && step.at <= turn.elapsedMs)
+          .map(step => `[${Math.floor(step.at / 1000)}s] ${step.title}`).join('\n');
+        const content = text || '正在整理本阶段记录…';
+        if (stage.code.textContent !== content) stage.code.textContent = content;
+      });
+    }
+    function setStageExpanded(turn, stage, expanded) {
+      if (expanded && stage.button.disabled) return;
+      if (!expanded && stage.technical.contains(doc.activeElement)) stage.button.focus({ preventScroll: true });
+      stage.button.setAttribute('aria-expanded', String(expanded));
+      stage.row.classList.toggle('is-detail-open', expanded);
+      stage.technical.hidden = !expanded;
+      stage.button.setAttribute('aria-label', `${stage.name}，${stage.label.textContent}，${stage.button.disabled ? '尚未开始' : expanded ? '收起技术记录' : '查看技术记录'}`);
+      if (expanded) updateTechnical(turn);
+      else stage.code.textContent = '';
     }
     function setProcessExpanded(turn, expanded) {
       if (!expanded && turn.body.contains(doc.activeElement)) turn.toggle.focus({ preventScroll: true });
@@ -200,10 +213,7 @@
       turn.toggle.setAttribute('aria-expanded', String(expanded));
       turn.body.setAttribute('aria-hidden', String(!expanded));
       turn.body.inert = !expanded;
-      if (!expanded) {
-        turn.technical.open = false;
-        turn.technicalCode.textContent = '';
-      }
+      if (!expanded) turn.stages.forEach(stage => setStageExpanded(turn, stage, false));
     }
     function updateProcess(turn, elapsed, status = 'running') {
       const view = processState(elapsed, status);
@@ -216,9 +226,15 @@
       turn.elapsed.textContent = view.elapsedLabel;
       if (turn.status !== view.status) turn.mark.innerHTML = markIcons[view.status];
       view.phases.forEach((phase, i) => {
-        turn.stages[i].row.dataset.state = phase.state;
-        turn.stages[i].label.textContent = phase.label;
+        const stage = turn.stages[i];
+        stage.row.dataset.state = phase.state;
+        stage.label.textContent = phase.label;
+        stage.button.disabled = phase.state === 'pending';
+        stage.button.setAttribute('aria-label', `${stage.name}，${phase.label}，${stage.button.disabled ? '尚未开始' : stage.technical.hidden ? '查看技术记录' : '收起技术记录'}`);
+        turn.segments[i].dataset.state = phase.state;
       });
+      turn.progress.setAttribute('aria-valuenow', String(view.phases.filter(phase => phase.state === 'done').length));
+      turn.progress.setAttribute('aria-valuetext', view.status === 'complete' ? '4 个阶段已完成' : `${view.index + 1}/4，${view.title}`);
       if (turn.phaseIndex !== view.index && view.status === 'running') announce.textContent = `${view.title}，${view.detail}。`;
       turn.phaseIndex = view.index;
       turn.status = view.status;
@@ -251,6 +267,18 @@
       chevron.className = 'appraisal-process-chevron';
       chevron.innerHTML = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       toggle.append(mark, heading, elapsed, chevron);
+      const progress = doc.createElement('div');
+      progress.className = 'appraisal-phase-progress';
+      progress.setAttribute('role', 'progressbar');
+      progress.setAttribute('aria-label', '鉴定阶段进度');
+      progress.setAttribute('aria-valuemin', '0');
+      progress.setAttribute('aria-valuemax', '4');
+      const segments = PHASES.map(() => {
+        const segment = doc.createElement('span');
+        segment.setAttribute('aria-hidden', 'true');
+        progress.append(segment);
+        return segment;
+      });
       const body = doc.createElement('div');
       body.className = 'appraisal-process-body';
       body.id = `appraisal-process-body-${sequence}`;
@@ -261,9 +289,15 @@
       const stagesList = doc.createElement('ol');
       stagesList.className = 'appraisal-stages';
       stagesList.setAttribute('aria-label', '鉴定处理阶段');
-      const stages = PHASES.map(phase => {
+      const stages = PHASES.map((phase, index) => {
         const row = doc.createElement('li');
         row.className = 'appraisal-stage';
+        const button = doc.createElement('button');
+        button.type = 'button';
+        button.className = 'appraisal-stage-toggle';
+        button.id = `appraisal-stage-toggle-${sequence}-${index}`;
+        button.setAttribute('aria-expanded', 'false');
+        button.setAttribute('aria-controls', `appraisal-stage-detail-${sequence}-${index}`);
         const dot = doc.createElement('span');
         dot.className = 'appraisal-stage-mark';
         dot.setAttribute('aria-hidden', 'true');
@@ -276,28 +310,39 @@
         copy.append(name, description);
         const label = doc.createElement('span');
         label.className = 'appraisal-stage-state';
-        row.append(dot, copy, label);
+        const meta = doc.createElement('span');
+        meta.className = 'appraisal-stage-meta';
+        const arrow = doc.createElement('span');
+        arrow.className = 'appraisal-stage-chevron';
+        arrow.setAttribute('aria-hidden', 'true');
+        arrow.innerHTML = chevron.innerHTML;
+        meta.append(label, arrow);
+        button.append(dot, copy, meta);
+        const technical = doc.createElement('div');
+        technical.className = 'appraisal-stage-technical';
+        technical.id = `appraisal-stage-detail-${sequence}-${index}`;
+        technical.hidden = true;
+        technical.setAttribute('role', 'region');
+        technical.setAttribute('aria-labelledby', button.id);
+        const pre = doc.createElement('pre');
+        pre.tabIndex = 0;
+        pre.setAttribute('aria-label', `${phase.name}技术记录`);
+        const code = doc.createElement('code');
+        pre.append(code);
+        technical.append(pre);
+        row.append(button, technical);
         stagesList.append(row);
-        return { row, label };
+        const stage = { row, button, label, technical, code, name: phase.name };
+        button.onclick = () => setStageExpanded(turn, stage, technical.hidden);
+        return stage;
       });
-      const technical = doc.createElement('details');
-      technical.className = 'appraisal-technical';
-      const technicalSummary = doc.createElement('summary');
-      technicalSummary.textContent = '技术详情';
-      const pre = doc.createElement('pre');
-      const technicalCode = doc.createElement('code');
-      pre.append(technicalCode);
-      technical.append(technicalSummary, pre);
-      inner.append(stagesList, technical);
+      inner.append(stagesList);
       body.append(inner);
-      process.append(toggle, body);
-      Object.assign(turn, { process, toggle, body, mark, title, detail, elapsed, stages, technical, technicalCode });
+      process.append(toggle, progress, body);
+      Object.assign(turn, { process, toggle, body, mark, title, detail, elapsed, stages, progress, segments });
       toggle.onclick = () => setProcessExpanded(turn, toggle.getAttribute('aria-expanded') !== 'true');
-      technical.addEventListener('toggle', () => {
-        if (technical.open) updateTechnical(turn);
-        else technicalCode.textContent = '';
-      });
       updateProcess(turn, 0);
+      setProcessExpanded(turn, true);
       return process;
     }
     function tick() {

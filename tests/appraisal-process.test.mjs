@@ -110,6 +110,22 @@ function accessibleCopy(element) {
     ...element.children.map(accessibleCopy)].join(' ');
 }
 
+function stageControls(h) {
+  return h.get('appraisal-stages').children.map(row => ({
+    row,
+    toggle: find(row, 'appraisal-stage-toggle'),
+    technical: find(row, 'appraisal-stage-technical')
+  }));
+}
+
+function assertStageRecordsClosed(h) {
+  for (const stage of stageControls(h)) {
+    assert.equal(stage.toggle.getAttribute('aria-expanded'), 'false');
+    assert.equal(stage.technical.hidden, true);
+    assert.equal(stage.technical.textContent, '');
+  }
+}
+
 function harness() {
   let now = 0;
   const intervals = new Map(); let intervalId = 0;
@@ -131,43 +147,77 @@ function harness() {
   };
 }
 
-test('default and first-level expanded process never expose technical text', () => {
+test('running process opens readable stages by default while all technical records stay closed', () => {
   const h = harness(), toggle = h.get('appraisal-process-summary'), body = h.get('appraisal-process-body');
-  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
-  assert.equal(body.getAttribute('aria-hidden'), 'true');
-  assert.equal(body.inert, true);
-  assert.equal(h.get('appraisal-technical').open, false);
-  assert.doesNotMatch(h.get('appraisal-process').textContent, publicCode);
-  toggle.onclick();
   assert.equal(toggle.getAttribute('aria-expanded'), 'true');
   assert.equal(body.getAttribute('aria-hidden'), 'false');
   assert.equal(body.inert, false);
-  assert.equal(h.get('appraisal-technical').open, false);
+  assert.equal(stageControls(h).length, 4);
+  assert.equal(h.get('appraisal-technical'), null, 'global technical disclosure is removed');
+  assertStageRecordsClosed(h);
+  assert.doesNotMatch(h.get('appraisal-process').textContent, publicCode);
   h.advance(19000);
   assert.equal(h.get('appraisal-status-title').textContent, '正在分析细节');
+  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+  assertStageRecordsClosed(h);
+  assert.doesNotMatch(h.get('appraisal-process').textContent, publicCode);
+  toggle.onclick();
+  assert.equal(body.getAttribute('aria-hidden'), 'true');
+  assert.equal(body.inert, true);
+  toggle.onclick();
+  assert.equal(body.getAttribute('aria-hidden'), 'false');
+  assert.equal(body.inert, false);
+  assertStageRecordsClosed(h);
   assert.doesNotMatch(h.get('appraisal-process').textContent, publicCode);
 });
 
-test('technical records require a second explicit reveal and are cleared when closed', () => {
-  const h = harness(), toggle = h.get('appraisal-process-summary'), technical = h.get('appraisal-technical');
+test('each stage reveals only its elapsed records and pending stages cannot be opened', () => {
+  const h = harness(), stages = stageControls(h);
+  assert.equal(stages[0].toggle.disabled, false);
+  assert.ok(stages.slice(1).every(stage => stage.toggle.disabled));
+  stages[3].toggle.onclick();
+  assert.equal(stages[3].technical.hidden, true);
+  assert.equal(stages[3].technical.textContent, '');
+  stages[0].toggle.onclick();
+  assert.equal(stages[0].toggle.getAttribute('aria-expanded'), 'true');
+  assert.equal(stages[0].technical.hidden, false);
+  assert.match(stages[0].technical.textContent, /\[0s\].*sandbox/);
+  assert.doesNotMatch(stages[0].technical.textContent, /\[3s\]/, 'future records must not appear early');
+  h.advance(25000);
+  assert.match(stages[0].technical.textContent, /\[6s\]/);
+  assert.doesNotMatch(stages[0].technical.textContent, /\[(?:9|12|16|20|24)s\]/, 'other stages must not leak into this stage');
+  stages[0].toggle.onclick();
+  assert.equal(stages[0].technical.hidden, true);
+  assert.equal(stages[0].technical.textContent, '');
+  assert.equal(stages[2].toggle.disabled, false);
+  assert.equal(stages[3].toggle.disabled, true);
+  stages[2].toggle.onclick();
+  assert.match(stages[2].technical.textContent, /\[20s\]/);
+  assert.match(stages[2].technical.textContent, /\[24s\]/);
+  assert.doesNotMatch(stages[2].technical.textContent, /sandbox|\[(?:0|3|6|9|12|16|28|32)s\]/);
+  h.advance(30000);
+  assert.equal(stages[3].toggle.disabled, false);
+});
+
+test('collapsing the outer process clears all stage records and restores keyboard focus', () => {
+  const h = harness(), toggle = h.get('appraisal-process-summary'), stages = stageControls(h);
+  h.advance(25000);
+  stages[0].toggle.onclick();
+  stages[2].toggle.onclick();
+  stages[2].technical.children[0].focus();
   toggle.onclick();
-  technical.open = true; technical.fire('toggle');
-  assert.match(technical.textContent, /sandbox/);
-  technical.open = false; technical.fire('toggle');
-  assert.doesNotMatch(technical.textContent, /sandbox/);
-  technical.open = true; technical.fire('toggle');
-  technical.children[0].focus();
-  toggle.onclick();
-  assert.equal(technical.open, false);
+  assertStageRecordsClosed(h);
   assert.equal(h.doc.activeElement, toggle);
   assert.doesNotMatch(h.get('appraisal-process').textContent, publicCode);
   toggle.onclick();
-  assert.equal(technical.open, false, 'reopening the readable process must not reopen technical details');
+  assertStageRecordsClosed(h);
+  assert.doesNotMatch(h.get('appraisal-process').textContent, publicCode);
 });
 
 test('40-second completion collapses both levels, restores focus and emits one conclusion', () => {
-  const h = harness(), toggle = h.get('appraisal-process-summary'), technical = h.get('appraisal-technical');
-  toggle.onclick(); technical.open = true; technical.fire('toggle'); technical.children[0].focus();
+  const h = harness(), toggle = h.get('appraisal-process-summary'), stages = stageControls(h);
+  stages[0].toggle.onclick();
+  stages[0].technical.children[0].focus();
   h.advance(39999);
   assert.equal(h.get('appraisal-result'), null);
   assert.equal(h.controller.busy, true);
@@ -176,7 +226,11 @@ test('40-second completion collapses both levels, restores focus and emits one c
   assert.equal(h.intervals.size, 0);
   assert.equal(toggle.getAttribute('aria-expanded'), 'false');
   assert.equal(h.get('appraisal-process-body').inert, true);
-  assert.equal(technical.open, false);
+  for (const stage of find(h.messages, 'appraisal-stages').children) {
+    const button = find(stage, 'appraisal-stage-toggle');
+    if (button.disabled) assert.match(button.getAttribute('aria-label'), /尚未开始/);
+  }
+  assertStageRecordsClosed(h);
   assert.equal(h.doc.activeElement, toggle);
   assert.equal(h.get('appraisal-status-title').textContent, '分析完成');
   assert.doesNotMatch(h.get('appraisal-process').textContent, publicCode);
@@ -195,10 +249,7 @@ test('conversation uses production copy in visible text and accessible labels th
     h.advance(time);
     assert.doesNotMatch(accessibleCopy(h.panel), nonproductionCopy);
   }
-  h.get('appraisal-process-summary').onclick();
-  const technical = h.get('appraisal-technical');
-  technical.open = true;
-  technical.fire('toggle');
+  for (const stage of stageControls(h)) stage.toggle.onclick();
   assert.doesNotMatch(accessibleCopy(h.panel), nonproductionCopy);
   h.advance(40000);
   assert.equal(h.get('appraisal-result').getAttribute('aria-label'), '鉴定结论');
@@ -208,6 +259,7 @@ test('conversation uses production copy in visible text and accessible labels th
 test('leaving an unfinished process stops the clock without manufacturing a conclusion', () => {
   const h = harness();
   h.advance(19000);
+  stageControls(h)[0].toggle.onclick();
   h.controller.close();
   assert.equal(h.controller.busy, false);
   assert.equal(h.intervals.size, 0);
@@ -216,19 +268,32 @@ test('leaving an unfinished process stops the clock without manufacturing a conc
   h.advance(80000);
   assert.equal(h.get('appraisal-result'), null);
   assert.equal(h.get('appraisal-process-summary').getAttribute('aria-expanded'), 'false');
+  assertStageRecordsClosed(h);
 });
 
 test('visual activity follows the actual running stage and becomes quiet when complete or stopped', () => {
   const finished = harness();
   const stages = find(finished.messages, 'appraisal-stages').children;
+  const progressbar = finished.get('appraisal-phase-progress');
+  const progress = progressbar.children;
+  assert.equal(progress.length, 4);
+  assert.equal(progressbar.getAttribute('role'), 'progressbar');
+  assert.equal(progressbar.getAttribute('aria-valuenow'), '0');
+  assert.match(progressbar.getAttribute('aria-valuetext'), /检查照片/);
   assert.equal(finished.get('appraisal-process').dataset.state, 'running');
   assert.equal(stages.filter(stage => stage.dataset.state === 'active').length, 1);
+  assert.deepEqual(progress.map(segment => segment.dataset.state), stages.map(stage => stage.dataset.state));
   finished.advance(19000);
   assert.deepEqual(stages.map(stage => stage.dataset.state), ['done', 'done', 'active', 'pending']);
+  assert.deepEqual(progress.map(segment => segment.dataset.state), ['done', 'done', 'active', 'pending']);
+  assert.equal(progressbar.getAttribute('aria-valuenow'), '2');
+  assert.match(progressbar.getAttribute('aria-valuetext'), /分析细节/);
   finished.advance(40000);
   assert.equal(finished.get('appraisal-process').dataset.state, 'complete');
   assert.equal(finished.get('appraisal-process').classList.contains('is-complete'), true);
   assert.ok(stages.every(stage => stage.dataset.state === 'done'));
+  assert.ok(progress.every(segment => segment.dataset.state === 'done'));
+  assert.equal(progressbar.getAttribute('aria-valuenow'), '4');
 
   const stopped = harness();
   stopped.advance(19000);
@@ -236,6 +301,7 @@ test('visual activity follows the actual running stage and becomes quiet when co
   assert.equal(stopped.get('appraisal-process').dataset.state, 'stopped');
   assert.equal(stopped.get('appraisal-process').classList.contains('is-stopped'), true);
   assert.ok(find(stopped.messages, 'appraisal-stages').children.every(stage => stage.dataset.state !== 'active'));
+  assert.deepEqual(stopped.get('appraisal-phase-progress').children.map(segment => segment.dataset.state), ['done', 'done', 'stopped', 'pending']);
 });
 
 test('continuous status animation is restricted to active work and disabled for reduced motion', () => {
@@ -254,11 +320,12 @@ test('continuous status animation is restricted to active work and disabled for 
   const continuouslyAnimated = rules(css).filter(rule => /animation(?:-iteration-count)?\s*:[^;]*\binfinite\b/.test(rule.declarations));
   assert.ok(continuouslyAnimated.length, 'running status retains a visible activity indicator');
   const motionDisabled = rules(reduced).filter(rule => /animation\s*:\s*none\s*!important/.test(rule.declarations));
+  const animationTarget = selector => selector.trim().split(/\s+/).at(-1).replace(/\[data-state=["']?(?:running|active)["']?\]/g, '');
   for (const rule of continuouslyAnimated) {
     for (const selector of rule.selector.split(',')) {
       assert.match(selector, /\[data-state=["']?(?:running|active)["']?\]/, 'finished and stopped states must not keep looping');
-      const target = selector.trim().split(/\s+/).at(-1);
-      assert.ok(motionDisabled.some(disabled => disabled.selector.split(',').some(part => part.trim().split(/\s+/).at(-1) === target)), `${target} needs a reduced-motion override`);
+      const target = animationTarget(selector);
+      assert.ok(motionDisabled.some(disabled => disabled.selector.split(',').some(part => animationTarget(part) === target)), `${target} needs a reduced-motion override`);
     }
   }
   assert.match(reduced, /transition\s*:\s*none/, 'disclosure transitions also respect reduced motion');

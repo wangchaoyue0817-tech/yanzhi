@@ -18,7 +18,7 @@ const escaped = s => s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 let skillTimer, bannerTimer, toastTimer;
 let uploadRevision = 0, uploading = false;
 const appraisalInput = window.JianxAppraisalInput;
-const appraisal = window.AppraisalConversation.create({app:$('app'),panel:$('conversationPanel'),messages:$('messages'),onBusyChange(busy){state.busy=busy;syncInput();},onHome(){$('inputField').placeholder='请上传图片或输入想聊的话题';}});
+const appraisal = window.AppraisalConversation.create({app:$('app'),panel:$('conversationPanel'),messages:$('messages'),runTask:request=>window.JianxAppraisalTask.run(request),onBusyChange(busy){state.busy=busy;syncInput();},onHome(){$('inputField').placeholder='请上传图片或输入想聊的话题';}});
 window.appraisalConversation = appraisal;
 let skillDrag=null, cancelSkillGesture=()=>{};
 const skillBatchSize=5;

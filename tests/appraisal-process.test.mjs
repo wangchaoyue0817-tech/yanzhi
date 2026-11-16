@@ -3,70 +3,21 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
+const modelSource = readFileSync(new URL('../public/appraisal-progress-model.js', import.meta.url), 'utf8');
 const source = readFileSync(new URL('../public/appraisal-conversation.js', import.meta.url), 'utf8');
 const publicCode = /sandbox|\bskill\b|\.md\b|lifecycle|mcp_call|appraise_|Worked/iu;
 const nonproductionCopy = /演示|示例|示范/u;
 
 function load(extra = {}) {
-  const window = { addEventListener() {}, ...extra };
-  const context = vm.createContext({ window, URL: { revokeObjectURL() {} }, ...extra });
+  const window = { addEventListener() {}, AbortController, ...extra };
+  const context = vm.createContext({ window, AbortController, URL: { revokeObjectURL() {} }, ...extra });
+  vm.runInContext(modelSource, context);
   vm.runInContext(source, context);
   return window.AppraisalConversation;
 }
 
-test('four readable phases advance only at their boundaries and finish after 40 seconds', () => {
-  const { processState, DURATION_MS } = load();
-  assert.equal(DURATION_MS, 40000);
-  for (const [time, index, title] of [
-    [0, 0, '正在检查照片'], [7999, 0, '正在检查照片'],
-    [8000, 1, '正在整理鉴定点位'], [17999, 1, '正在整理鉴定点位'],
-    [18000, 2, '正在分析细节'], [29999, 2, '正在分析细节'],
-    [30000, 3, '正在整理结论'], [39999, 3, '正在整理结论']
-  ]) {
-    const view = processState(time);
-    assert.equal(view.title, title);
-    assert.equal(view.index, index);
-    assert.equal(view.status, 'running');
-    assert.equal(view.phases.filter(phase => phase.state === 'active').length, 1);
-    assert.deepEqual(Array.from(view.phases, phase => phase.state),
-      Array.from({ length: 4 }, (_, i) => i < index ? 'done' : i === index ? 'active' : 'pending'));
-  }
-  const complete = processState(DURATION_MS);
-  assert.equal(complete.status, 'complete');
-  assert.equal(complete.title, '分析完成');
-  assert.equal(complete.detail, '鉴定结论已生成');
-  assert.equal(complete.elapsedLabel.replaceAll(' ', ''), '40秒');
-  assert.ok(complete.phases.every(phase => phase.state === 'done'));
-});
-
-test('public process copy stays free of code, paths and internal tool names', () => {
-  const { processState, PHASES } = load();
-  for (const phase of PHASES) assert.doesNotMatch(`${phase.name} ${phase.title} ${phase.detail}`, publicCode);
-  for (let time = 0; time <= 40000; time += 500) {
-    for (const status of ['running', 'complete', 'stopped']) {
-      const view = processState(time, status);
-      assert.doesNotMatch([view.title, view.detail, view.elapsedLabel, ...view.phases.map(phase => phase.label)].join(' '), publicCode);
-    }
-  }
-});
-
-test('elapsed values are bounded and stopping does not imply a generated conclusion', () => {
-  const { processState } = load();
-  for (const value of [-500, NaN, undefined]) {
-    const view = processState(value);
-    assert.equal(view.index, 0);
-    assert.equal(view.elapsedLabel.replaceAll(' ', ''), '0秒');
-  }
-  assert.equal(processState(90000).elapsedLabel.replaceAll(' ', ''), '40秒');
-  const stopped = processState(19000, 'stopped');
-  assert.equal(stopped.title, '分析已停止');
-  assert.equal(stopped.detail, '可重新上传照片发起鉴定');
-  assert.deepEqual(Array.from(stopped.phases, phase => phase.state), ['done', 'done', 'stopped', 'pending']);
-  assert.equal(stopped.status, 'stopped');
-});
-
-// Minimal DOM test double. The production controller executes unchanged, including
-// its click handlers, clock, focus restoration and deferred technical text.
+// Execute the real controller with a minimal DOM and an independently controlled
+// clock. Only runner events may create steps or conclusions.
 class Element {
   constructor(tag, doc) {
     this.tagName = tag.toUpperCase(); this.ownerDocument = doc; this.children = [];
@@ -86,8 +37,11 @@ class Element {
   }
   append(...children) { for (const child of children) { child.parentElement = this; this.children.push(child); } }
   replaceChildren(...children) { this.children = []; this._text = ''; this._html = ''; this.append(...children); }
+  remove() { if (this.parentElement) this.parentElement.children = this.parentElement.children.filter(child => child !== this); this.parentElement = null; }
+  replaceWith(element) { const parent = this.parentElement; if (parent) { parent.children[parent.children.indexOf(this)] = element; element.parentElement = parent; this.parentElement = null; } }
   setAttribute(name, value) { this.attributes.set(name, String(value)); }
   getAttribute(name) { return this.attributes.get(name) ?? null; }
+  removeAttribute(name) { this.attributes.delete(name); }
   addEventListener(name, handler) { if (!this.listeners.has(name)) this.listeners.set(name, []); this.listeners.get(name).push(handler); }
   fire(name) { for (const handler of this.listeners.get(name) || []) handler({ target: this }); }
   contains(element) { return this === element || this.children.some(child => child.contains(element)); }
@@ -99,25 +53,22 @@ class Element {
   get innerHTML() { return this._html || ''; }
 }
 
-function find(element, className) {
-  if (element.classList.contains(className)) return element;
-  for (const child of element.children) { const match = find(child, className); if (match) return match; }
-  return null;
+function all(element, predicate) {
+  return [...(predicate(element) ? [element] : []), ...element.children.flatMap(child => all(child, predicate))];
 }
-
+function find(element, className) {
+  return all(element, node => node.classList.contains(className))[0] || null;
+}
 function accessibleCopy(element) {
   return [element.textContent, element.alt || '', element.getAttribute('aria-label') || '',
     ...element.children.map(accessibleCopy)].join(' ');
 }
-
 function stageControls(h) {
   return h.get('appraisal-stages').children.map(row => ({
-    row,
-    toggle: find(row, 'appraisal-stage-toggle'),
-    technical: find(row, 'appraisal-stage-technical')
+    row, toggle: find(row, 'appraisal-stage-toggle'),
+    technical: find(row, 'appraisal-stage-technical'), arrow: find(row, 'appraisal-stage-chevron')
   }));
 }
-
 function assertStageRecordsClosed(h) {
   for (const stage of stageControls(h)) {
     assert.equal(stage.toggle.getAttribute('aria-expanded'), 'false');
@@ -126,9 +77,9 @@ function assertStageRecordsClosed(h) {
   }
 }
 
-function harness() {
+function harness({ runTask = null, configured = true } = {}) {
   let now = 0;
-  const intervals = new Map(); let intervalId = 0;
+  const intervals = new Map(), runs = [], busyEvents = []; let intervalId = 0;
   class TestDate extends Date {
     constructor(...args) { super(...(args.length ? args : [now])); }
     static now() { return now; }
@@ -136,197 +87,292 @@ function harness() {
   const doc = { activeElement: null, createElement(tag) { return new Element(tag, doc); } };
   const app = doc.createElement('div'), panel = doc.createElement('section'), messages = doc.createElement('div');
   app.append(panel); panel.append(messages);
-  const busyEvents = [];
-  const model = load({ Date: TestDate, setInterval(callback) { intervals.set(++intervalId, callback); return intervalId; }, clearInterval(id) { intervals.delete(id); } });
-  const controller = model.create({ app, panel, messages, onBusyChange: busy => busyEvents.push(busy) });
-  controller.send({ photos: [{ url: 'assets/appraisal/sample-reference.png', name: 'sample', sample: true }] });
+  const implementation = load({ Date: TestDate, setInterval(callback) { intervals.set(++intervalId, callback); return intervalId; }, clearInterval(id) { intervals.delete(id); } });
+  const options = { app, panel, messages, onBusyChange: busy => busyEvents.push(busy) };
+  if (configured) options.runTask = args => { runs.push(args); return runTask?.(args); };
+  const controller = implementation.create(options);
+  const send = () => controller.send({ text: '请鉴定这件商品', photos: [{ url: 'blob:uploaded-photo', name: 'my-photo.jpg' }], skill: '鉴美妆' });
+  assert.equal(send(), true);
   return {
-    controller, app, panel, messages, doc, busyEvents, intervals,
+    controller, app, panel, messages, doc, busyEvents, intervals, runs, send,
     get: name => find(messages, name),
+    emit(event, index = runs.length - 1) { runs[index].onEvent(event); },
     advance(time) { now = time; for (const callback of [...intervals.values()]) callback(); }
   };
 }
 
-test('running process opens readable stages by default while all technical records stay closed', () => {
-  const h = harness(), toggle = h.get('appraisal-process-summary'), body = h.get('appraisal-process-body');
-  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
-  assert.equal(body.getAttribute('aria-hidden'), 'false');
-  assert.equal(body.inert, false);
-  assert.equal(stageControls(h).length, 4);
-  assert.equal(h.get('appraisal-technical'), null, 'global technical disclosure is removed');
-  assertStageRecordsClosed(h);
-  assert.doesNotMatch(h.get('appraisal-process').textContent, publicCode);
-  h.advance(19000);
-  assert.equal(h.get('appraisal-status-title').textContent, '正在分析细节');
-  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
-  assertStageRecordsClosed(h);
-  assert.doesNotMatch(h.get('appraisal-process').textContent, publicCode);
-  toggle.onclick();
-  assert.equal(body.getAttribute('aria-hidden'), 'true');
-  assert.equal(body.inert, true);
-  toggle.onclick();
-  assert.equal(body.getAttribute('aria-hidden'), 'false');
-  assert.equal(body.inert, false);
-  assertStageRecordsClosed(h);
-  assert.doesNotMatch(h.get('appraisal-process').textContent, publicCode);
-});
+const step = (id, technical) => ({ type: 'step', id, title: `检查第 ${id} 项细节`, detail: '正在核对可见特征', status: 'active', ...(technical ? { technical } : {}) });
+const flush = async () => { for (let i = 0; i < 5; i++) await Promise.resolve(); };
 
-test('each stage reveals only its elapsed records and pending stages cannot be opened', () => {
-  const h = harness(), stages = stageControls(h);
-  assert.equal(stages[0].toggle.disabled, false);
-  assert.ok(stages.slice(1).every(stage => stage.toggle.disabled));
-  stages[3].toggle.onclick();
-  assert.equal(stages[3].technical.hidden, true);
-  assert.equal(stages[3].technical.textContent, '');
-  stages[0].toggle.onclick();
-  assert.equal(stages[0].toggle.getAttribute('aria-expanded'), 'true');
-  assert.equal(stages[0].technical.hidden, false);
-  assert.match(stages[0].technical.textContent, /\[0s\].*sandbox/);
-  assert.doesNotMatch(stages[0].technical.textContent, /\[3s\]/, 'future records must not appear early');
-  h.advance(25000);
-  assert.match(stages[0].technical.textContent, /\[6s\]/);
-  assert.doesNotMatch(stages[0].technical.textContent, /\[(?:9|12|16|20|24)s\]/, 'other stages must not leak into this stage');
-  stages[0].toggle.onclick();
-  assert.equal(stages[0].technical.hidden, true);
-  assert.equal(stages[0].technical.textContent, '');
-  assert.equal(stages[2].toggle.disabled, false);
-  assert.equal(stages[3].toggle.disabled, true);
-  stages[2].toggle.onclick();
-  assert.match(stages[2].technical.textContent, /\[20s\]/);
-  assert.match(stages[2].technical.textContent, /\[24s\]/);
-  assert.doesNotMatch(stages[2].technical.textContent, /sandbox|\[(?:0|3|6|9|12|16|28|32)s\]/);
-  h.advance(30000);
-  assert.equal(stages[3].toggle.disabled, false);
-});
-
-test('collapsing the outer process clears all stage records and restores keyboard focus', () => {
-  const h = harness(), toggle = h.get('appraisal-process-summary'), stages = stageControls(h);
-  h.advance(25000);
-  stages[0].toggle.onclick();
-  stages[2].toggle.onclick();
-  stages[2].technical.children[0].focus();
-  toggle.onclick();
-  assertStageRecordsClosed(h);
-  assert.equal(h.doc.activeElement, toggle);
-  assert.doesNotMatch(h.get('appraisal-process').textContent, publicCode);
-  toggle.onclick();
-  assertStageRecordsClosed(h);
-  assert.doesNotMatch(h.get('appraisal-process').textContent, publicCode);
-});
-
-test('40-second completion collapses both levels, restores focus and emits one conclusion', () => {
-  const h = harness(), toggle = h.get('appraisal-process-summary'), stages = stageControls(h);
-  stages[0].toggle.onclick();
-  stages[0].technical.children[0].focus();
-  h.advance(39999);
-  assert.equal(h.get('appraisal-result'), null);
+test('the clock only measures elapsed time and never fabricates task steps or conclusions', () => {
+  const h = harness();
+  assert.equal(h.runs.length, 1);
+  assert.equal(h.runs[0].photos[0].url, 'blob:uploaded-photo');
+  assert.equal(h.runs[0].text, '请鉴定这件商品');
+  assert.equal(h.get('appraisal-process-summary').getAttribute('aria-expanded'), 'true');
+  assert.equal(h.get('appraisal-process-body').inert, false);
+  assert.equal(stageControls(h).length, 0);
+  h.advance(120000);
   assert.equal(h.controller.busy, true);
-  h.advance(40000);
+  assert.equal(stageControls(h).length, 0);
+  assert.equal(h.get('appraisal-result'), null);
+  assert.match(h.get('appraisal-elapsed').textContent, /2分\s*00秒/);
+  h.emit({ type: 'heartbeat' });
+  assert.equal(stageControls(h).length, 0);
+  assertStageRecordsClosed(h);
+});
+
+test('actual events append steps while updates retain one row per step and show only three recent records', () => {
+  const h = harness();
+  for (let id = 1; id <= 6; id++) h.emit(step(String(id)));
+  const stages = stageControls(h);
+  assert.equal(stages.length, 6);
+  assert.equal(stages.filter(stage => !stage.row.hidden).length, 3);
+  assert.ok(stages.slice(0, 3).every(stage => stage.row.hidden));
+  assert.ok(stages.slice(3).every(stage => !stage.row.hidden));
+  h.emit({ ...step('6'), status: 'done' });
+  assert.equal(stageControls(h).length, 6);
+  assert.equal(stages[5].row.dataset.state, 'done');
+  assert.match(h.get('appraisal-history-toggle').textContent, /查看前面 3 条记录/);
+  assertStageRecordsClosed(h);
+});
+
+test('history expanded by the user remains open when further events arrive', () => {
+  const h = harness();
+  for (let id = 1; id <= 6; id++) h.emit(step(String(id)));
+  h.get('appraisal-history-toggle').onclick();
+  assert.ok(stageControls(h).every(stage => !stage.row.hidden));
+  h.emit(step('7'));
+  assert.equal(stageControls(h).length, 7);
+  assert.ok(stageControls(h).every(stage => !stage.row.hidden));
+  assert.equal(h.get('appraisal-history-toggle').getAttribute('aria-expanded'), 'true');
+});
+
+test('readable process copy hides code and disables technical actions when records are absent', () => {
+  const h = harness();
+  h.emit({ type: 'step', id: 'unsafe', title: 'sandbox {"mode":"new"}', detail: '读取 skills/internal.md', status: 'active' });
+  const stage = stageControls(h)[0];
+  assert.equal(stage.toggle.disabled, true);
+  assert.equal(stage.arrow.hidden, true);
+  assert.equal(h.get('appraisal-technical'), null);
+  assert.doesNotMatch(accessibleCopy(h.get('appraisal-process')), publicCode);
+  assert.doesNotMatch(accessibleCopy(h.get('appraisal-process')), nonproductionCopy);
+  assertStageRecordsClosed(h);
+});
+
+test('technical disclosure shows only that step records and clears them on close', () => {
+  const h = harness();
+  h.emit(step('1', 'sandbox {"photo":1}'));
+  h.emit(step('2', '读取 skills/second.md'));
+  const [first, second] = stageControls(h);
+  assert.equal(first.toggle.disabled, false);
+  assert.equal(first.arrow.hidden, false);
+  assertStageRecordsClosed(h);
+  first.toggle.onclick();
+  assert.equal(first.technical.hidden, false);
+  assert.match(first.technical.textContent, /sandbox/);
+  assert.doesNotMatch(first.technical.textContent, /second\.md/);
+  first.technical.children[0].focus();
+  first.toggle.onclick();
+  assert.equal(h.doc.activeElement, first.toggle);
+  assert.equal(first.technical.textContent, '');
+  second.toggle.onclick();
+  assert.match(second.technical.textContent, /second\.md/);
+  assert.doesNotMatch(second.technical.textContent, /sandbox/);
+  second.technical.children[0].focus();
+  h.get('appraisal-process-summary').onclick();
+  assert.equal(h.doc.activeElement, h.get('appraisal-process-summary'));
+  assert.equal(h.get('appraisal-process-body').inert, true);
+  assertStageRecordsClosed(h);
+  h.get('appraisal-process-summary').onclick();
+  assertStageRecordsClosed(h);
+});
+
+test('completion events collapse records, restore focus and safely render only the supplied conclusion', () => {
+  const h = harness();
+  h.emit(step('1', 'sandbox {"photo":1}'));
+  const stage = stageControls(h)[0];
+  stage.toggle.onclick();
+  stage.technical.children[0].focus();
+  h.emit({ type: 'complete', result: { title: '鉴定结果', paragraphs: ['这张照片还需要补充细节。', '<img src=x onerror=alert(1)>'] } });
+  const result = h.get('appraisal-result');
+  assert.ok(result);
+  assert.match(result.textContent, /这张照片还需要补充细节/);
+  assert.match(result.textContent, /<img src=x onerror=alert\(1\)>/);
+  assert.equal(all(result, node => node.tagName === 'IMG').length, 0);
+  assert.doesNotMatch(result.textContent, /YSL|65 分|GCCCMT74DB/);
   assert.equal(h.controller.busy, false);
   assert.equal(h.intervals.size, 0);
-  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
-  assert.equal(h.get('appraisal-process-body').inert, true);
-  for (const stage of find(h.messages, 'appraisal-stages').children) {
-    const button = find(stage, 'appraisal-stage-toggle');
-    if (button.disabled) assert.match(button.getAttribute('aria-label'), /尚未开始/);
-  }
+  assert.equal(h.get('appraisal-process-summary').getAttribute('aria-expanded'), 'false');
+  assert.equal(h.doc.activeElement, h.get('appraisal-process-summary'));
   assertStageRecordsClosed(h);
-  assert.equal(h.doc.activeElement, toggle);
-  assert.equal(h.get('appraisal-status-title').textContent, '分析完成');
-  assert.doesNotMatch(h.get('appraisal-process').textContent, publicCode);
-  const result = h.get('appraisal-result');
-  assert.match(result.innerHTML, /AI 鉴定结果：真（正品置信度 65 分）/);
-  assert.match(result.innerHTML, /各点位明细/);
-  assert.equal((result.innerHTML.match(/scope="row"/g) || []).length, 4);
-  h.advance(80000);
+  h.emit(step('late'));
+  h.emit({ type: 'complete', result: '不应显示的第二个结果' });
+  h.advance(90000);
+  assert.equal(stageControls(h).length, 1);
   assert.equal(h.get('appraisal-result'), result);
+  assert.doesNotMatch(result.textContent, /第二个结果/);
   assert.deepEqual(h.busyEvents, [true, false]);
 });
 
-test('conversation uses production copy in visible text and accessible labels throughout the flow', () => {
-  const h = harness();
-  for (const time of [0, 8000, 18000, 30000]) {
-    h.advance(time);
-    assert.doesNotMatch(accessibleCopy(h.panel), nonproductionCopy);
-  }
-  for (const stage of stageControls(h)) stage.toggle.onclick();
-  assert.doesNotMatch(accessibleCopy(h.panel), nonproductionCopy);
-  h.advance(40000);
-  assert.equal(h.get('appraisal-result').getAttribute('aria-label'), '鉴定结论');
-  assert.doesNotMatch(accessibleCopy(h.panel), nonproductionCopy);
+test('a runner may complete synchronously without leaving a timer running', () => {
+  const h = harness({ runTask: ({ onEvent }) => {
+    onEvent(step('1'));
+    onEvent({ type: 'complete', result: '鉴定已完成' });
+  } });
+  assert.equal(h.controller.busy, false);
+  assert.equal(h.intervals.size, 0);
+  assert.equal(h.get('appraisal-result').textContent, '鉴定已完成');
 });
 
-test('leaving an unfinished process stops the clock without manufacturing a conclusion', () => {
+test('percentages appear only when reported and time never increments them', () => {
+  const h = harness(), track = h.get('appraisal-activity-track'), value = h.get('appraisal-progress-value');
+  assert.equal(track.getAttribute('role'), 'progressbar');
+  assert.equal(track.getAttribute('aria-valuenow'), null);
+  assert.equal(value.hidden, true);
+  h.emit({ type: 'progress', value: 42 });
+  assert.equal(track.getAttribute('aria-valuenow'), '42');
+  assert.equal(value.hidden, false);
+  assert.match(value.textContent, /42/);
+  h.advance(60000);
+  assert.equal(track.getAttribute('aria-valuenow'), '42');
+  h.emit({ type: 'progress', value: null });
+  assert.equal(track.getAttribute('aria-valuenow'), null);
+  assert.equal(value.hidden, true);
+});
+
+test('closing aborts the task, clears records and rejects late runner events', () => {
   const h = harness();
-  h.advance(19000);
+  h.emit(step('1', 'sandbox {}'));
   stageControls(h)[0].toggle.onclick();
   h.controller.close();
+  assert.equal(h.runs[0].signal.aborted, true);
   assert.equal(h.controller.busy, false);
   assert.equal(h.intervals.size, 0);
   assert.equal(h.panel.hidden, true);
-  assert.equal(h.get('appraisal-status-title').textContent, '分析已停止');
-  h.advance(80000);
-  assert.equal(h.get('appraisal-result'), null);
-  assert.equal(h.get('appraisal-process-summary').getAttribute('aria-expanded'), 'false');
   assertStageRecordsClosed(h);
+  h.emit(step('late'));
+  h.emit({ type: 'complete', result: '迟到结果' });
+  assert.equal(stageControls(h).length, 1);
+  assert.equal(h.get('appraisal-result'), null);
 });
 
-test('visual activity follows the actual running stage and becomes quiet when complete or stopped', () => {
-  const finished = harness();
-  const stages = find(finished.messages, 'appraisal-stages').children;
-  const progressbar = finished.get('appraisal-phase-progress');
-  const progress = progressbar.children;
-  assert.equal(progress.length, 4);
-  assert.equal(progressbar.getAttribute('role'), 'progressbar');
-  assert.equal(progressbar.getAttribute('aria-valuenow'), '0');
-  assert.match(progressbar.getAttribute('aria-valuetext'), /检查照片/);
-  assert.equal(finished.get('appraisal-process').dataset.state, 'running');
-  assert.equal(stages.filter(stage => stage.dataset.state === 'active').length, 1);
-  assert.deepEqual(progress.map(segment => segment.dataset.state), stages.map(stage => stage.dataset.state));
-  finished.advance(19000);
-  assert.deepEqual(stages.map(stage => stage.dataset.state), ['done', 'done', 'active', 'pending']);
-  assert.deepEqual(progress.map(segment => segment.dataset.state), ['done', 'done', 'active', 'pending']);
-  assert.equal(progressbar.getAttribute('aria-valuenow'), '2');
-  assert.match(progressbar.getAttribute('aria-valuetext'), /分析细节/);
-  finished.advance(40000);
-  assert.equal(finished.get('appraisal-process').dataset.state, 'complete');
-  assert.equal(finished.get('appraisal-process').classList.contains('is-complete'), true);
-  assert.ok(stages.every(stage => stage.dataset.state === 'done'));
-  assert.ok(progress.every(segment => segment.dataset.state === 'done'));
-  assert.equal(progressbar.getAttribute('aria-valuenow'), '4');
+test('reset and a new task cannot receive the previous task late results', () => {
+  const h = harness();
+  h.emit(step('old'));
+  h.controller.reset();
+  assert.equal(h.runs[0].signal.aborted, true);
+  assert.equal(h.send(), true);
+  h.emit({ type: 'complete', result: '旧结论' }, 0);
+  h.emit(step('new'), 1);
+  assert.equal(h.controller.busy, true);
+  assert.equal(h.get('appraisal-result'), null);
+  assert.equal(stageControls(h).length, 1);
+  assert.match(stageControls(h)[0].row.textContent, /new/);
+});
 
-  const stopped = harness();
-  stopped.advance(19000);
-  stopped.controller.close();
-  assert.equal(stopped.get('appraisal-process').dataset.state, 'stopped');
-  assert.equal(stopped.get('appraisal-process').classList.contains('is-stopped'), true);
-  assert.ok(find(stopped.messages, 'appraisal-stages').children.every(stage => stage.dataset.state !== 'active'));
-  assert.deepEqual(stopped.get('appraisal-phase-progress').children.map(segment => segment.dataset.state), ['done', 'done', 'stopped', 'pending']);
+test('missing task integration shows a formal error instead of a fixed merchandise conclusion', async () => {
+  const h = harness({ configured: false });
+  await flush();
+  assert.equal(h.controller.busy, false);
+  assert.equal(h.intervals.size, 0);
+  assert.equal(h.get('appraisal-result'), null);
+  assert.equal(h.get('appraisal-process').dataset.state, 'error');
+  assert.ok(h.get('appraisal-process-error').textContent.trim());
+  assert.doesNotMatch(accessibleCopy(h.panel), /YSL|GCCCMT74DB|演示|示例|示范/);
+});
+
+test('runner exceptions and rejections become readable retryable errors', async () => {
+  for (const runTask of [() => { throw new Error('sandbox internal.md'); }, () => Promise.reject(new Error('sandbox internal.md'))]) {
+    const h = harness({ runTask });
+    await flush();
+    assert.equal(h.controller.busy, false);
+    assert.equal(h.get('appraisal-result'), null);
+    assert.equal(h.get('appraisal-process').dataset.state, 'error');
+    assert.equal(h.get('appraisal-retry').hidden, false);
+    assert.doesNotMatch(h.get('appraisal-process-error').textContent, publicCode);
+  }
+});
+
+test('retry starts a fresh task and ignores callbacks from the failed attempt', () => {
+  const h = harness();
+  h.emit(step('1', 'sandbox old'));
+  stageControls(h)[0].toggle.onclick();
+  h.emit({ type: 'error', message: '连接中断，请重试', retryable: true });
+  assert.equal(h.get('appraisal-retry').hidden, false);
+  assertStageRecordsClosed(h);
+  h.get('appraisal-retry').onclick();
+  assert.equal(h.runs.length, 2);
+  assert.equal(h.runs[0].signal.aborted, true);
+  assert.notEqual(h.runs[0].signal, h.runs[1].signal);
+  assert.equal(h.controller.busy, true);
+  assert.equal(stageControls(h).length, 0);
+  h.emit({ type: 'complete', result: '已失效的结果' }, 0);
+  assert.equal(h.get('appraisal-result'), null);
+  h.emit({ type: 'complete', result: '重试后的结论' }, 1);
+  assert.equal(h.get('appraisal-result').textContent, '重试后的结论');
+});
+
+test('a non-retryable error does not offer a retry action', () => {
+  const h = harness();
+  h.emit({ type: 'error', message: '无法处理这张照片', retryable: false });
+  assert.equal(h.controller.busy, false);
+  assert.equal(h.get('appraisal-retry').hidden, true);
+});
+
+test('an older failed task regains retry availability after a newer task finishes', () => {
+  const h = harness();
+  for (let id = 1; id <= 6; id++) h.emit(step(String(id)));
+  h.emit({ type: 'error', message: '连接中断，请重试', retryable: true });
+  const retryA = h.get('appraisal-retry');
+  const historyA = h.get('appraisal-history-toggle');
+  assert.equal(retryA.disabled, false);
+  assert.equal(h.send(), true);
+  assert.equal(h.runs.length, 2);
+  assert.equal(retryA.disabled, true);
+  historyA.onclick();
+  assert.equal(retryA.disabled, true);
+  retryA.onclick();
+  assert.equal(h.runs.length, 2, 'a busy task cannot be interrupted by an older retry');
+  h.emit({ type: 'complete', result: '第二轮已完成' }, 1);
+  assert.equal(retryA.disabled, false, 'all older retry buttons must recover when idle');
+  retryA.onclick();
+  assert.equal(h.runs.length, 3);
+  assert.equal(h.controller.busy, true);
+  h.emit({ type: 'complete', result: '第一轮重试完成' }, 2);
+  assert.equal(all(h.messages, node => node.classList.contains('appraisal-result')).length, 2);
+});
+
+test('runner promises complete only when a valid result is supplied', async () => {
+  const completed = harness({ runTask: () => Promise.resolve({ title: '识别完成', paragraphs: ['已收到鉴定结果'] }) });
+  await flush();
+  assert.equal(completed.controller.busy, false);
+  assert.match(completed.get('appraisal-result').textContent, /已收到鉴定结果/);
+  const pending = harness({ runTask: () => Promise.resolve(undefined) });
+  await flush();
+  pending.advance(60000);
+  assert.equal(pending.controller.busy, true);
+  assert.equal(pending.get('appraisal-result'), null);
+  pending.emit({ type: 'complete', result: '稍后收到的结论' });
+  assert.equal(pending.get('appraisal-result').textContent, '稍后收到的结论');
 });
 
 test('continuous status animation is restricted to active work and disabled for reduced motion', () => {
   const css = readFileSync(new URL('../public/appraisal-conversation.css', import.meta.url), 'utf8');
   const preference = /@media\s*\(\s*prefers-reduced-motion\s*:\s*reduce\s*\)\s*\{/g.exec(css);
-  assert.ok(preference, 'reduced-motion preference must be supported');
+  assert.ok(preference);
   const start = preference.index + preference[0].length;
   let depth = 1, end = start;
-  while (depth && end < css.length) {
-    if (css[end] === '{') depth++;
-    if (css[end] === '}') depth--;
-    end++;
-  }
+  while (depth && end < css.length) { if (css[end] === '{') depth++; if (css[end] === '}') depth--; end++; }
   const reduced = css.slice(start, end - 1);
   const rules = text => Array.from(text.matchAll(/([^{}]+)\{([^{}]*)\}/g), match => ({ selector: match[1].trim(), declarations: match[2] }));
-  const continuouslyAnimated = rules(css).filter(rule => /animation(?:-iteration-count)?\s*:[^;]*\binfinite\b/.test(rule.declarations));
-  assert.ok(continuouslyAnimated.length, 'running status retains a visible activity indicator');
-  const motionDisabled = rules(reduced).filter(rule => /animation\s*:\s*none\s*!important/.test(rule.declarations));
-  const animationTarget = selector => selector.trim().split(/\s+/).at(-1).replace(/\[data-state=["']?(?:running|active)["']?\]/g, '');
-  for (const rule of continuouslyAnimated) {
-    for (const selector of rule.selector.split(',')) {
-      assert.match(selector, /\[data-state=["']?(?:running|active)["']?\]/, 'finished and stopped states must not keep looping');
-      const target = animationTarget(selector);
-      assert.ok(motionDisabled.some(disabled => disabled.selector.split(',').some(part => animationTarget(part) === target)), `${target} needs a reduced-motion override`);
-    }
+  const animated = rules(css).filter(rule => /animation(?:-iteration-count)?\s*:[^;]*\binfinite\b/.test(rule.declarations));
+  const disabled = rules(reduced).filter(rule => /animation\s*:\s*none\s*!important/.test(rule.declarations));
+  const target = selector => selector.trim().split(/\s+/).at(-1).replace(/:not\([^()]*\)/g, '').replace(/\[data-state=["']?(?:running|active)["']?\]/g, '');
+  assert.ok(animated.length);
+  for (const rule of animated) for (const selector of rule.selector.split(',')) {
+    assert.match(selector, /\[data-state=["']?(?:running|active)["']?\]/);
+    assert.ok(disabled.some(override => override.selector.split(',').some(part => target(part) === target(selector))), `${target(selector)} needs a reduced-motion override`);
   }
-  assert.match(reduced, /transition\s*:\s*none/, 'disclosure transitions also respect reduced motion');
+  assert.match(reduced, /transition\s*:\s*none/);
 });

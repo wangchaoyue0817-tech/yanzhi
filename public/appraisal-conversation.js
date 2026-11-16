@@ -1,63 +1,11 @@
 (function (root) {
   'use strict';
 
-  const DURATION_MS = 40000;
-  // Screenshot fixtures for the interaction replica, never a real tool trace.
-  const STEPS = Object.freeze([
-    { at: 0, title: 'sandbox {"lifecycle":"turn","mode":"new","pr…', detail: '建立鉴定会话，准备本次图片。' },
-    { at: 3000, title: '思考了 3 秒', detail: '整理上传图片，确认可见的商品信息。' },
-    { at: 6000, title: '阅读了 skill 的第 1-127 行', detail: '查看美妆品类的图片要求。' },
-    { at: 9000, title: '阅读了 skill 的第 1-127 行', detail: '查看商品点位与图像清晰度要求。' },
-    { at: 12000, title: '读取 {"path":"skills/jianx-ai-appraisal-b…', detail: '准备粉扑、内托、底部和正面的点位信息。' },
-    { at: 16000, title: '思考了 4 秒', detail: '整理不同点位的可见信息。' },
-    { at: 20000, title: '阅读了 skill', detail: '查看点位结果的展示格式。' },
-    { at: 24000, title: '思考了 4 秒', detail: '汇总点位分数与照片拍摄条件。' },
-    { at: 28000, title: '阅读了 skill', detail: '准备结论和补拍建议。' },
-    { at: 32000, title: '思考了 1 秒', detail: '检查结果表格和商品信息。' },
-    { at: 35000, title: '阅读了 skill', detail: '整理鉴定结论。' },
-    { at: 38000, title: '思考了 2 秒', detail: '完成报告排版。' }
-  ]);
-
-  const PHASES = Object.freeze([
-    { at: 0, name: '检查照片', title: '正在检查照片', detail: '确认照片清晰度与可见细节' },
-    { at: 8000, name: '整理鉴定点位', title: '正在整理鉴定点位', detail: '整理包装、标识及细节位置' },
-    { at: 18000, name: '分析细节', title: '正在分析细节', detail: '对照各处细节，综合照片信息' },
-    { at: 30000, name: '整理结论', title: '正在整理结论', detail: '汇总点位结果与补拍建议' }
-  ]);
-  function processState(elapsed, status = 'running') {
-    const time = Math.max(0, Math.min(Number(elapsed) || 0, DURATION_MS));
-    const resolved = status === 'running' && time >= DURATION_MS ? 'complete' : status;
-    const index = PHASES.reduce((selected, phase, i) => time >= phase.at ? i : selected, 0);
-    const phases = PHASES.map((phase, i) => {
-      const state = resolved === 'complete' || i < index ? 'done' : i > index ? 'pending' : resolved === 'stopped' ? 'stopped' : 'active';
-      return { state, label: { done: '已完成', active: '进行中', pending: '待处理', stopped: '已停止' }[state] };
-    });
-    return {
-      title: resolved === 'complete' ? '分析完成' : resolved === 'stopped' ? '分析已停止' : PHASES[index].title,
-      detail: resolved === 'complete' ? '鉴定结论已生成' : resolved === 'stopped' ? '可重新上传照片发起鉴定' : PHASES[index].detail,
-      elapsedLabel: `${Math.floor(time / 1000)} 秒`, index, phases, status: resolved
-    };
-  }
-
-  function sampleReportHTML() {
-    return `<h2>AI 鉴定结果：真（正品置信度 65 分）</h2>
-      <p><strong>识别信息：</strong>美妆 · 圣罗兰 YSL · 皮革气垫（LE CUSHION ENCRE DE PEAU，色号 20，批号 78Z33X，韩国制） | 鉴鉴单号 GCCCMT74DB</p>
-      <h3>各点位明细</h3>
-      <table><caption class="appraisal-sr-only">商品点位鉴定结果</caption><thead><tr><th scope="col">点位</th><th scope="col">结论</th><th scope="col">符合度</th></tr></thead><tbody>
-        <tr><th scope="row">粉扑正面</th><td>真</td><td>81%</td></tr>
-        <tr><th scope="row">粉扑放置层</th><td>真</td><td>81%</td></tr>
-        <tr><th scope="row">气垫底部</th><td>真</td><td>81%</td></tr>
-        <tr><th scope="row">气垫正面</th><td>假/偏低</td><td>26%</td></tr>
-      </tbody></table>
-      <p>综合各点位加权后得分 65%，整体结论倾向真。</p>
-      <p><strong>关于「气垫正面」这一项分数明显偏低：</strong>你拍的正面几张里，金色镜盖面反光、眩光很重，还有指纹和灰尘痕迹，AI 很难提取到有效的工艺特征，所以这一项分值被拉了下来，属于<strong>拍摄条件影响判断</strong>，不等于产品为假。如果想让分数更可靠，建议这样补拍一处：</p>
-      <ul><li>白天自然光或柔和侧光下，避开顶灯直射，把气垫外面金色盖子（含 YSL 皮纹绗缝面）平放着单独拍一张清晰正面；对焦在 logo 金属件和皮纹缝线上，不要隔着手持反光面拍摄。</li></ul>
-      <p>其余像粉扑、内托、底部刻字、背面标签这几处拍得很清楚，符合度均在 81%，是这次判定为真的主要支撑。</p>`;
-  }
-
-  function create({ app, panel, messages, onBusyChange = () => {}, onHome = () => {} }) {
+  function create({ app, panel, messages, onBusyChange = () => {}, onHome = () => {}, runTask }) {
     const doc = app.ownerDocument;
+    const model = root.JianxAppraisalProgress;
     const ownedUrls = new Set();
+    const turns = new Set();
     let active = null;
     let timer = null;
     let busy = false;
@@ -79,6 +27,7 @@
 
     function setBusy(value) {
       busy = value;
+      turns.forEach(turn => { turn.retry.disabled = value; });
       onBusyChange(value);
     }
     function stopClock() {
@@ -187,15 +136,17 @@
       complete: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m6 12 4 4 8-9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
       stopped: '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 7v10M15 7v10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
     };
-    function updateTechnical(turn) {
-      turn.stages.forEach((stage, index) => {
-        if (stage.technical.hidden) return;
-        const end = PHASES[index + 1]?.at ?? DURATION_MS;
-        const text = STEPS.filter(step => step.at >= PHASES[index].at && step.at < end && step.at <= turn.elapsedMs)
-          .map(step => `[${Math.floor(step.at / 1000)}s] ${step.title}`).join('\n');
-        const content = text || '正在整理本阶段记录…';
-        if (stage.code.textContent !== content) stage.code.textContent = content;
-      });
+    markIcons.error = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 6v8m0 4h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+    const chevronHTML = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const stageLabels = { active: '进行中', done: '已完成', error: '未完成', stopped: '已停止' };
+    function element(tag, className, text) {
+      const node = doc.createElement(tag);
+      if (className) node.className = className;
+      if (text !== undefined) node.textContent = text;
+      return node;
+    }
+    function stageLabel(stage) {
+      stage.button.setAttribute('aria-label', `${stage.name.textContent}，${stage.label.textContent}${stage.button.disabled ? '' : stage.technical.hidden ? '，查看技术记录' : '，收起技术记录'}`);
     }
     function setStageExpanded(turn, stage, expanded) {
       if (expanded && stage.button.disabled) return;
@@ -203,9 +154,8 @@
       stage.button.setAttribute('aria-expanded', String(expanded));
       stage.row.classList.toggle('is-detail-open', expanded);
       stage.technical.hidden = !expanded;
-      stage.button.setAttribute('aria-label', `${stage.name}，${stage.label.textContent}，${stage.button.disabled ? '尚未开始' : expanded ? '收起技术记录' : '查看技术记录'}`);
-      if (expanded) updateTechnical(turn);
-      else stage.code.textContent = '';
+      stage.code.textContent = expanded ? stage.records.join('\n') : '';
+      stageLabel(stage);
     }
     function setProcessExpanded(turn, expanded) {
       if (!expanded && turn.body.contains(doc.activeElement)) turn.toggle.focus({ preventScroll: true });
@@ -215,9 +165,47 @@
       turn.body.inert = !expanded;
       if (!expanded) turn.stages.forEach(stage => setStageExpanded(turn, stage, false));
     }
-    function updateProcess(turn, elapsed, status = 'running') {
-      const view = processState(elapsed, status);
-      turn.elapsedMs = Math.max(0, Math.min(elapsed, DURATION_MS));
+    function createStage(turn, step) {
+      const row = element('li', 'appraisal-stage');
+      row.dataset.stepId = step.id;
+      const button = element('button', 'appraisal-stage-toggle');
+      button.type = 'button';
+      const key = `${turn.key}-${turn.stages.size}`;
+      button.id = `appraisal-stage-toggle-${key}`;
+      button.setAttribute('aria-expanded', 'false');
+      button.setAttribute('aria-controls', `appraisal-stage-detail-${key}`);
+      const dot = element('span', 'appraisal-stage-mark');
+      dot.setAttribute('aria-hidden', 'true');
+      const copy = element('div', 'appraisal-stage-copy');
+      const name = element('strong');
+      const description = element('p');
+      copy.append(name, description);
+      const label = element('span', 'appraisal-stage-state');
+      const meta = element('span', 'appraisal-stage-meta');
+      const arrow = element('span', 'appraisal-stage-chevron');
+      arrow.setAttribute('aria-hidden', 'true');
+      arrow.innerHTML = chevronHTML;
+      meta.append(label, arrow);
+      button.append(dot, copy, meta);
+      const technical = element('div', 'appraisal-stage-technical');
+      technical.id = `appraisal-stage-detail-${key}`;
+      technical.hidden = true;
+      technical.setAttribute('role', 'region');
+      technical.setAttribute('aria-labelledby', button.id);
+      const pre = element('pre');
+      pre.tabIndex = 0;
+      const code = element('code');
+      pre.append(code);
+      technical.append(pre);
+      row.append(button, technical);
+      const stage = { row, button, name, description, label, arrow, technical, pre, code, records: [] };
+      button.onclick = () => setStageExpanded(turn, stage, technical.hidden);
+      turn.stages.set(step.id, stage);
+      turn.list.append(row);
+      return stage;
+    }
+    function updateProcess(turn) {
+      const view = model.view(turn.state, Date.now());
       turn.process.dataset.state = view.status;
       turn.process.classList.toggle('is-complete', view.status === 'complete');
       turn.process.classList.toggle('is-stopped', view.status === 'stopped');
@@ -225,145 +213,204 @@
       turn.detail.textContent = view.detail;
       turn.elapsed.textContent = view.elapsedLabel;
       if (turn.status !== view.status) turn.mark.innerHTML = markIcons[view.status];
-      view.phases.forEach((phase, i) => {
-        const stage = turn.stages[i];
-        stage.row.dataset.state = phase.state;
-        stage.label.textContent = phase.label;
-        stage.button.disabled = phase.state === 'pending';
-        stage.button.setAttribute('aria-label', `${stage.name}，${phase.label}，${stage.button.disabled ? '尚未开始' : stage.technical.hidden ? '查看技术记录' : '收起技术记录'}`);
-        turn.segments[i].dataset.state = phase.state;
+      const determinate = view.progress !== null;
+      turn.progress.dataset.determinate = String(determinate);
+      turn.progress.style.setProperty('--progress', determinate ? `${view.progress}%` : '0%');
+      turn.progressValue.hidden = !determinate;
+      turn.progressValue.textContent = determinate ? `${Math.round(view.progress)}%` : '';
+      if (determinate) turn.progress.setAttribute('aria-valuenow', String(view.progress));
+      else turn.progress.removeAttribute('aria-valuenow');
+      turn.progress.setAttribute('aria-valuetext', view.title);
+      const historyIds = new Set(view.historyIds);
+      // Never hide a record while the user is reading its detail or holding focus.
+      turn.stages.forEach((stage, id) => {
+        if (historyIds.has(id) && (!stage.technical.hidden || stage.row.contains(doc.activeElement))) turn.historyExpanded = true;
       });
-      turn.progress.setAttribute('aria-valuenow', String(view.phases.filter(phase => phase.state === 'done').length));
-      turn.progress.setAttribute('aria-valuetext', view.status === 'complete' ? '4 个阶段已完成' : `${view.index + 1}/4，${view.title}`);
-      if (turn.phaseIndex !== view.index && view.status === 'running') announce.textContent = `${view.title}，${view.detail}。`;
-      turn.phaseIndex = view.index;
+      for (const step of view.steps) {
+        const stage = turn.stages.get(step.id) || createStage(turn, step);
+        stage.row.dataset.state = step.status;
+        stage.row.hidden = historyIds.has(step.id) && !turn.historyExpanded;
+        stage.name.textContent = step.title;
+        stage.description.textContent = step.detail;
+        stage.label.textContent = stageLabels[step.status];
+        stage.records = step.technical;
+        stage.button.disabled = step.technical.length === 0;
+        stage.arrow.hidden = stage.button.disabled;
+        stage.pre.setAttribute('aria-label', `${step.title}技术记录`);
+        if (!stage.technical.hidden) stage.code.textContent = stage.records.join('\n');
+        stageLabel(stage);
+      }
+      turn.history.hidden = view.historyIds.length === 0;
+      turn.history.textContent = turn.historyExpanded ? '收起历史记录' : `查看前面 ${view.historyIds.length} 条记录`;
+      turn.history.setAttribute('aria-expanded', String(turn.historyExpanded));
+      turn.error.hidden = view.status !== 'error';
+      turn.retry.hidden = !turn.state.retryable;
+      turn.retry.disabled = busy;
+      turn.errorText.textContent = view.status === 'error' ? '本次处理未完成' : '';
+      if (turn.currentId !== view.currentId || turn.status !== view.status) announce.textContent = `${view.title}。`;
+      turn.currentId = view.currentId;
       turn.status = view.status;
-      updateTechnical(turn);
     }
     function makeProcess(turn) {
-      const process = doc.createElement('section');
-      process.className = 'appraisal-process';
-      const toggle = doc.createElement('button');
+      const process = element('section', 'appraisal-process');
+      const toggle = element('button', 'appraisal-process-summary');
       toggle.type = 'button';
-      toggle.className = 'appraisal-process-summary';
       toggle.setAttribute('aria-expanded', 'false');
-      toggle.setAttribute('aria-controls', `appraisal-process-body-${sequence}`);
-      const mark = doc.createElement('span');
-      mark.className = 'appraisal-process-mark';
+      toggle.setAttribute('aria-controls', `appraisal-process-body-${turn.key}`);
+      const mark = element('span', 'appraisal-process-mark');
       mark.setAttribute('aria-hidden', 'true');
-      const heading = doc.createElement('span');
-      heading.className = 'appraisal-process-heading';
-      const line = doc.createElement('span');
-      line.className = 'appraisal-status-line';
-      const title = doc.createElement('strong');
-      title.className = 'appraisal-status-title';
+      const heading = element('span', 'appraisal-process-heading');
+      const line = element('span', 'appraisal-status-line');
+      const title = element('strong', 'appraisal-status-title');
       line.append(title);
-      const detail = doc.createElement('span');
-      detail.className = 'appraisal-status-detail';
+      const detail = element('span', 'appraisal-status-detail');
       heading.append(line, detail);
-      const elapsed = doc.createElement('span');
-      elapsed.className = 'appraisal-elapsed';
-      const chevron = doc.createElement('span');
-      chevron.className = 'appraisal-process-chevron';
-      chevron.innerHTML = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-      toggle.append(mark, heading, elapsed, chevron);
-      const progress = doc.createElement('div');
-      progress.className = 'appraisal-phase-progress';
+      const elapsed = element('span', 'appraisal-elapsed');
+      const progressValue = element('span', 'appraisal-progress-value');
+      progressValue.hidden = true;
+      const chevron = element('span', 'appraisal-process-chevron');
+      chevron.innerHTML = chevronHTML;
+      toggle.append(mark, heading, elapsed, progressValue, chevron);
+      const progress = element('div', 'appraisal-activity-track');
       progress.setAttribute('role', 'progressbar');
-      progress.setAttribute('aria-label', '鉴定阶段进度');
+      progress.setAttribute('aria-label', '鉴定进度');
       progress.setAttribute('aria-valuemin', '0');
-      progress.setAttribute('aria-valuemax', '4');
-      const segments = PHASES.map(() => {
-        const segment = doc.createElement('span');
-        segment.setAttribute('aria-hidden', 'true');
-        progress.append(segment);
-        return segment;
-      });
-      const body = doc.createElement('div');
-      body.className = 'appraisal-process-body';
-      body.id = `appraisal-process-body-${sequence}`;
-      body.setAttribute('aria-hidden', 'true');
-      body.inert = true;
-      const inner = doc.createElement('div');
-      inner.className = 'appraisal-process-inner';
-      const stagesList = doc.createElement('ol');
-      stagesList.className = 'appraisal-stages';
-      stagesList.setAttribute('aria-label', '鉴定处理阶段');
-      const stages = PHASES.map((phase, index) => {
-        const row = doc.createElement('li');
-        row.className = 'appraisal-stage';
-        const button = doc.createElement('button');
-        button.type = 'button';
-        button.className = 'appraisal-stage-toggle';
-        button.id = `appraisal-stage-toggle-${sequence}-${index}`;
-        button.setAttribute('aria-expanded', 'false');
-        button.setAttribute('aria-controls', `appraisal-stage-detail-${sequence}-${index}`);
-        const dot = doc.createElement('span');
-        dot.className = 'appraisal-stage-mark';
-        dot.setAttribute('aria-hidden', 'true');
-        const copy = doc.createElement('div');
-        copy.className = 'appraisal-stage-copy';
-        const name = doc.createElement('strong');
-        name.textContent = phase.name;
-        const description = doc.createElement('p');
-        description.textContent = phase.detail;
-        copy.append(name, description);
-        const label = doc.createElement('span');
-        label.className = 'appraisal-stage-state';
-        const meta = doc.createElement('span');
-        meta.className = 'appraisal-stage-meta';
-        const arrow = doc.createElement('span');
-        arrow.className = 'appraisal-stage-chevron';
-        arrow.setAttribute('aria-hidden', 'true');
-        arrow.innerHTML = chevron.innerHTML;
-        meta.append(label, arrow);
-        button.append(dot, copy, meta);
-        const technical = doc.createElement('div');
-        technical.className = 'appraisal-stage-technical';
-        technical.id = `appraisal-stage-detail-${sequence}-${index}`;
-        technical.hidden = true;
-        technical.setAttribute('role', 'region');
-        technical.setAttribute('aria-labelledby', button.id);
-        const pre = doc.createElement('pre');
-        pre.tabIndex = 0;
-        pre.setAttribute('aria-label', `${phase.name}技术记录`);
-        const code = doc.createElement('code');
-        pre.append(code);
-        technical.append(pre);
-        row.append(button, technical);
-        stagesList.append(row);
-        const stage = { row, button, label, technical, code, name: phase.name };
-        button.onclick = () => setStageExpanded(turn, stage, technical.hidden);
-        return stage;
-      });
-      inner.append(stagesList);
+      progress.setAttribute('aria-valuemax', '100');
+      const light = element('i');
+      light.setAttribute('aria-hidden', 'true');
+      progress.append(light);
+      const body = element('div', 'appraisal-process-body');
+      body.id = `appraisal-process-body-${turn.key}`;
+      const inner = element('div', 'appraisal-process-inner');
+      const list = element('ol', 'appraisal-stages');
+      list.id = `appraisal-stages-${turn.key}`;
+      list.setAttribute('aria-label', '鉴定处理记录');
+      const history = element('button', 'appraisal-history-toggle');
+      history.type = 'button';
+      history.setAttribute('aria-controls', list.id);
+      history.hidden = true;
+      inner.append(list, history);
       body.append(inner);
-      process.append(toggle, progress, body);
-      Object.assign(turn, { process, toggle, body, mark, title, detail, elapsed, stages, progress, segments });
+      const error = element('div', 'appraisal-process-error');
+      error.hidden = true;
+      const errorText = element('p');
+      const retry = element('button', 'appraisal-retry', '重新尝试');
+      retry.type = 'button';
+      error.append(errorText, retry);
+      process.append(toggle, progress, body, error);
+      Object.assign(turn, { process, toggle, body, mark, title, detail, elapsed, list, history, progress, progressValue, error, errorText, retry, stages: new Map(), historyExpanded: false, status: null, currentId: null });
       toggle.onclick = () => setProcessExpanded(turn, toggle.getAttribute('aria-expanded') !== 'true');
-      updateProcess(turn, 0);
+      history.onclick = () => {
+        turn.historyExpanded = !turn.historyExpanded;
+        if (!turn.historyExpanded) {
+          const ids = new Set(model.view(turn.state).historyIds);
+          turn.stages.forEach((stage, id) => {
+            if (ids.has(id)) {
+              if (stage.row.contains(doc.activeElement)) history.focus({ preventScroll: true });
+              setStageExpanded(turn, stage, false);
+            }
+          });
+        }
+        updateProcess(turn);
+      };
+      retry.onclick = () => {
+        if (busy) return;
+        turn.abort?.abort();
+        const old = turn.process;
+        turn.key = ++sequence;
+        turn.state = model.createState();
+        const replacement = makeProcess(turn);
+        old.replaceWith(replacement);
+        turn.toggle.focus({ preventScroll: true });
+        begin(turn);
+      };
+      updateProcess(turn);
       setProcessExpanded(turn, true);
       return process;
     }
+    function appendResult(turn, data) {
+      const result = element('article', 'appraisal-result');
+      result.setAttribute('aria-label', '鉴定结论');
+      result.tabIndex = -1;
+      if (typeof data === 'string') result.append(element('p', '', data));
+      else {
+        if (typeof data.title === 'string') result.append(element('h2', '', data.title));
+        (Array.isArray(data.paragraphs) ? data.paragraphs : []).forEach(text => {
+          if (typeof text === 'string') result.append(element('p', '', text));
+        });
+        if (Array.isArray(data.rows) && data.rows.length) {
+          const table = element('table');
+          const caption = element('caption', 'appraisal-sr-only', '商品点位鉴定结果');
+          const head = element('thead');
+          const tr = element('tr');
+          ['点位', '结论', '符合度'].forEach(text => {
+            const th = element('th', '', text);
+            th.setAttribute('scope', 'col');
+            tr.append(th);
+          });
+          head.append(tr);
+          const tbody = element('tbody');
+          data.rows.forEach(row => {
+            if (!Array.isArray(row)) return;
+            const tr = element('tr');
+            row.slice(0, 3).forEach((text, i) => {
+              const cell = element(i ? 'td' : 'th', '', String(text));
+              if (!i) cell.setAttribute('scope', 'row');
+              tr.append(cell);
+            });
+            tbody.append(tr);
+          });
+          table.append(caption, head, tbody);
+          result.append(table);
+        }
+      }
+      turn.node.append(result);
+    }
     function tick() {
-      if (!active || !busy) return;
-      const turn = active;
-      const elapsed = Math.min(Date.now() - turn.startedAt, DURATION_MS);
-      const keepFollowing = followTail;
-      updateProcess(turn, elapsed);
-      if (elapsed >= DURATION_MS) {
-        stopClock();
-        setProcessExpanded(turn, false);
-        const result = doc.createElement('article');
-        result.className = 'appraisal-result';
-        result.setAttribute('aria-label', '鉴定结论');
-        result.tabIndex = -1;
-        result.innerHTML = sampleReportHTML();
-        turn.node.append(result);
-        setBusy(false);
-        active = null;
-        announce.textContent = '分析完成，鉴定结论已生成。';
-        if (keepFollowing) messages.scrollTop = Math.max(0, turn.process.offsetTop - messages.offsetTop - 14);
+      if (active && busy) updateProcess(active);
+    }
+    function begin(turn) {
+      active = turn;
+      const abort = new root.AbortController();
+      turn.abort = abort;
+      setBusy(true);
+      announce.textContent = '已接收照片，正在处理任务。';
+      stopClock();
+      timer = root.setInterval(tick, 500);
+      const onEvent = event => {
+        if (active !== turn || turn.abort !== abort || abort.signal.aborted) return;
+        if (!model.applyEvent(turn.state, event)) return;
+        const keepFollowing = followTail;
+        updateProcess(turn);
+        if (turn.state.status !== 'running') {
+          stopClock();
+          active = null;
+          setBusy(false);
+          turn.stages.forEach(stage => setStageExpanded(turn, stage, false));
+          if (turn.state.status === 'complete') {
+            setProcessExpanded(turn, false);
+            appendResult(turn, turn.state.result);
+            announce.textContent = '分析完成，鉴定结论已生成。';
+          }
+          abort.abort();
+        }
+        if (keepFollowing) messages.scrollTop = turn.state.status === 'complete'
+          ? Math.max(0, turn.process.offsetTop - messages.offsetTop - 14)
+          : Math.max(0, messages.scrollHeight - messages.clientHeight);
+      };
+      try {
+        if (typeof runTask !== 'function') {
+          onEvent({ type: 'error', message: '暂时无法连接鉴定服务，请稍后重试' });
+          return;
+        }
+        const output = runTask({ ...turn.payload, signal: abort.signal, onEvent });
+        // Providers may stream after returning; only an explicit result ends the task.
+        if (output && typeof output.then === 'function') output.then(result => {
+          if (result !== undefined) onEvent({ type: 'complete', result });
+        }).catch(() => onEvent({ type: 'error', message: '暂时无法完成处理，请重试' }));
+        else if (output !== undefined) onEvent({ type: 'complete', result: output });
+      } catch (_) {
+        onEvent({ type: 'error', message: '暂时无法完成处理，请重试' });
       }
     }
     function send({ text = '', photos = [], skill = '' } = {}) {
@@ -371,46 +418,32 @@
       sequence += 1;
       panel.hidden = false;
       app.classList.add('is-appraisal');
-      const turn = { node: doc.createElement('section'), startedAt: Date.now() };
-      turn.node.className = 'appraisal-turn';
-      const time = doc.createElement('p');
-      time.className = 'appraisal-time';
+      const turn = { node: element('section', 'appraisal-turn'), key: sequence, state: model.createState(), payload: { text, photos: [...photos], skill } };
+      const time = element('p', 'appraisal-time');
       time.textContent = `今天 ${new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date())}`;
       turn.node.append(time);
       photos.forEach(photo => { if (photo.url.startsWith('blob:')) ownedUrls.add(photo.url); });
       if (photos.length) turn.node.append(makeMedia(photos));
-      if (text.trim()) {
-        const bubble = doc.createElement('p');
-        bubble.className = 'appraisal-user-text';
-        bubble.textContent = text.trim();
-        turn.node.append(bubble);
-      }
+      if (text.trim()) turn.node.append(element('p', 'appraisal-user-text', text.trim()));
       if (photos.length) turn.node.append(makeProcess(turn));
-      else {
-        const reply = doc.createElement('p');
-        reply.className = 'appraisal-text-reply';
-        reply.textContent = '请上传商品照片，我会在这里展示处理过程与鉴定结论。';
-        turn.node.append(reply);
-      }
+      else turn.node.append(element('p', 'appraisal-text-reply', '请上传商品照片，我会在这里展示处理过程与鉴定结论。'));
+      if (photos.length) turns.add(turn);
       messages.append(turn.node);
       messages.scrollTop = Math.max(0, turn.node.offsetTop - messages.offsetTop);
       followTail = true;
-      if (photos.length) {
-        active = turn;
-        setBusy(true);
-        announce.textContent = '已接收照片，正在检查照片。';
-        tick();
-        timer = root.setInterval(tick, 500);
-      }
+      if (photos.length) begin(turn);
       return true;
     }
     function close() {
       closeViewer();
       stopClock();
       if (active) {
-        updateProcess(active, Date.now() - active.startedAt, 'stopped');
-        setProcessExpanded(active, false);
+        const turn = active;
         active = null;
+        turn.abort.abort();
+        model.applyEvent(turn.state, { type: 'stop' });
+        updateProcess(turn);
+        setProcessExpanded(turn, false);
       }
       if (busy) setBusy(false);
       panel.hidden = true;
@@ -421,12 +454,12 @@
       close();
       ownedUrls.forEach(url => URL.revokeObjectURL(url));
       ownedUrls.clear();
+      turns.clear();
       messages.replaceChildren();
       announce.textContent = '';
     }
     root.addEventListener('pagehide', reset);
     return { send, close, reset, get busy() { return busy; } };
   }
-
-  root.AppraisalConversation = Object.freeze({ create, DURATION_MS, STEPS, PHASES, processState, sampleReportHTML });
+  root.AppraisalConversation = Object.freeze({ create });
 })(window);

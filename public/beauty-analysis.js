@@ -153,6 +153,7 @@ function resetEntry() {
 }
 function open() {
   returnFocus = document.activeElement;
+  window.appraisalConversation?.close();
   $('menuPanel').hidden = true;
   $('conversationPanel').hidden = true;
   $('skillPopup').classList.remove('show');

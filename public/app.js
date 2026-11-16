@@ -15,7 +15,11 @@ const state = { center:2, selected:'', tab:'ai', banner:0, paused:false, busy:fa
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const icon = name => `<span class="icon-glyph" aria-hidden="true" style="--icon: url('assets/icons/${ICON_FILES[name] || 'handbag.svg'}')"></span>`;
 const escaped = s => s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let skillTimer, bannerTimer, toastTimer, messageTimer;
+let skillTimer, bannerTimer, toastTimer;
+let uploadRevision = 0, uploading = false;
+const appraisalInput = window.JianxAppraisalInput;
+const appraisal = window.AppraisalConversation.create({app:$('app'),panel:$('conversationPanel'),messages:$('messages'),onBusyChange(busy){state.busy=busy;syncInput();},onHome(){$('inputField').placeholder='请上传图片或输入想聊的话题';}});
+window.appraisalConversation = appraisal;
 let skillDrag=null, cancelSkillGesture=()=>{};
 const skillBatchSize=5;
 function toast(text){$('toast').textContent=text;$('toast').hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').hidden=true,3400);}
@@ -56,15 +60,16 @@ function updateSkillBtn(){
  else{btn.className='toolbar-btn';btn.innerHTML=initialSkillBtn;}
  $('inputTip').textContent=(HOT.find(s=>s.label===state.selected)||{}).tip||'本服务由AI提供，请注意甄别';
 }
-function selectSkill(label){if(state.tab!=='ai')setTab('ai');state.selected=label;state.center=skills.findIndex(s=>s.label===label);positionCards();updateSkillBtn();renderPopup();closePopup();suspend(20000);if(label==='鉴颜值'&&window.beautyExperience){window.beautyExperience.open();return;}toast(`已开启${label}，可上传照片或输入问题`);}
+function selectSkill(label){if(state.tab!=='ai')setTab('ai');state.selected=label;state.center=skills.findIndex(s=>s.label===label);positionCards();updateSkillBtn();renderPopup();closePopup();suspend(20000);if(label==='鉴颜值'&&window.beautyExperience){appraisal.close();window.beautyExperience.open();return;}toast(`已开启${label}，可上传照片或输入问题`);}
 function openPopup(){state.focusReturn=document.activeElement;$('menuPanel').hidden=true;renderPopup();$('skillPopup').classList.add('show');$('sheetMask').classList.add('show');$('popupClose').focus();}
 function closePopup(){const wasOpen=$('skillPopup').classList.contains('show')||$('agreeSheet').classList.contains('show');$('skillPopup').classList.remove('show');$('sheetMask').classList.remove('show');$('agreeSheet').classList.remove('show');if(wasOpen&&state.focusReturn?.isConnected)state.focusReturn.focus();if(wasOpen)suspend();}
 function setTab(tab,{updateHistory=true}={}){
+ appraisal.close();
  const wasOffline=window.offlineRouter?.closeForTab()||false;
  window.expertPicker?.close(false);
  cancelSkillGesture();
  state.tab=tab;$('aiHome').hidden=tab!=='ai';$('expertHome').hidden=tab!=='expert';$('app').classList.toggle('is-expert',tab==='expert');$('conversationPanel').hidden=true;$('menuPanel').hidden=true;
- document.querySelectorAll('.home-mode-tab-item').forEach(el=>{el.classList.toggle('active',el.dataset.tab===tab);el.setAttribute('aria-selected',String(el.dataset.tab===tab));});
+ document.querySelectorAll('.home-mode-tab-item').forEach(el=>{el.classList.toggle('active',el.dataset.tab===tab);el.setAttribute('aria-selected',String(el.dataset.tab===tab));el.querySelector('span').textContent=el.dataset.tab==='ai'?(tab==='ai'?'AI鉴别':'AI鉴定'):(tab==='ai'?'专家鉴别':'专家鉴定');});
  $('pageScroll').scrollTop=0;closePopup();if(tab==='ai')positionCards(true);
  if(!updateHistory)return;
  const url=new URL(location.href);if(wasOffline){url.searchParams.delete('view');url.searchParams.delete('order');}if(tab==='expert')url.searchParams.set('tab','expert');else url.searchParams.delete('tab');history.replaceState(history.state,'',url);
@@ -147,12 +152,34 @@ function createTicker(){
 }
 let lastFrame=0;
 function tick(now){const dt=Math.min((now-lastFrame)/1000||0,.05);lastFrame=now;tickerRows.forEach(r=>{r.width=r.el.firstElementChild.getBoundingClientRect().width+7;if(!r.drag&&!r.hover&&!blocked())r.x+=r.dir*7*dt;if(r.width){r.x=((r.x%r.width)-r.width)%r.width;r.el.style.transform=`translate3d(${r.x}px,0,0)`;}});requestAnimationFrame(tick);}
-function syncInput(){const input=$('inputField');$('wordCount').textContent=`${input.value.length}/250`;$('sendBtn').classList.toggle('active',!!input.value.trim()||state.photos.length>0);$('inputWrap').classList.toggle('focus',document.activeElement===input||!!input.value);}
-function renderPhotos(){const tray=$('attachmentTray');tray.hidden=!state.photos.length;tray.innerHTML=state.photos.map((p,i)=>`<span class="attachment"><img src="${p.url}" alt="待咨询照片 ${i+1}"><button type="button" data-remove="${i}" aria-label="移除照片 ${i+1}">×</button></span>`).join('');syncInput();}
-function appendMessage(text,kind,photos=[]){const el=document.createElement('div');el.className='message '+kind;photos.forEach(p=>{const img=document.createElement('img');img.src=p.url;img.alt='本地上传照片';el.append(img);});const copy=document.createElement('span');copy.textContent=text;el.append(copy);$('messages').append(el);$('messages').scrollTop=$('messages').scrollHeight;}
-function sendMessage(){if(state.busy)return;const input=$('inputField'),value=input.value.trim();if(!value&&!state.photos.length){toast('请先输入问题或上传照片');input.focus();return;}
- $('conversationPanel').hidden=false;appendMessage((state.selected?`[${state.selected}]\n`:'')+(value||'请帮我看看这件物品'), 'user',state.photos);input.value='';state.photos=[];renderPhotos();input.blur();state.busy=true;
- messageTimer=setTimeout(()=>{appendMessage('这是一段交互演示，尚未连接真实鉴定服务。\n\n'+(state.selected?`你已选择「${state.selected}」。`:'你可以先选择一个鉴定技能。')+'实际服务可在接入后，根据照片和问题继续咨询。图片当前仅在本机预览，没有上传。','assistant');state.busy=false;},650);
+function syncInput(){
+ const input=$('inputField');
+ if(!input.isComposing)input.value=appraisalInput.normalizeText(input.value);
+ $('wordCount').textContent=`${appraisalInput.countText(input.value)}/250`;
+ const ready=!!input.value.trim()||state.photos.length>0;
+ $('sendBtn').disabled=state.busy||uploading||!ready;
+ $('sendBtn').setAttribute('aria-label',state.busy?'正在鉴定':'发送咨询');
+ $('sendBtn').classList.toggle('active',ready&&!state.busy);
+ $('inputWrap').classList.toggle('focus',document.activeElement===input||!!input.value);
+}
+function renderPhotos(){
+ const tray=$('attachmentTray');tray.hidden=!state.photos.length;
+ tray.innerHTML=state.photos.map((p,i)=>`<span class="attachment">${p.sample?'<span class="appraisal-attachment-sample">':''}<img src="${escaped(p.url)}" alt="待咨询照片 ${i+1}">${p.sample?'</span>':''}<button type="button" data-remove="${i}" aria-label="移除照片 ${i+1}">×</button></span>`).join('');syncInput();
+}
+function sendMessage(){
+ if(state.busy||uploading)return;
+ const input=$('inputField'),value=appraisalInput.normalizeText(input.value).trim();
+ if(!value&&!state.photos.length)return;
+ if(!appraisal.send({text:value,photos:[...state.photos],skill:state.selected}))return;
+ input.value='';state.photos=[];renderPhotos();input.blur();
+ $('inputField').placeholder='上传商品图片，我来看看真假';
+}
+function closeConversation(){appraisal.close();$('inputField').placeholder='请上传图片或输入想聊的话题';suspend();}
+function addScreenshotSample(){
+ if(state.photos.length>=appraisalInput.MAX_PHOTOS){toast('每次最多选择 9 张照片');return;}
+ state.photos.push({url:'assets/appraisal/sample-reference.png',name:'截图中的气垫示例',sample:true});
+ state.selected='鉴美妆';updateSkillBtn();renderPhotos();suspend();
+ toast('已添加截图示例，点击发送查看完整流程');
 }
 createCards();createTicker();renderPopup();updateSkillBtn();setBanner(0);requestAnimationFrame(tick);
 $('skillGrid').onclick=e=>{const card=e.target.closest('[data-index]');if(card)selectSkill(skills[Number(card.dataset.index)].label);};
@@ -163,17 +190,46 @@ $('bannerDots').onclick=e=>{const b=e.target.closest('[data-page]');if(b)setBann
 $('bannerTrack').onclick=e=>{const b=e.target.closest('[data-banner]');if(!b)return;const n=Number(b.dataset.banner);if(n===0)openPopup();else if(n===1)setTab('expert');else selectSkill('估价格');};
 $('skillList').onclick=e=>{const item=e.target.closest('[data-skill]');if(item)selectSkill(item.dataset.skill);};$('skillBtn').onclick=openPopup;$('popupClose').onclick=closePopup;$('sheetMask').onclick=closePopup;
 $('ticker').onclick=e=>{const b=e.target.closest('[data-question]');if(!b)return;const track=b.closest('.suggestion-track');if(Number(track.dataset.noClick)>Date.now())return;$('inputField').value=b.dataset.question;syncInput();suspend();$('inputField').focus();};
-$('inputField').addEventListener('input',syncInput);$('inputField').addEventListener('focus',()=>{syncInput();suspend();});$('inputField').addEventListener('blur',syncInput);$('inputField').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();sendMessage();}});
-$('sendBtn').onclick=sendMessage;$('uploadBtn').onclick=()=>$('photoInput').click();$('photoInput').onchange=e=>{for(const file of e.target.files){if(!file.type.startsWith('image/')){toast('请选择图片文件');continue;}if(file.size>12*1024*1024){toast('单张照片请小于 12MB');continue;}if(state.photos.length>=3){toast('最多选择 3 张照片');break;}state.photos.push({url:URL.createObjectURL(file),name:file.name});}e.target.value='';renderPhotos();suspend();};$('attachmentTray').onclick=e=>{const b=e.target.closest('[data-remove]');if(b){const i=Number(b.dataset.remove);URL.revokeObjectURL(state.photos[i].url);state.photos.splice(i,1);renderPhotos();}};
-$('closeConversation').onclick=()=>{$('conversationPanel').hidden=true;suspend();};
-const menu=document.querySelector('.icon-menu');menu.onclick=e=>{e.stopPropagation();$('menuPanel').hidden=!$('menuPanel').hidden;};$('menuSkills').onclick=openPopup;$('menuMotion').onclick=()=>{toggleMotion();$('menuPanel').hidden=true;};$('newConversation').onclick=()=>{clearTimeout(messageTimer);state.busy=false;$('messages').replaceChildren();$('inputField').value='';state.photos.forEach(p=>URL.revokeObjectURL(p.url));state.photos=[];renderPhotos();$('conversationPanel').hidden=true;$('menuPanel').hidden=true;setTab('ai');toast('已开始新的咨询');};document.addEventListener('click',e=>{if(!e.target.closest('.menu-panel')&&!e.target.closest('.icon-menu'))$('menuPanel').hidden=true;});
+$('inputField').addEventListener('input',syncInput);$('inputField').addEventListener('focus',()=>{syncInput();suspend();});$('inputField').addEventListener('blur',syncInput);
+$('inputField').addEventListener('compositionstart',()=>{$('inputField').isComposing=true;});
+$('inputField').addEventListener('compositionend',()=>{$('inputField').isComposing=false;syncInput();});
+$('inputField').addEventListener('keydown',e=>{if(!e.isComposing&&!$('inputField').isComposing&&e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();sendMessage();}});
+$('sendBtn').onclick=sendMessage;
+const uploadDialog=$('appraisalUploadDialog');
+$('uploadBtn').onclick=()=>uploadDialog.showModal();
+$('appraisalUploadClose').onclick=()=>uploadDialog.close();
+$('appraisalChooseFiles').onclick=()=>{uploadDialog.close();$('photoInput').click();};
+$('appraisalUseSample').onclick=()=>{uploadDialog.close();addScreenshotSample();};
+uploadDialog.addEventListener('click',e=>{if(e.target===uploadDialog){const r=uploadDialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)uploadDialog.close();}});
+$('photoInput').onchange=async e=>{
+ const files=[...e.target.files];e.target.value='';
+ const revision=++uploadRevision;uploading=true;syncInput();
+ const {accepted,errors}=appraisalInput.selectFiles(files,state.photos.length);
+ for(const file of accepted){
+  const url=URL.createObjectURL(file),img=new Image();img.src=url;
+  try{await img.decode();if(revision===uploadRevision&&state.photos.length<appraisalInput.MAX_PHOTOS)state.photos.push({url,name:file.name});else URL.revokeObjectURL(url);}
+  catch{URL.revokeObjectURL(url);errors.push('这张图片无法读取，请重新选择');}
+ }
+ if(revision!==uploadRevision)return;
+ uploading=false;
+ if(errors.length)toast([...new Set(errors)].join('；'));
+ renderPhotos();suspend();
+};
+$('attachmentTray').onclick=e=>{const b=e.target.closest('[data-remove]');if(b){const i=Number(b.dataset.remove);if(state.photos[i].url.startsWith('blob:'))URL.revokeObjectURL(state.photos[i].url);state.photos.splice(i,1);renderPhotos();}};
+$('closeConversation').onclick=closeConversation;
+const menu=document.querySelector('.icon-menu');menu.onclick=e=>{e.stopPropagation();$('menuPanel').hidden=!$('menuPanel').hidden;};$('menuSkills').onclick=openPopup;$('menuMotion').onclick=()=>{toggleMotion();$('menuPanel').hidden=true;};
+$('newConversation').onclick=()=>{uploadRevision++;uploading=false;appraisal.reset();state.busy=false;$('inputField').value='';state.photos.forEach(p=>{if(p.url.startsWith('blob:'))URL.revokeObjectURL(p.url);});state.photos=[];renderPhotos();$('menuPanel').hidden=true;setTab('ai');toast('已开始新的咨询');};
+$('menuHome').onclick=()=>{closeConversation();$('menuPanel').hidden=true;};
+document.addEventListener('click',e=>{if(!e.target.closest('.menu-panel')&&!e.target.closest('.icon-menu'))$('menuPanel').hidden=true;});
 // Retain original expert interactions and content. No payment or real order is submitted.
 let agreed=false;$('expertCta').onclick=()=>window.expertPicker.open();
 document.querySelectorAll('.home-mode-tab-item').forEach(el=>el.onclick=()=>setTab(el.dataset.tab));
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closePopup();$('menuPanel').hidden=true;$('conversationPanel').hidden=true;}if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"],[role="tab"]')){e.preventDefault();e.target.click();}if(e.key==='Tab'&&$('skillPopup').classList.contains('show')){const focusables=[...$('skillPopup').querySelectorAll('button,[tabindex="0"]')];const first=focusables[0],last=focusables.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!e.defaultPrevented&&!document.querySelector('dialog[open]')){if($('skillPopup').classList.contains('show')||$('agreeSheet').classList.contains('show'))closePopup();else if(!$('menuPanel').hidden)$('menuPanel').hidden=true;else closeConversation();}if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"],[role="tab"]')){e.preventDefault();e.target.click();}if(e.key==='Tab'&&$('skillPopup').classList.contains('show')){const focusables=[...$('skillPopup').querySelectorAll('button,[tabindex="0"]')];const first=focusables[0],last=focusables.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
 new ResizeObserver(()=>positionCards(true)).observe($('skillCarousel'));
 const composerLayout=new ResizeObserver(()=>{if(state.tab==='ai'){const app=$('app').getBoundingClientRect(),input=$('inputArea').getBoundingClientRect();$('conversationPanel').style.bottom=`${app.bottom-input.top}px`;}});
 ['app','inputArea','pageScroll'].forEach(id=>composerLayout.observe($(id)));
 skillTimer=setInterval(()=>{if(!blocked()&&Date.now()>state.holdUntil)moveSkill(1);},5200);bannerTimer=setInterval(()=>{if(!blocked()&&Date.now()>state.bannerHold&&Date.now()>state.holdUntil)setBanner(state.banner+1);},7800);
 if(new URLSearchParams(location.search).get('tab')==='expert')setTab('expert');else setTab('ai');
-window.addEventListener('pagehide',()=>{state.photos.forEach(p=>URL.revokeObjectURL(p.url));});
+syncInput();
+if(new URLSearchParams(location.search).get('appraisal')==='demo'){setTab('ai');addScreenshotSample();}
+window.addEventListener('pagehide',()=>{uploadRevision++;appraisal.reset();state.photos.forEach(p=>{if(p.url.startsWith('blob:'))URL.revokeObjectURL(p.url);});});

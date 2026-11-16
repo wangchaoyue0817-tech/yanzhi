@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#050810"><meta name="description" content="图灵鉴X · 从日常好物，到珍藏之选。探索鉴定技能，开启图片咨询。"><title>图灵鉴X · 首页</title><link rel="icon" href="data:,"><link rel="stylesheet" href="original.css"><link rel="stylesheet" href="app.css"><link rel="stylesheet" href="spectral.css?v=7"><link rel="stylesheet" href="expert-refinement.css?v=11"><link rel="stylesheet" href="expert-picker.css?v=9"><link rel="stylesheet" href="offline-appraisal.css?v=11"><link rel="stylesheet" href="offline-orders.css?v=13"><link rel="stylesheet" href="offline-order-report.css?v=13"><link rel="stylesheet" href="offline-order-controller.css?v=13"><link rel="stylesheet" href="beauty-analysis.css?v=28"><link rel="stylesheet" href="beauty-entry-v16.css?v=16"><link rel="stylesheet" href="beauty-report-v16.css?v=28"><link rel="stylesheet" href="beauty-report-v17.css?v=19"><link rel="stylesheet" href="beauty-celebration.css?v=17"><link rel="stylesheet" href="beauty-report-v20.css?v=20">
-  <link rel="stylesheet" href="beauty-report-v21.css?v=21">  <link rel="stylesheet" href="beauty-loading-v22.css?v=22"><link rel="stylesheet" href="beauty-commerce-v22.css?v=3301"><link rel="stylesheet" href="beauty-merchant-v28.css?v=28"><link rel="stylesheet" href="beauty-ranking.css?v=3301"></head><body>
+  <link rel="stylesheet" href="beauty-report-v21.css?v=21">  <link rel="stylesheet" href="beauty-loading-v22.css?v=22"><link rel="stylesheet" href="beauty-commerce-v22.css?v=3301"><link rel="stylesheet" href="beauty-merchant-v28.css?v=28"><link rel="stylesheet" href="beauty-ranking.css?v=3301"><link rel="stylesheet" href="appraisal-conversation.css?v=3401"><link rel="stylesheet" href="appraisal-input.css?v=3401"></head><body>
   <div class="stage">
     <div class="phone" id="phone">
-      <div class="chat-container" id="app">
+      <div class="chat-container has-appraisal-ui" id="app">
         <div class="navbar">
           <div class="status-bar">
             <div class="time">11:42</div>
@@ -185,7 +185,7 @@
           <div class="input-glow-wrapper" id="inputWrap">
             <div id="attachmentTray" class="attachment-tray" hidden></div>
             <div class="input-text-row">
-              <textarea class="input-field" id="inputField" maxlength="250" placeholder="请上传图片或输入想聊的话题"></textarea>
+              <label class="appraisal-sr-only" for="inputField">鉴定问题</label><textarea class="input-field" id="inputField" placeholder="请上传图片或输入想聊的话题"></textarea>
               <span class="input-word-count" id="wordCount">0/250</span>
             </div>
             <div class="input-toolbar">
@@ -200,7 +200,7 @@
                 </div>
               </div>
               <button type="button" class="send-btn" aria-label="发送咨询" id="sendBtn">
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 18V6m-5.5 5.5L12 6l5.5 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m3 10 18-7-6 18-4-7-8-4Z" fill="currentColor"/><path d="m11 14 5-6" stroke="#8272e9" stroke-width="1.3"/></svg>
               </button>
             </div>
           </div>
@@ -209,9 +209,10 @@
 
         <div class="home-indicator"></div>
 
-        <div class="conversation-panel" id="conversationPanel" hidden><header><button id="closeConversation" aria-label="返回首页">‹</button><strong>鉴定咨询</strong><span>演示会话</span></header><div class="messages" id="messages" aria-live="polite"></div></div>
+        <section class="conversation-panel" id="conversationPanel" aria-label="AI鉴定对话" hidden><button id="closeConversation" hidden aria-label="返回首页">返回首页</button><div class="messages" id="messages"></div></section>
+        <dialog id="appraisalUploadDialog" aria-labelledby="appraisalUploadTitle"><header><h2 id="appraisalUploadTitle">上传照片</h2><button id="appraisalUploadClose" aria-label="关闭上传">×</button></header><button class="appraisal-upload-option" id="appraisalChooseFiles"><span>从设备选择照片</span><span aria-hidden="true">＋</span></button><button class="appraisal-upload-option" id="appraisalUseSample"><span>使用截图示例</span><span aria-hidden="true">↗</span></button><p class="appraisal-upload-note">最多 9 张，每张不超过 12MB。图片仅在本机预览，本页演示处理过程与示例结论。</p></dialog>
         <div class="toast" id="toast" role="status" hidden></div>
-        <div class="menu-panel" id="menuPanel" hidden><strong>图灵鉴X</strong><button id="newConversation">新的咨询</button><button id="menuSkills">选择技能</button><button id="menuMotion">暂停 / 继续动效</button><div class="menu-services">鉴定服务</div><button id="menuOfflineOrders">线下评鉴服务</button><p>交互演示 · 信息仅在本机保存</p></div>
+        <div class="menu-panel" id="menuPanel" hidden><strong>图灵鉴X</strong><button id="menuHome">返回首页</button><button id="newConversation">新的咨询</button><button id="menuSkills">选择技能</button><button id="menuMotion">暂停 / 继续动效</button><div class="menu-services">鉴定服务</div><button id="menuOfflineOrders">线下评鉴服务</button><p>交互演示 · 信息仅在本机保存</p></div>
         <div class="sheet-mask" id="sheetMask"></div>
         <div class="skill-popup" id="skillPopup" role="dialog" aria-modal="true" aria-label="选择鉴定技能">
           <div class="skill-popup-header">
@@ -243,4 +244,4 @@ AI可鉴别的产品会在提交订单并付款后即时给出结果，专家鉴
     </div>
   </div>
 
-  <script src="data.js"></script><script src="assets/icon-map.js"></script><script src="app.js?v=13"></script><script type="module" src="beauty-analysis.js?v=3301"></script><script type="module" src="beauty-ranking.js?v=3301"></script><script src="expert-catalog.js?v=9"></script><script src="expert-picker.js?v=12"></script><script src="offline-appraisal.js?v=13"></script><script src="offline-order-model.js?v=13"></script><script src="offline-order-views.js?v=13"></script><script src="offline-order-report.js?v=13"></script><script src="offline-order-controller.js?v=13"></script><script src="offline-router.js?v=13"></script></body></html>
+  <script src="data.js"></script><script src="assets/icon-map.js"></script><script src="appraisal-input-model.js?v=3401"></script><script src="appraisal-conversation.js?v=3401"></script><script src="app.js?v=3401"></script><script type="module" src="beauty-analysis.js?v=3401"></script><script type="module" src="beauty-ranking.js?v=3301"></script><script src="expert-catalog.js?v=9"></script><script src="expert-picker.js?v=12"></script><script src="offline-appraisal.js?v=13"></script><script src="offline-order-model.js?v=13"></script><script src="offline-order-views.js?v=13"></script><script src="offline-order-report.js?v=13"></script><script src="offline-order-controller.js?v=13"></script><script src="offline-router.js?v=13"></script></body></html>

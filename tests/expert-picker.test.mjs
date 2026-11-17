@@ -101,8 +101,11 @@ test('expert picker routes from category and brand to photo upload on the first 
   click(brand);
   assert.equal(get('epSeriesLayer').hidden, false);
   assert.equal(get('epProductView').inert, true);
-  assert.equal(document.activeElement, get('epSeriesDrawer'));
-  click(get('epSeriesMask'));
+  assert.equal(document.activeElement, get('epSeriesLayer'));
+  const backButton = get('epSeriesMask');
+  assert.equal(backButton.tag, 'button');
+  assert.equal(backButton.attributes['aria-label'], '点击返回');
+  click(backButton);
   assert.equal(get('epSeriesLayer').hidden, true);
   assert.equal(get('epProductView').inert, false);
   assert.equal(document.activeElement, brand);
@@ -133,4 +136,15 @@ test('expert picker routes from category and brand to photo upload on the first 
   history.back();
   assert.equal(root.hidden, true);
   assert.equal(document.activeElement, cta);
+});
+
+test('the expert directory only displays service tags, even for AI-tagged catalog choices', () => {
+  const { get, click, window } = setup();
+  window.expertPicker.open();
+  click(get('epCategoryGrid').querySelector('[data-ep-category="1"]'));
+  assert.match(get('epBrandGroups').innerHTML, /肌肤之钥 CPB/u);
+  assert.doesNotMatch(get('epBrandGroups').innerHTML, />AI</u);
+  click(get('epBrandGroups').querySelector('[data-ep-brand="0"]'));
+  assert.match(get('epSeriesGroups').innerHTML, />无损</u);
+  assert.doesNotMatch(get('epSeriesGroups').innerHTML, />AI</u);
 });

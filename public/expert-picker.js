@@ -34,10 +34,10 @@
   </div>
   <div class="ep-aux-view" id="epAuxView" hidden></div>
   <section class="ep-upload-view" id="epUploadView" hidden></section>
-  <div class="ep-series-layer" id="epSeriesLayer" hidden>
-   <div class="ep-series-mask" id="epSeriesMask" aria-hidden="true"></div>
-   <section class="ep-series-drawer" id="epSeriesDrawer" role="dialog" aria-modal="true" aria-labelledby="epDrawerTitle" tabindex="-1">
-    <header class="ep-drawer-header"><h3 id="epDrawerTitle"></h3><button class="ep-icon-button" id="epDrawerClose" type="button" aria-label="关闭系列列表">${glyph('x')}</button></header>
+  <div class="ep-series-layer" id="epSeriesLayer" role="dialog" aria-modal="true" aria-labelledby="epDrawerTitle" tabindex="-1" hidden>
+   <button class="ep-series-mask" id="epSeriesMask" type="button" aria-label="点击返回"><span class="ep-series-back-hint" aria-hidden="true"><span class="ep-series-back-icon">${glyph('caret-left')}</span><span class="ep-series-back-label">点击返回</span></span></button>
+   <section class="ep-series-drawer" id="epSeriesDrawer">
+    <header class="ep-drawer-header"><h3 id="epDrawerTitle"></h3></header>
     <label class="ep-directory-search ep-search">${glyph('magnifying-glass')}<input id="epStyleSearch" type="search" autocomplete="off" aria-label="搜索系列" placeholder="搜索系列"></label>
     <div class="ep-directory-layout">
      <div class="ep-directory-scroll" id="epSeriesScroll"><div id="epSeriesGroups"></div></div>
@@ -117,7 +117,7 @@
     field.placeholder = c.groupLabel === '品牌' ? '搜索系列' : `搜索${c.styleLabel}`;
     field.setAttribute('aria-label', field.placeholder);
     renderSeries(true);
-    e('epSeriesDrawer').focus({ preventScroll: true });
+    seriesLayer.focus({ preventScroll: true });
    } else if (previous?.view === 'series' && brandTrigger?.isConnected) {
     brandTrigger.focus({ preventScroll: true });
    } else if (previous?.view === 'upload') {
@@ -212,8 +212,8 @@
   list.scroll.scrollTop = resetScroll ? 0 : scrollTop;
  }
 
- function badge(item) {
-  return `${item.ai ? '<span class="ep-ai-badge">AI</span>' : ''}${item.badge ? `<span class="ep-service-badge">${html(item.badge)}</span>` : ''}`;
+ function serviceBadge(item) {
+  return item.badge ? `<span class="ep-service-badge">${html(item.badge)}</span>` : '';
  }
 
  function renderBrands(resetScroll) {
@@ -225,7 +225,7 @@
    const selected = selection?.category === route.category && selection.brand === item.index;
    const style = selected ? category.groups[item.index].styles[selection.series] : null;
    const styleName = typeof style === 'string' ? style : style?.name;
-   return `<button type="button" class="ep-directory-row" data-ep-brand="${item.index}" aria-haspopup="dialog"${selected ? ' aria-current="true"' : ''}><span class="ep-row-label">${html(item.name)}${badge(item)}${styleName ? `<small class="ep-row-secondary">${html(styleName)}</small>` : ''}</span>${glyph('caret-right')}</button>`;
+   return `<button type="button" class="ep-directory-row" data-ep-brand="${item.index}" aria-haspopup="dialog"${selected ? ' aria-current="true"' : ''}><span class="ep-row-label">${html(item.name)}${styleName ? `<small class="ep-row-secondary">${html(styleName)}</small>` : ''}</span>${glyph('caret-right')}</button>`;
   }, `没有找到相关${category.groupLabel}`, resetScroll);
  }
 
@@ -234,7 +234,7 @@
   const { groups } = directory.series(brand, e('epStyleSearch').value);
   updateList(seriesList, groups, item => {
    const selected = selection?.category === route.category && selection.brand === route.brand && selection.series === item.index;
-   return `<button type="button" class="ep-directory-row" data-ep-style="${item.index}"${selected ? ' aria-current="true"' : ''}><span class="ep-row-label">${html(item.name)}${badge(item)}</span>${glyph(selected ? 'check' : 'caret-right')}</button>`;
+   return `<button type="button" class="ep-directory-row" data-ep-style="${item.index}"${selected ? ' aria-current="true"' : ''}><span class="ep-row-label">${html(item.name)}${serviceBadge(item)}</span>${glyph(selected ? 'check' : 'caret-right')}</button>`;
   }, '没有找到相关款式', resetScroll);
  }
 
@@ -256,10 +256,10 @@
  }
 
  root.addEventListener('click', event => {
-  const target = event.target.closest('button,[data-ep-close],#epSeriesMask');
+  const target = event.target.closest('button,[data-ep-close]');
   if (!target || !route) return;
   if (target.hasAttribute('data-ep-close') && route.view !== 'categories') return;
-  if (target.hasAttribute('data-ep-close') || ['epClose', 'epBack', 'epDrawerClose', 'epSeriesMask'].includes(target.id)) {
+  if (target.hasAttribute('data-ep-close') || ['epClose', 'epBack', 'epSeriesMask'].includes(target.id)) {
    history.back();
    return;
   }
@@ -302,7 +302,7 @@
    return;
   }
   if (event.key !== 'Tab') return;
-  const scope = route.view === 'series' ? e('epSeriesDrawer') : panel;
+  const scope = route.view === 'series' ? seriesLayer : panel;
   const focusable = [...scope.querySelectorAll('button,input,textarea,[tabindex="0"]')].filter(el => !el.disabled && el.tabIndex >= 0 && el.getClientRects().length);
   const first = focusable[0];
   const last = focusable.at(-1);

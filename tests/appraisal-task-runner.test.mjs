@@ -53,6 +53,7 @@ test('an ordinary upload without query flags emits seven steps and a conclusion 
   assert.equal(events[7].result.paragraphs.length, 3);
   assert.equal(events[7].result.rows.length, 4);
   assert.deepEqual(plain(events[7].result.rows[0]), ['粉扑正面', '真', '81%']);
+  assert.deepEqual(plain(events[7].result.rows.at(-1)), ['气垫正面', '假/偏低', '26%']);
   assert.equal(timers.size, 0);
   advance(120000);
   assert.equal(events.length, 8, 'completion is emitted only once');
@@ -100,17 +101,27 @@ test('the experience neither checks nor calls an external provider', async () =>
   assert.ok(events.every(event => event.type !== 'error'));
 });
 
-test('all emitted user-facing copy uses formal wording', async () => {
+test('operation records use concise readable copy without internal files or commands', async () => {
   const { run, advance } = setup();
   const events = [];
   const work = run({ photos: ordinaryPhotos(), onEvent: event => events.push(event) });
   advance(40000);
   await work;
+  const records = events.filter(event => event.type === 'step');
+  assert.equal(records[0].title, '校验上传图片');
+  assert.match(records[1].title, /匹配.*品牌.*系列/);
+  assert.equal(records.at(-1).title, '汇总鉴定结论');
+  for (const record of records) {
+    assert.ok(record.title.trim() && record.detail.trim());
+    assert.doesNotMatch(record.title, /正在|思考|阅读了|读取文件/);
+    assert.doesNotMatch(record.detail, /正在|思考/);
+  }
   const copy = events.flatMap(event => event.type === 'step'
     ? [event.title, event.detail, ...event.technical]
     : [event.result.title, ...event.result.paragraphs, ...event.result.rows.flat()]).join('\n');
   assert.doesNotMatch(copy, /演示|示例|示范|\b(?:demo|fixture|mock)\b/i);
   assert.doesNotMatch(copy, /鉴定服务.*(?:接入|连接|未配置)|JianxAppraisalService/);
+  assert.doesNotMatch(copy, /\b(?:sandbox|skills?|mcp_call|appraise_\w*|python|node|bash|curl)\b|[\w.-]+\.(?:md|py|[cm]?js|json|ya?ml|sh)\b|(?:skills|scripts|src|node_modules)\//i);
 });
 
 test('cancellation clears timers and prevents all later task events', async () => {

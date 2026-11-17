@@ -1,35 +1,14 @@
-/* The service supplies progress events; only the isolated screenshot fixture uses a clock. */
+/* Local interaction prototype: all uploads play the same reference case without network access. */
 (function (root) {
   'use strict';
 
-  const connectionError = '暂时无法连接鉴定服务，请稍后重试';
-
-  function run({ photos = [], text = '', skill = '', signal, onEvent = () => {} } = {}) {
+  function run({ signal, onEvent = () => {} } = {}) {
     if (signal?.aborted) return;
     const emit = event => { if (!signal?.aborted) onEvent(event); };
-    const fail = () => emit({ type: 'error', message: connectionError, retryable: true });
-    const service = root.JianxAppraisalService;
-
-    if (typeof service?.run === 'function') {
-      try {
-        const work = service.run({ photos, text, skill, signal, onEvent: emit });
-        return work && typeof work.then === 'function' ? Promise.resolve(work).catch(fail) : work;
-      } catch (_) {
-        fail();
-        return;
-      }
-    }
-
-    const fixtureEnabled = new URLSearchParams(root.location?.search || '').get('appraisal') === 'demo';
-    if (!fixtureEnabled || !Array.isArray(photos) || !photos.length || !photos.every(photo => photo?.sample === true)) {
-      fail();
-      return;
-    }
-
-    return runScreenshotFixture(emit, signal);
+    return runLocalSequence(emit, signal);
   }
 
-  function runScreenshotFixture(emit, signal) {
+  function runLocalSequence(emit, signal) {
     const stages = [
       [0, 'identify', '识别商品信息', '正在确认商品类别与包装特征', '归类美妆商品，提取可见包装文字。'],
       [4000, 'angles', '梳理拍摄角度', '正在整理各张照片对应的商品部位', '对应粉扑正面、放置层、底部与气垫正面。'],

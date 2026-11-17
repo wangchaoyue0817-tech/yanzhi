@@ -4,8 +4,8 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 
 const source = readFileSync(new URL('../public/appraisal-task-runner.js', import.meta.url), 'utf8');
-const errorMessage = '暂时无法连接鉴定服务，请稍后重试';
 const plain = value => JSON.parse(JSON.stringify(value));
+const ordinaryPhotos = () => [{ url: 'blob:user-upload', name: 'my-photo.jpg' }];
 
 function setup(search = '') {
   let time = 0;
@@ -32,62 +32,10 @@ function setup(search = '') {
   };
 }
 
-test('the current provider receives original task inputs and owns completion events', async () => {
-  const { run, window, timers } = setup('?appraisal=demo');
-  const photos = [{ sample: true }];
-  const signal = new AbortController().signal;
+test('an ordinary upload without query flags emits seven steps and a conclusion at forty seconds', async () => {
+  const { run, advance, timers } = setup();
   const events = [];
-  let received;
-  window.JianxAppraisalService = {
-    run(options) {
-      assert.equal(this, window.JianxAppraisalService);
-      received = options;
-      options.onEvent({ type: 'step', id: 'real-task', title: '检查照片', status: 'active' });
-      return Promise.resolve({ title: '返回值不能自动完成任务' });
-    }
-  };
-  await run({ photos, text: '检查包装', skill: '美妆', signal, onEvent: event => events.push(event) });
-  assert.equal(received.photos, photos);
-  assert.equal(received.text, '检查包装');
-  assert.equal(received.skill, '美妆');
-  assert.equal(received.signal, signal);
-  assert.equal(events.length, 1);
-  assert.equal(events[0].id, 'real-task');
-  assert.equal(timers.size, 0);
-  received.onEvent({ type: 'complete', result: { title: '完成' } });
-  assert.equal(events[1].type, 'complete');
-});
-
-test('ordinary uploads never receive the screenshot result without a provider', () => {
-  for (const [search, photos] of [
-    ['', [{ url: 'blob:user' }]],
-    ['', [{ sample: true }]],
-    ['?appraisal=demo', [{ sample: true }, { url: 'blob:user' }]],
-    ['?appraisal=demo', []],
-    ['?appraisal=demo', [null]],
-    ['?appraisal=other', [{ sample: true }]]
-  ]) {
-    const { run, timers } = setup(search);
-    const events = [];
-    run({ photos, onEvent: event => events.push(event) });
-    assert.deepEqual(plain(events), [{ type: 'error', message: errorMessage, retryable: true }]);
-    assert.equal(timers.size, 0);
-  }
-});
-
-test('a provider can be connected after the runner loads', () => {
-  const { run, window } = setup();
-  const events = [];
-  run({ onEvent: event => events.push(event) });
-  window.JianxAppraisalService = { run({ onEvent }) { onEvent({ type: 'heartbeat' }); } };
-  run({ onEvent: event => events.push(event) });
-  assert.deepEqual(events.map(event => event.type), ['error', 'heartbeat']);
-});
-
-test('the isolated screenshot task emits seven distinct steps and completes at forty seconds', async () => {
-  const { run, advance, timers } = setup('?appraisal=demo');
-  const events = [];
-  const work = run({ photos: [{ sample: true }], onEvent: event => events.push(event) });
+  const work = run({ photos: ordinaryPhotos(), text: '请看看这个商品', skill: '鉴美妆', onEvent: event => events.push(event) });
   assert.equal(events.length, 1);
   assert.equal(events[0].type, 'step');
   advance(10000);
@@ -96,23 +44,80 @@ test('the isolated screenshot task emits seven distinct steps and completes at f
   assert.equal(events.length, 7);
   assert.equal(new Set(events.map(event => event.id)).size, 7);
   assert.ok(events.every(event => event.status === 'active' && event.technical.length > 0));
-  assert.ok(events.every(event => !/演示|示例|示范|demo|fixture|mock/i.test(event.title + event.detail)));
-  assert.ok(events.every(event => event.type !== 'complete'));
+  assert.ok(events.every(event => event.type !== 'complete' && event.type !== 'error'));
   advance(40000);
   await work;
   assert.equal(events.length, 8);
   assert.equal(events[7].type, 'complete');
   assert.match(events[7].result.title, /65/);
   assert.equal(events[7].result.paragraphs.length, 3);
+  assert.equal(events[7].result.rows.length, 4);
   assert.deepEqual(plain(events[7].result.rows[0]), ['粉扑正面', '真', '81%']);
   assert.equal(timers.size, 0);
+  advance(120000);
+  assert.equal(events.length, 8, 'completion is emitted only once');
+});
+
+test('URL flags and photo metadata do not gate the local experience', async () => {
+  const transcripts = [];
+  for (const [search, photos] of [
+    ['', ordinaryPhotos()],
+    ['?unrelated=1', ordinaryPhotos()],
+    ['?appraisal=demo', ordinaryPhotos()],
+    ['', [{ url: 'blob:another-photo', sample: true }]],
+    ['', [...ordinaryPhotos(), { url: 'blob:second-photo', name: 'second.png' }]]
+  ]) {
+    const { run, advance, timers } = setup(search);
+    const events = [];
+    const work = run({ photos, onEvent: event => events.push(event) });
+    advance(40000);
+    await work;
+    assert.equal(timers.size, 0);
+    assert.equal(events.at(-1).type, 'complete');
+    transcripts.push(plain(events));
+  }
+  for (const transcript of transcripts.slice(1)) assert.deepEqual(transcript, transcripts[0]);
+});
+
+test('the experience neither checks nor calls an external provider', async () => {
+  const { run, window, advance } = setup();
+  let providerReads = 0;
+  let providerCalls = 0;
+  Object.defineProperty(window, 'JianxAppraisalService', {
+    get() {
+      providerReads++;
+      return { run() { providerCalls++; throw new Error('provider must not run'); } };
+    }
+  });
+  Object.defineProperty(window, 'location', { get() { assert.fail('URL state is not an access requirement'); } });
+  const events = [];
+  const work = run({ photos: ordinaryPhotos(), onEvent: event => events.push(event) });
+  advance(40000);
+  await work;
+  assert.equal(providerReads, 0);
+  assert.equal(providerCalls, 0);
+  assert.equal(events.at(-1).type, 'complete');
+  assert.ok(events.every(event => event.type !== 'error'));
+});
+
+test('all emitted user-facing copy uses formal wording', async () => {
+  const { run, advance } = setup();
+  const events = [];
+  const work = run({ photos: ordinaryPhotos(), onEvent: event => events.push(event) });
+  advance(40000);
+  await work;
+  const copy = events.flatMap(event => event.type === 'step'
+    ? [event.title, event.detail, ...event.technical]
+    : [event.result.title, ...event.result.paragraphs, ...event.result.rows.flat()]).join('\n');
+  assert.doesNotMatch(copy, /演示|示例|示范|\b(?:demo|fixture|mock)\b/i);
+  assert.doesNotMatch(copy, /鉴定服务.*(?:接入|连接|未配置)|JianxAppraisalService/);
 });
 
 test('cancellation clears timers and prevents all later task events', async () => {
-  const { run, advance, timers } = setup('?appraisal=demo');
+  const { run, advance, timers } = setup();
   const controller = new AbortController();
   const events = [];
-  const work = run({ photos: [{ sample: true }], signal: controller.signal, onEvent: event => events.push(event) });
+  const work = run({ photos: ordinaryPhotos(), signal: controller.signal, onEvent: event => events.push(event) });
   advance(16000);
   assert.equal(events.length, 4);
   controller.abort();
@@ -120,36 +125,70 @@ test('cancellation clears timers and prevents all later task events', async () =
   assert.equal(timers.size, 0);
   advance(120000);
   assert.equal(events.length, 4);
+  assert.ok(events.every(event => event.type !== 'complete'));
 });
 
-test('already cancelled work never starts, including when a provider exists', () => {
-  for (const provider of [false, true]) {
-    const { run, window, timers } = setup('?appraisal=demo');
-    const controller = new AbortController();
-    controller.abort();
-    if (provider) window.JianxAppraisalService = { run() { assert.fail('cancelled provider must not start'); } };
-    run({ photos: [{ sample: true }], signal: controller.signal, onEvent() { assert.fail('cancelled task emitted an event'); } });
-    assert.equal(timers.size, 0);
-  }
-});
-
-test('provider errors become readable failures and late events after cancellation are ignored', async () => {
-  const { run, window } = setup();
-  const events = [];
-  window.JianxAppraisalService = { run() { throw new Error('private internal error'); } };
-  run({ onEvent: event => events.push(event) });
-  window.JianxAppraisalService = { run() { return Promise.reject(new Error('private internal error')); } };
-  await run({ onEvent: event => events.push(event) });
-  assert.deepEqual(events.map(event => event.message), [errorMessage, errorMessage]);
-
+test('already cancelled work never starts', async () => {
+  const { run, timers } = setup();
   const controller = new AbortController();
-  let emit;
-  let reject;
-  window.JianxAppraisalService = { run({ onEvent }) { emit = onEvent; return new Promise((_, fail) => { reject = fail; }); } };
-  const work = run({ signal: controller.signal, onEvent: event => events.push(event) });
   controller.abort();
-  emit({ type: 'complete', result: { title: '迟到结果' } });
-  reject(new Error('late failure'));
+  await run({ photos: ordinaryPhotos(), signal: controller.signal, onEvent() { assert.fail('cancelled task emitted an event'); } });
+  assert.equal(timers.size, 0);
+});
+
+test('cancellation from the first event does not leave scheduled work behind', async () => {
+  const { run, timers, advance } = setup();
+  const controller = new AbortController();
+  const events = [];
+  const work = run({ photos: ordinaryPhotos(), signal: controller.signal, onEvent(event) { events.push(event); controller.abort(); } });
   await work;
-  assert.equal(events.length, 2);
+  assert.equal(events.length, 1);
+  assert.equal(timers.size, 0);
+  advance(120000);
+  assert.equal(events.length, 1);
+});
+
+test('overlapping calls retain independent clocks and cancelling one leaves the other running', async () => {
+  const { run, advance, timers } = setup();
+  const firstController = new AbortController();
+  const first = [], second = [];
+  const workA = run({ photos: ordinaryPhotos(), signal: firstController.signal, onEvent: event => first.push(event) });
+  advance(5000);
+  const workB = run({ photos: [{ url: 'blob:second-call' }], onEvent: event => second.push(event) });
+  advance(16000);
+  assert.equal(first.length, 4);
+  assert.equal(second.length, 3);
+  firstController.abort();
+  await workA;
+  assert.ok(timers.size > 0, 'only the cancelled call timers are removed');
+  advance(44999);
+  assert.equal(first.length, 4);
+  assert.equal(second.length, 7);
+  advance(45000);
+  await workB;
+  assert.equal(first.length, 4);
+  assert.equal(second.length, 8);
+  assert.equal(second.at(-1).type, 'complete');
+  assert.equal(timers.size, 0);
+});
+
+test('later calls create fresh events and result data on the same page', async () => {
+  const { run, advance, timers } = setup();
+  const first = [], second = [];
+  const workA = run({ photos: ordinaryPhotos(), onEvent: event => first.push(event) });
+  advance(40000);
+  await workA;
+  const originalTitle = first[0].title;
+  first[0].title = '上一轮修改';
+  first.at(-1).result.rows[0][0] = '上一轮修改';
+  const workB = run({ photos: ordinaryPhotos(), onEvent: event => second.push(event) });
+  assert.equal(second.length, 1);
+  assert.equal(second[0].title, originalTitle);
+  advance(79999);
+  assert.equal(second.length, 7);
+  advance(80000);
+  await workB;
+  assert.equal(second.length, 8);
+  assert.equal(second.at(-1).result.rows[0][0], '粉扑正面');
+  assert.equal(timers.size, 0);
 });

@@ -399,10 +399,6 @@
           : Math.max(0, messages.scrollHeight - messages.clientHeight);
       };
       try {
-        if (typeof runTask !== 'function') {
-          onEvent({ type: 'error', message: '暂时无法连接鉴定服务，请稍后重试' });
-          return;
-        }
         const output = runTask({ ...turn.payload, signal: abort.signal, onEvent });
         // Providers may stream after returning; only an explicit result ends the task.
         if (output && typeof output.then === 'function') output.then(result => {

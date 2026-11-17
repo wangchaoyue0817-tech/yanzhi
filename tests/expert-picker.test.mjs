@@ -98,6 +98,7 @@ test('expert picker routes from category and brand to photo upload on the first 
   field.value = '香奈儿';
   field.fire('input');
   const brand = get('epBrandGroups').querySelector('[data-ep-brand="0"]');
+  assert.equal(brand.hasAttribute('aria-current'), false);
   click(brand);
   assert.equal(get('epSeriesLayer').hidden, false);
   assert.equal(get('epProductView').inert, true);
@@ -131,6 +132,12 @@ test('expert picker routes from category and brand to photo upload on the first 
   assert.equal(upload.shown, false);
   assert.equal(field.value, '香奈儿');
   assert.match(get('epBrandGroups').innerHTML, /Classic Flap/u);
+  const selectedBrand = get('epBrandGroups').querySelector('[data-ep-brand="0"]');
+  assert.equal(selectedBrand.attributes['aria-current'], 'true');
+  click(selectedBrand);
+  assert.equal(get('epSeriesGroups').querySelector('[data-ep-style="0"]').attributes['aria-current'], 'true');
+  assert.equal(get('epSeriesGroups').querySelector('[data-ep-style="1"]').hasAttribute('aria-current'), false);
+  history.back();
   history.back();
   assert.equal(root.dataset.view, 'categories');
   history.back();

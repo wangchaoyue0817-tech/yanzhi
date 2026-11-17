@@ -258,14 +258,15 @@
   border: 0;
   border-radius: 10px;
   color: #e2e6f4;
-  background: #1b2032;
+  background: transparent;
   text-align: left;
   font-size: 14px;
   font-weight: 500;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
-.ep-directory-row:hover { background: #242b42; }
+.ep-directory-row:hover { color: #fff; }
+.ep-directory-row:hover > .ep-icon { color: #b9adff; }
 .ep-directory-row[aria-current="true"],
 .ep-directory-row[aria-pressed="true"] {
   color: #f2edff;

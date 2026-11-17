@@ -168,6 +168,11 @@
     function createStage(turn, step) {
       const row = element('li', 'appraisal-stage');
       row.dataset.stepId = step.id;
+      const group = step.reference ? element('h3', 'appraisal-stage-group', '深度思考') : null;
+      if (group) {
+        group.hidden = true;
+        row.append(group);
+      }
       const button = element('button', 'appraisal-stage-toggle');
       button.type = 'button';
       const key = `${turn.key}-${turn.stages.size}`;
@@ -198,7 +203,7 @@
       pre.append(code);
       technical.append(pre);
       row.append(button, technical);
-      const stage = { row, button, name, description, label, arrow, technical, pre, code, records: [] };
+      const stage = { row, group, button, name, description, label, arrow, technical, pre, code, records: [] };
       button.onclick = () => setStageExpanded(turn, stage, technical.hidden);
       turn.stages.set(step.id, stage);
       turn.list.append(row);
@@ -209,8 +214,9 @@
       turn.process.dataset.state = view.status;
       turn.process.classList.toggle('is-complete', view.status === 'complete');
       turn.process.classList.toggle('is-stopped', view.status === 'stopped');
-      turn.title.textContent = view.title;
+      turn.title.textContent = view.reference && view.status === 'running' ? '深度思考' : view.title;
       turn.detail.textContent = view.detail;
+      turn.detail.hidden = !view.detail;
       turn.elapsed.textContent = view.elapsedLabel;
       if (turn.status !== view.status) turn.mark.innerHTML = markIcons[view.status];
       const determinate = view.progress !== null;
@@ -226,12 +232,21 @@
       turn.stages.forEach((stage, id) => {
         if (historyIds.has(id) && (!stage.technical.hidden || stage.row.contains(doc.activeElement))) turn.historyExpanded = true;
       });
+      turn.list.classList.toggle('has-reference-groups', view.reference);
+      let groupNeedsHeading = false;
       for (const step of view.steps) {
         const stage = turn.stages.get(step.id) || createStage(turn, step);
         stage.row.dataset.state = step.status;
         stage.row.hidden = historyIds.has(step.id) && !turn.historyExpanded;
+        if (!step.reference) groupNeedsHeading = false;
+        if (step.groupStart) groupNeedsHeading = true;
+        if (stage.group) {
+          stage.group.hidden = stage.row.hidden || !groupNeedsHeading;
+          if (!stage.group.hidden) groupNeedsHeading = false;
+        }
         stage.name.textContent = step.title;
         stage.description.textContent = step.detail;
+        stage.description.hidden = !step.detail;
         stage.label.textContent = stageLabels[step.status];
         stage.records = step.technical;
         stage.button.disabled = step.technical.length === 0;

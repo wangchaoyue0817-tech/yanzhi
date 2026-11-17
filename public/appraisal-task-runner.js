@@ -10,13 +10,33 @@
 
   function runLocalSequence(emit, signal) {
     const stages = [
-      [0, 'identify', '校验上传图片', '清晰度与可见部位', '检查画面清晰度，标记遮挡或反光的部位。'],
-      [4000, 'angles', '匹配商品品牌及系列', '圣罗兰皮革气垫', '根据包装标识和外壳样式匹配商品系列。'],
-      [9000, 'puff', '确认鉴定点位', '粉扑、放置层、底部、正面', '从图中定位粉扑正面、粉扑放置层、气垫底部和气垫正面。'],
-      [15000, 'packaging', '比对包装标识', '字体、位置与外壳工艺', '逐项比对包装字样、标识位置和外壳结构。'],
-      [22000, 'base', '核对底部批号与色号', '批号 78Z33X · 色号 20', '核对底部标签的批号、色号与产地标注。'],
-      [29000, 'review', '复核反光部位', '气垫正面', '正面反光遮住部分工艺细节，记录为补拍点位。'],
-      [35000, 'conclusion', '汇总鉴定结论', '点位结果与补拍建议', '汇总各点位的符合度，并整理正面补拍建议。']
+      [0, 'validate-file', '运行校验、查看文件：single-image.md', false, 'const validation = {"file":"single-image.md","checks":["syntax","requiredFields"],"passed":true};'],
+      [1200, 'read-skill', '已读取 SKILL.md', true, 'const document = {"file":"SKILL.md","sections":["input","workflow","output"]};'],
+      [2400, 'inspect-directory', '查看鉴定技能目录结构', true, 'const directory = {"files":["SKILL.md","single-image.md","point-match.md","wording.md"]};'],
+      [3600, 'read-point-match', '已读取 point-match.md', true, 'const document = {"file":"point-match.md","fields":["point","image","confidence"]};'],
+      [4800, 'read-wording', '已读取 wording.md', true, 'const document = {"file":"wording.md","sections":["conclusion","evidence","limitations"]};'],
+      [6000, 'confirm-images', '确认图片文件存在', true, 'const images = [{"name":"photo_01.jpg","exists":true},{"name":"photo_02.jpg","exists":true}];'],
+      [7800, 'cpb-multi', '对 CPB 隔离霜 5 图运行多图鉴定', true, 'const appraisal = {"brand":"CPB","category":"隔离霜","imageCount":5,"mode":"multi"};'],
+      [9800, 'rerun-series', '用命中的系列 ID 重跑多图鉴定', true, 'const appraisal = {"seriesId":"series_local_01","imageCount":5,"mode":"multi"};'],
+      [11000, 'rerun-brand', '带品牌重跑多图鉴定', false, 'const appraisal = {"brand":"CPB","imageCount":5,"matchBy":"brand"};'],
+      [12800, 'check-card-category', '查询卡牌类目是否支持', true, 'const category = {"name":"卡牌","supported":true,"modes":["single","multi"]};'],
+      [14000, 'batch-args', '查看批量鉴定脚本参数', true, 'const argumentsList = ["category","brand","images","pointKeys"];'],
+      [15800, 'card-batch', '对宝可梦卡牌正反面批量鉴定', true, 'const batch = {"brand":"宝可梦","images":["card_front.jpg","card_back.jpg"]};'],
+      [17400, 'catalog-args', '查看目录查询脚本用法', true, 'const argumentsList = ["category","brand","series"];'],
+      [18600, 'card-series', '查询宝可梦品牌下的系列', false, 'const catalog = {"brand":"宝可梦","series":[{"id":"series_local_02","name":"25周年"}]};'],
+      [20400, 'card-brand-multi', '按品牌对宝可梦卡牌做多图鉴定', true, 'const appraisal = {"brand":"宝可梦","imageCount":2,"matchBy":"brand"};'],
+      [22000, 'read-batch', '已读取 appraise_batch.py', true, 'const document = {"file":"appraise_batch.py","entry":"batch","inputs":["images","pointKeys"]};'],
+      [23200, 'read-catalog', '查看目录数据文件', true, 'const catalog = {"category":"卡牌","brand":"宝可梦","pointCount":2};'],
+      [24400, 'inspect-point-keys', '检查宝可梦品牌级鉴定点键', false, 'const points = {"brand":"宝可梦","keys":["front_print","back_print"]};'],
+      [25800, 'inspect-cli', '检查点位键与 mcp_call 命令行入口', true, 'const entry = {"name":"mcp_call","pointKeys":["front_print","back_print"],"argumentsValid":true};'],
+      [27000, 'read-single', '已读取 single-image.md', true, 'const document = {"file":"single-image.md","sections":["upload","pointMatch","result"]};'],
+      [28400, 'upload-args', '查看单张与多张上传脚本参数', true, 'const argumentsList = {"single":["image"],"multi":["images","pointKeys"]};'],
+      [29800, 'validate-auth', '运行校验、查看文件：auth-and-tools.md', true, 'const validation = {"file":"auth-and-tools.md","checks":["requiredFields"],"passed":true};'],
+      [31000, 'read-auth', '已读取 auth-and-tools.md', false, 'const document = {"file":"auth-and-tools.md","sections":["credentials","uploads"]};'],
+      [32600, 'credentials', '为卡牌正反面签发上传凭证', true, 'const uploadMetadata = {"files":["card_front.jpg","card_back.jpg"],"credentialRef":"local_record_01"};'],
+      [34400, 'upload-images', '上传卡牌正反面图片', true, 'const uploadMetadata = {"files":[{"name":"card_front.jpg","bytes":204800},{"name":"card_back.jpg","bytes":198400}]};'],
+      [36200, 'point-appraise', '卡牌正反面逐点单鉴', true, 'const points = [{"key":"front_print","image":"card_front.jpg"},{"key":"back_print","image":"card_back.jpg"}];'],
+      [38000, 'aggregate', '卡牌正反面整鉴出结论', true, 'const summary = {"imageCount":2,"pointCount":2,"completed":true};']
     ];
 
     return new Promise(resolve => {
@@ -37,7 +57,7 @@
         }, delay);
         timers.add(timer);
       };
-      const step = ([, id, title, detail, technical]) => emit({ type: 'step', id, title, detail, status: 'active', technical: [technical] });
+      const step = ([, id, title, groupStart, technical]) => emit({ type: 'step', id, title, detail: '', status: 'active', reference: true, groupStart, technical: [technical] });
 
       signal?.addEventListener('abort', finish, { once: true });
       if (signal?.aborted) { finish(); return; }

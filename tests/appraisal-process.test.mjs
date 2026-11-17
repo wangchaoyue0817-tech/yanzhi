@@ -148,6 +148,74 @@ test('history expanded by the user remains open when further events arrive', () 
   assert.equal(h.get('appraisal-history-toggle').getAttribute('aria-expanded'), 'true');
 });
 
+test('reference group headings follow the visible cutoff and return to the original group starts when history opens', () => {
+  const h = harness();
+  const records = [
+    ['已读取 SKILL.md', true],
+    ['查看鉴定技能目录结构', false],
+    ['已读取 point-match.md', false],
+    ['已读取 wording.md', true],
+    ['确认图片文件存在', false],
+    ['查看批量鉴定脚本参数', false],
+    ['已读取 appraise_batch.py', false]
+  ];
+  records.forEach(([title, groupStart], index) => h.emit({
+    type: 'step', id: `ref-${index}`, title, detail: '', status: 'active',
+    reference: true, groupStart, technical: [`record_${index}()`]
+  }));
+  const stages = stageControls(h);
+  const visibleHeadings = () => stages.flatMap((stage, index) => {
+    const heading = find(stage.row, 'appraisal-stage-group');
+    if (stage.row.hidden || !heading || heading.hidden) return [];
+    assert.equal(heading.tagName, 'H3');
+    assert.equal(heading.textContent, '深度思考');
+    return [index];
+  });
+  assert.deepEqual(stages.map(stage => stage.row.hidden), [true, true, true, true, false, false, false]);
+  assert.deepEqual(visibleHeadings(), [4], 'a hidden group start must not orphan its visible records');
+  assert.match(stages[6].toggle.textContent, /已读取 appraise_batch\.py/);
+  assertStageRecordsClosed(h);
+  h.get('appraisal-history-toggle').onclick();
+  assert.ok(stages.every(stage => !stage.row.hidden));
+  assert.deepEqual(visibleHeadings(), [0, 3]);
+  assert.match(stages[0].toggle.textContent, /已读取 SKILL\.md/);
+  assert.match(stages[2].toggle.textContent, /已读取 point-match\.md/);
+  h.get('appraisal-history-toggle').onclick();
+  assert.deepEqual(visibleHeadings(), [4]);
+  assertStageRecordsClosed(h);
+});
+
+test('allowed reference titles remain readable while code requires an explicit reveal and completion clears it', () => {
+  const h = harness();
+  h.emit({
+    type: 'step', id: 'reference-file', title: '已读取 SKILL.md', detail: '', status: 'active',
+    reference: true, groupStart: true, technical: ['cat skills/private/internal.md']
+  });
+  const stage = stageControls(h)[0];
+  assert.match(stage.toggle.textContent, /已读取 SKILL\.md/);
+  assertStageRecordsClosed(h);
+  assert.doesNotMatch(h.get('appraisal-process').textContent, /cat skills|private\/internal/);
+  stage.toggle.onclick();
+  assert.equal(stage.technical.hidden, false);
+  assert.equal(stage.technical.textContent, 'cat skills/private/internal.md');
+  stage.technical.children[0].focus();
+  h.advance(12000);
+  h.emit({ type: 'complete', result: '鉴定结论已生成' });
+  assert.equal(h.get('appraisal-status-title').textContent, '已完成');
+  assert.equal(h.get('appraisal-elapsed').textContent.replaceAll(' ', ''), '12秒');
+  assert.equal(h.get('appraisal-process-summary').getAttribute('aria-expanded'), 'false');
+  assert.equal(h.doc.activeElement, h.get('appraisal-process-summary'));
+  assertStageRecordsClosed(h);
+  assert.doesNotMatch(h.get('appraisal-process').textContent, /cat skills|private\/internal/);
+  h.advance(60000);
+  assert.equal(h.get('appraisal-elapsed').textContent.replaceAll(' ', ''), '12秒');
+
+  const ordinary = harness();
+  ordinary.emit({ type: 'step', id: 'ordinary-file', title: '已读取 SKILL.md', detail: '', status: 'active' });
+  assert.doesNotMatch(stageControls(ordinary)[0].toggle.textContent, /SKILL\.md/,
+    'reference exceptions must not relax ordinary event sanitization');
+});
+
 test('readable process copy hides code and disables technical actions when records are absent', () => {
   const h = harness();
   h.emit({ type: 'step', id: 'unsafe', title: 'sandbox {"mode":"new"}', detail: '读取 skills/internal.md', status: 'active' });

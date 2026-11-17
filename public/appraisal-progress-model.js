@@ -3,12 +3,18 @@
   'use strict';
 
   const technicalCopy = /[{}<>`]|\b(?:sandbox|skills?|mcp(?:_call)?|appraise_\w*|function|const|undefined|traceback|worked\s+for)\b|\b[\w.-]+\.(?:md|py|[cm]?js|tsx?|jsx|json|ya?ml|sh|css|html|log|env)\b|(?:https?:\/\/|(?:^|\s)(?:\/|[a-z]:[\\/])|\b(?:src|skills|scripts|public|node_modules)\/)|\b[a-z]+\w*_[a-z]\w*\b|演示|示例|示范|\b(?:demo|mock|fixture)\b/iu;
+  const referenceTitle = /^(?:(?:运行校验、查看文件[：:]\s*|已读取\s+)(?:(?:SKILL|single-image|point-match|wording|auth-and-tools)\.md|appraise_batch\.py)|检查点位键与 mcp_call 命令行入口)$/u;
 
   function publicText(value, fallback, limit = 160) {
     if (typeof value !== 'string') return fallback;
     const text = value.replace(/\s+/gu, ' ').trim();
     if (!text || technicalCopy.test(text)) return fallback;
     return Array.from(text).slice(0, limit).join('');
+  }
+  function stepTitle(value, reference) {
+    // These are literal labels from the reference screenshot, not task output.
+    if (reference && typeof value === 'string' && referenceTitle.test(value)) return value;
+    return publicText(value, '正在处理任务', 80);
   }
   function clock(value, fallback) {
     return Number.isFinite(value) ? value : fallback;
@@ -43,11 +49,16 @@
       let step = state.steps.find(item => item.id === id);
       if (step?.status === 'done' && event.status === 'active') return false;
       if (!step) {
-        step = { id, title: publicText(event.title, '正在处理任务', 80), detail: publicText(event.detail, '正在处理当前环节'), status: event.status, technical: [], startedAt: time, updatedAt: time };
+        const reference = event.reference === true;
+        step = {
+          id, reference, groupStart: reference && event.groupStart === true,
+          title: stepTitle(event.title, reference), detail: publicText(event.detail, reference ? '' : '正在处理当前环节'),
+          status: event.status, technical: [], startedAt: time, updatedAt: time
+        };
         state.steps.push(step);
       } else {
-        if (event.title !== undefined) step.title = publicText(event.title, '正在处理任务', 80);
-        if (event.detail !== undefined) step.detail = publicText(event.detail, '正在处理当前环节');
+        if (event.title !== undefined) step.title = stepTitle(event.title, step.reference);
+        if (event.detail !== undefined) step.detail = publicText(event.detail, step.reference ? '' : '正在处理当前环节');
         step.status = event.status;
         step.updatedAt = time;
       }
@@ -92,11 +103,12 @@
     const recent = state.steps.slice(Math.max(0, currentIndex - 2), currentIndex + 1);
     const recentSet = new Set(recent.map(step => step.id));
     const waiting = state.status === 'running' && clock(now, state.lastEventAt) - state.lastEventAt >= 30000;
+    const reference = state.steps.some(step => step.reference);
     return {
-      title: state.status === 'complete' ? '分析完成' : state.status === 'error' ? '处理暂未完成' : state.status === 'stopped' ? '分析已停止' : current?.title || '正在处理任务',
-      detail: state.status === 'complete' ? '鉴定结论已生成' : state.status === 'error' ? state.error : state.status === 'stopped' ? '可重新发起鉴定' : waiting ? '仍在处理当前环节，请稍候' : current?.detail || '等待任务进展',
+      title: state.status === 'complete' ? (reference ? '已完成' : '分析完成') : state.status === 'error' ? '处理暂未完成' : state.status === 'stopped' ? '分析已停止' : current?.title || '正在处理任务',
+      detail: state.status === 'complete' ? '鉴定结论已生成' : state.status === 'error' ? state.error : state.status === 'stopped' ? '可重新发起鉴定' : waiting ? '仍在处理当前环节，请稍候' : current?.detail ?? '等待任务进展',
       elapsedLabel: elapsedLabel(state, now), status: state.status, progress: state.progress,
-      currentId: current?.id || null, recentIds: recent.map(step => step.id),
+      reference, currentId: current?.id || null, recentIds: recent.map(step => step.id),
       historyIds: state.steps.filter(step => !recentSet.has(step.id)).map(step => step.id),
       steps: state.steps
     };

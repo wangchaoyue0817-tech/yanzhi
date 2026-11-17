@@ -59,6 +59,7 @@
 .appraisal-status-line{display:flex;align-items:center;gap:7px;min-width:0}
 .appraisal-status-title{font-size:14px;line-height:21px;font-weight:550;letter-spacing:.1px;color:#e8ebf8}
 .appraisal-status-detail{display:block;font-size:12px;line-height:18px;color:#a4aec6;overflow-wrap:anywhere}
+.appraisal-status-detail[hidden]{display:none}
 .appraisal-elapsed{flex:0 0 auto;font-size:11px;font-weight:400;line-height:20px;font-variant-numeric:tabular-nums;color:#98a3bc;white-space:nowrap}
 .appraisal-progress-value{flex:0 0 auto;font-size:11px;line-height:20px;font-variant-numeric:tabular-nums;color:#c4bcf4;white-space:nowrap}
 .appraisal-progress-value[hidden],.appraisal-progress-value:empty{display:none}
@@ -108,6 +109,17 @@
 .appraisal-stage-technical[hidden]{display:none}
 .appraisal-stage-technical pre{max-height:168px;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;margin:0;padding:10px 11px;border:1px solid #889ac51b;border-radius:9px;background:#0e1526;color:#a4b0ca;font:11px/1.8 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;tab-size:2}
 .appraisal-stage-technical code{font:inherit;color:inherit}
+/* Screenshot-style groups keep the full activity wording and a light text hierarchy. */
+.appraisal-stages.has-reference-groups .appraisal-stage-group{display:block;margin:15px 0 5px;padding:0;color:#aeb5cc;font-size:15px;font-weight:500;line-height:24px;letter-spacing:.1px;overflow-wrap:anywhere}
+.appraisal-stages.has-reference-groups>.appraisal-stage:first-child .appraisal-stage-group{margin-top:3px}
+.appraisal-stages.has-reference-groups .appraisal-stage-group[hidden]{display:none}
+.appraisal-stages.has-reference-groups .appraisal-stage:before{display:none}
+.appraisal-stages.has-reference-groups .appraisal-stage-toggle{min-height:44px;padding-top:10px;padding-bottom:10px}
+.appraisal-stages.has-reference-groups .appraisal-stage-copy>strong{font-weight:400;line-height:22px;white-space:normal;overflow-wrap:anywhere;word-break:normal}
+.appraisal-stages.has-reference-groups .appraisal-stage[data-state="active"] .appraisal-stage-copy>strong{font-weight:500}
+.appraisal-stages.has-reference-groups .appraisal-stage-copy>p:empty,.appraisal-stages.has-reference-groups .appraisal-stage-copy>p[hidden]{display:none}
+.appraisal-stages.has-reference-groups .appraisal-stage-meta{align-self:start;min-height:22px}
+.appraisal-stages.has-reference-groups .appraisal-stage-technical pre{max-height:220px;font-size:12px;line-height:1.8;color:#b8c3d9}
 .appraisal-history-toggle{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 28px);min-height:44px;margin:0 14px 6px;padding:8px 10px;border:0;border-radius:8px;background:transparent;color:#9eabc4;font-family:inherit;font-size:12px;font-weight:400;line-height:20px;cursor:pointer;touch-action:manipulation}
 .appraisal-history-toggle:hover{color:#d2d8ec;background:#d5ddff03}
 .appraisal-history-toggle:not(:has(svg)):after{content:'';width:5px;height:5px;border-right:1px solid currentColor;border-bottom:1px solid currentColor;transform:translateY(-2px) rotate(45deg);transition:transform .2s ease}

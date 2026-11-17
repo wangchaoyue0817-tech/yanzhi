@@ -3,6 +3,28 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 
+test('the series drawer gradient keeps the letter index readable', () => {
+  const css = readFileSync(new URL('../public/expert-picker.css', import.meta.url), 'utf8');
+  const gradient = css.match(/\.ep-series-drawer\s*\{[^}]*background:\s*linear-gradient\(([^)]+)\)/u)?.[1] ?? '';
+  const stops = gradient.match(/#[\da-f]{6}\b/giu) ?? [];
+  const letterColor = css.match(/\.ep-letter-nav button\s*\{[^}]*\bcolor:\s*(#[\da-f]{6})\b/iu)?.[1];
+  assert.ok(new Set(stops).size > 1, 'the drawer has distinct gradient stops');
+  assert.ok(letterColor);
+
+  const luminance = (hex) => {
+    const [red, green, blue] = hex.slice(1).match(/../gu).map(channel => {
+      const srgb = Number.parseInt(channel, 16) / 255;
+      return srgb <= 0.04045 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
+    });
+    return red * 0.2126 + green * 0.7152 + blue * 0.0722;
+  };
+  for (const stop of stops) {
+    const colors = [luminance(stop), luminance(letterColor)];
+    const contrast = (Math.max(...colors) + 0.05) / (Math.min(...colors) + 0.05);
+    assert.ok(contrast >= 4.5, `letter index contrast is too low against ${stop}`);
+  }
+});
+
 function setup() {
   const nodes = new Map();
   const windowEvents = new Map();

@@ -15,21 +15,25 @@ const names = directoryList => Array.from(directoryList.groups.flatMap(group => 
 test('bilingual brand names use their English initials with original selection indices', () => {
   const bags = category('bags');
   const list = directory.brands(bags);
-  assert.deepEqual(letters(list), ['C', 'D', 'G', 'L']);
-  assert.deepEqual(names(list), ['香奈儿 Chanel', '迪奥 Dior', '古驰 Gucci', '路易威登 Louis Vuitton']);
+  assert.deepEqual(letters(list).filter(letter => ['C', 'D', 'G', 'L'].includes(letter)), ['C', 'D', 'G', 'L']);
+  for (const [letter, name] of [['C', '香奈儿 Chanel'], ['D', '迪奥 Dior'], ['G', '古驰 Gucci'], ['L', '路易威登 Louis Vuitton']]) {
+    assert.ok(list.groups.find(group => group.letter === letter).items.some(item => item.name === name));
+  }
   for (const { items } of list.groups) {
     for (const { index, name } of items) assert.equal(bags.groups[index].name, name);
   }
   assert.deepEqual(Array.from(list.popular, item => item.index), [0, 1, 2]);
 });
 
-test('brand search finds Chinese and English labels or matching series', () => {
+test('brand search matches brand labels and series search matches only the active brand’s series names', () => {
   const bags = category('bags');
   assert.deepEqual(names(directory.brands(bags, '奈儿')), ['香奈儿 Chanel']);
   assert.deepEqual(names(directory.brands(bags, 'louisvuitton')), ['路易威登 Louis Vuitton']);
-  const matches = directory.brands(bags, ' Chanel 2.55 ');
-  assert.deepEqual(names(matches), ['香奈儿 Chanel']);
-  assert.equal(matches.popular.length, 0);
+  assert.deepEqual(names(directory.brands(bags, 'Classic Flap')), []);
+  assert.deepEqual(names(directory.brands(bags, ' Chanel 2.55 ')), []);
+  assert.equal(directory.brands(bags, 'Chanel').popular.length, 0);
+  assert.deepEqual(names(directory.series(bags.groups[0], 'classic flap')), ['Classic Flap']);
+  assert.deepEqual(names(directory.series(bags.groups[0], 'Chanel 2.55')), []);
   assert.deepEqual(names(directory.brands(category('beauty'), 'lancome')), ['Lancôme']);
   assert.deepEqual(names(directory.brands(category('beauty'), 'MAC')), ['M·A·C']);
   assert.deepEqual(letters(directory.brands(bags, 'Alpine')), []);
@@ -46,12 +50,15 @@ test('Chinese names group by pinyin, including category types without a brand', 
 
 test('series groups put numeric models last and retain catalog metadata', () => {
   const chanel = category('bags').groups[0];
-  assert.deepEqual(letters(directory.series(chanel)), ['B', 'C', '#']);
-  assert.deepEqual(names(directory.series(chanel)), ['Boy Chanel', 'Classic Flap', '2.55']);
+  const chanelSeries = directory.series(chanel);
+  assert.equal(letters(chanelSeries).at(-1), '#');
+  for (const [letter, name] of [['B', 'Boy Chanel'], ['C', 'Classic Flap'], ['#', '2.55']]) {
+    assert.ok(chanelSeries.groups.find(group => group.letter === letter).items.some(item => item.name === name));
+  }
   const compact = directory.series(chanel, '２.５５');
   assert.equal(compact.groups[0].items[0].index, 1);
   const cpb = category('beauty').groups[0];
-  assert.deepEqual(letters(directory.series(cpb)), ['C', 'G', 'Q', '#']);
+  assert.equal(letters(directory.series(cpb)).at(-1), '#');
   const item = directory.series(cpb, '通用瓶').groups[0].items[0];
   assert.equal(item.index, 0);
   assert.equal(item.name, '全品牌通用瓶鉴定');

@@ -22,7 +22,7 @@
   </div>
   <div class="ep-product-view" id="epProductView" hidden>
    <nav class="ep-category-nav" aria-label="切换鉴定品类"><div class="ep-category-tabs" id="epCategoryTabs"></div></nav>
-   <label class="ep-directory-search ep-search">${glyph('magnifying-glass')}<input id="epGroupSearch" type="search" autocomplete="off" aria-label="搜索品牌、系列、产品名称" placeholder="搜索品牌、系列、产品名称"></label>
+   <label class="ep-directory-search ep-search">${glyph('magnifying-glass')}<input id="epGroupSearch" type="search" autocomplete="off" aria-label="搜索品牌" placeholder="搜索品牌"></label>
    <div class="ep-directory-layout">
     <div class="ep-directory-scroll" id="epBrandScroll">
      <section class="ep-popular" id="epPopular" hidden><h3>热门品牌</h3><div class="ep-popular-items" id="epPopularItems"></div></section>
@@ -38,7 +38,7 @@
    <div class="ep-series-mask" id="epSeriesMask" aria-hidden="true"></div>
    <section class="ep-series-drawer" id="epSeriesDrawer" role="dialog" aria-modal="true" aria-labelledby="epDrawerTitle" tabindex="-1">
     <header class="ep-drawer-header"><h3 id="epDrawerTitle"></h3><button class="ep-icon-button" id="epDrawerClose" type="button" aria-label="关闭系列列表">${glyph('x')}</button></header>
-    <label class="ep-directory-search ep-search">${glyph('magnifying-glass')}<input id="epStyleSearch" type="search" autocomplete="off" aria-label="搜索款式或系列" placeholder="搜索款式或系列"></label>
+    <label class="ep-directory-search ep-search">${glyph('magnifying-glass')}<input id="epStyleSearch" type="search" autocomplete="off" aria-label="搜索系列" placeholder="搜索系列"></label>
     <div class="ep-directory-layout">
      <div class="ep-directory-scroll" id="epSeriesScroll"><div id="epSeriesGroups"></div></div>
      <nav class="ep-letter-nav" id="epSeriesIndex" aria-label="系列首字母定位"></nav>
@@ -114,7 +114,7 @@
     e('epDrawerTitle').textContent = b.name;
     const field = e('epStyleSearch');
     field.value = '';
-    field.placeholder = c.groupLabel === '品牌' ? '搜索款式或系列' : '搜索细分类型';
+    field.placeholder = c.groupLabel === '品牌' ? '搜索系列' : `搜索${c.styleLabel}`;
     field.setAttribute('aria-label', field.placeholder);
     renderSeries(true);
     e('epSeriesDrawer').focus({ preventScroll: true });
@@ -192,7 +192,7 @@
   renderedCategory = index;
   const groupSearch = e('epGroupSearch');
   groupSearch.value = '';
-  groupSearch.placeholder = category.groupLabel === '品牌' ? '搜索品牌、系列、产品名称' : '搜索种类或细分类型';
+  groupSearch.placeholder = `搜索${category.groupLabel}`;
   groupSearch.setAttribute('aria-label', groupSearch.placeholder);
   brandList.index.setAttribute('aria-label', `${category.groupLabel}首字母定位`);
   const tabs = e('epCategoryTabs');

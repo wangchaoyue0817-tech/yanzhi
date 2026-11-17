@@ -18,10 +18,10 @@
     return String(query ?? '').trim().split(/\s+/u).map(searchKey).filter(Boolean);
   }
 
-  function matches(names, terms) {
+  function matches(name, terms) {
     if (!terms.length) return true;
-    const keys = names.map(searchKey);
-    return terms.every(term => keys.some(key => key.includes(term)));
+    const key = searchKey(name);
+    return terms.every(term => key.includes(term));
   }
 
   function pinyinInitial(name) {
@@ -69,8 +69,7 @@
     const isBrandCategory = category?.groupLabel === '品牌';
     const items = [];
     for (const [index, entry] of (category?.groups ?? []).entries()) {
-      const names = [entry.name, ...entry.styles.map(style => styleInfo(style).name)];
-      if (matches(names, terms)) {
+      if (matches(entry.name, terms)) {
         items.push({ index, name: entry.name, ...(entry.ai ? { ai: true } : {}) });
       }
     }
@@ -81,7 +80,7 @@
   function series(brand, query = '') {
     const terms = searchTerms(query);
     const items = (brand?.styles ?? []).map((entry, index) => ({ ...styleInfo(entry), index }));
-    return { groups: groupEntries(items.filter(item => matches([item.name], terms)), false) };
+    return { groups: groupEntries(items.filter(item => matches(item.name, terms)), false) };
   }
 
   root.ExpertDirectory = Object.freeze({ brands, series });

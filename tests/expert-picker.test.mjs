@@ -91,6 +91,10 @@ test('expert picker routes from category and brand to photo upload on the first 
   assert.equal(get('epConfirm'), undefined);
 
   const field = get('epGroupSearch');
+  assert.equal(field.placeholder, '搜索品牌');
+  field.value = 'Classic Flap';
+  field.fire('input');
+  assert.match(get('epBrandGroups').innerHTML, /没有找到相关品牌/u);
   field.value = '香奈儿';
   field.fire('input');
   const brand = get('epBrandGroups').querySelector('[data-ep-brand="0"]');
@@ -106,6 +110,10 @@ test('expert picker routes from category and brand to photo upload on the first 
 
   click(brand);
   const seriesSearch = get('epStyleSearch');
+  assert.equal(seriesSearch.placeholder, '搜索系列');
+  seriesSearch.value = '香奈儿';
+  seriesSearch.fire('input');
+  assert.match(get('epSeriesGroups').innerHTML, /没有找到相关款式/u);
   seriesSearch.value = 'classic';
   seriesSearch.fire('input');
   click(get('epSeriesGroups').querySelector('[data-ep-style="0"]'));

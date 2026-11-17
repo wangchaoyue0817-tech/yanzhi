@@ -1,5 +1,5 @@
 // Demo product library. Prices and category order follow the supplied screenshots.
-// Group and style options are illustrative and can be replaced with a live catalog.
+// Recognizable brand and series names make the prototype browsable. Options do not describe live service coverage.
 const EXPERT_CATALOG = [
   {
     "id": "bags",
@@ -13,7 +13,11 @@ const EXPERT_CATALOG = [
         "styles": [
           "Classic Flap",
           "2.55",
-          "Boy Chanel"
+          "Boy Chanel",
+          "Chanel 19",
+          "Chanel 22",
+          "Chanel 25",
+          "Coco Handle"
         ]
       },
       {
@@ -21,7 +25,13 @@ const EXPERT_CATALOG = [
         "styles": [
           "Speedy",
           "Neverfull",
-          "Alma"
+          "Alma",
+          "NéoNoé",
+          "Noé",
+          "Speedy Bandoulière",
+          "Side Trunk",
+          "Pochette Métis",
+          "Capucines"
         ]
       },
       {
@@ -29,7 +39,11 @@ const EXPERT_CATALOG = [
         "styles": [
           "Jackie",
           "Horsebit 1955",
-          "Dionysus"
+          "Dionysus",
+          "GG Marmont",
+          "Ophidia",
+          "Bamboo 1947",
+          "Blondie"
         ]
       },
       {
@@ -37,7 +51,148 @@ const EXPERT_CATALOG = [
         "styles": [
           "Lady Dior",
           "Saddle",
-          "Book Tote"
+          "Book Tote",
+          "Lady D-Joy",
+          "Dior Toujours",
+          "Dior Bobby",
+          "30 Montaigne"
+        ]
+      },
+      {
+        "name": "Acne Studios",
+        "styles": [
+          "Musubi",
+          "Multipocket"
+        ]
+      },
+      {
+        "name": "巴黎世家 Balenciaga",
+        "styles": [
+          "Le City",
+          "Le Cagole",
+          "Hourglass",
+          "Crush",
+          "Rodeo"
+        ]
+      },
+      {
+        "name": "葆蝶家 Bottega Veneta",
+        "styles": [
+          "Andiamo",
+          "Cassette",
+          "Cabat",
+          "Jodie",
+          "Hop",
+          "Loop"
+        ]
+      },
+      {
+        "name": "博柏利 Burberry",
+        "styles": [
+          "Rocking Horse",
+          "Knight",
+          "Lola",
+          "Check Tote"
+        ]
+      },
+      {
+        "name": "赛琳 Celine",
+        "styles": [
+          "Ava",
+          "Belt Bag",
+          "Triomphe",
+          "16",
+          "Luggage",
+          "Cabas"
+        ]
+      },
+      {
+        "name": "蔻驰 Coach",
+        "styles": [
+          "Tabby",
+          "Rogue",
+          "Brooklyn",
+          "Swinger",
+          "Willow",
+          "Hamptons"
+        ]
+      },
+      {
+        "name": "蔻依 Chloé",
+        "styles": [
+          "Marcie",
+          "Woody",
+          "Paddington",
+          "Chloé Spin"
+        ]
+      },
+      {
+        "name": "芬迪 Fendi",
+        "styles": [
+          "Peekaboo",
+          "Baguette",
+          "By The Way",
+          "Fendi First"
+        ]
+      },
+      {
+        "name": "纪梵希 Givenchy",
+        "styles": [
+          "Antigona",
+          "Voyou",
+          "Pandora"
+        ]
+      },
+      {
+        "name": "爱马仕 Hermès",
+        "styles": [
+          "Birkin",
+          "Kelly",
+          "Constance",
+          "Evelyne",
+          "Picotin",
+          "Garden Party"
+        ]
+      },
+      {
+        "name": "缪缪 Miu Miu",
+        "styles": [
+          "Wander",
+          "Arcadie",
+          "Beau"
+        ]
+      },
+      {
+        "name": "普拉达 Prada",
+        "styles": [
+          "Galleria",
+          "Cleo",
+          "Arqué",
+          "Buckle",
+          "Re-Edition 2000",
+          "Re-Edition 2005"
+        ]
+      },
+      {
+        "name": "圣罗兰 Saint Laurent",
+        "styles": [
+          "Le 5 à 7",
+          "Loulou",
+          "Niki",
+          "Sunset",
+          "Sac de Jour",
+          "Kate",
+          "Cassandre"
+        ]
+      },
+      {
+        "name": "汤丽柏琦 Tory Burch",
+        "styles": [
+          "Kira",
+          "Fleming",
+          "Miller",
+          "Robinson",
+          "Perry"
         ]
       }
     ],
@@ -90,7 +245,13 @@ const EXPERT_CATALOG = [
         "styles": [
           "口红 / 唇釉",
           "粉底 / 遮瑕",
-          "眼影 / 腮红"
+          "眼影 / 腮红",
+          "Rouge Dior",
+          "Dior Addict",
+          "Dior Forever",
+          "Dior Backstage",
+          "Miss Dior",
+          "Sauvage"
         ]
       },
       {
@@ -98,7 +259,13 @@ const EXPERT_CATALOG = [
         "styles": [
           "口红 / 唇釉",
           "粉底 / 遮瑕",
-          "香水"
+          "香水",
+          "Rouge Allure",
+          "Rouge Coco",
+          "Les Beiges",
+          "N°5",
+          "Coco Mademoiselle",
+          "Chance"
         ]
       },
       {
@@ -106,7 +273,10 @@ const EXPERT_CATALOG = [
         "styles": [
           "口红",
           "粉底",
-          "眼影"
+          "眼影",
+          "Studio Fix",
+          "Powder Kiss",
+          "Lustreglass"
         ]
       },
       {
@@ -114,7 +284,73 @@ const EXPERT_CATALOG = [
         "styles": [
           "口红",
           "粉底",
-          "护肤品"
+          "护肤品",
+          "L'Absolu Rouge",
+          "Teint Idole Ultra Wear",
+          "Génifique",
+          "Absolue",
+          "Rénergie"
+        ]
+      },
+      {
+        "name": "阿玛尼 Giorgio Armani",
+        "styles": [
+          "Luminous Silk",
+          "Power Fabric",
+          "Lip Maestro",
+          "Lip Power",
+          "Acqua di Giò",
+          "Sì"
+        ]
+      },
+      {
+        "name": "雅诗兰黛 Estée Lauder",
+        "styles": [
+          "Advanced Night Repair",
+          "Double Wear",
+          "Revitalizing Supreme+",
+          "Re-Nutriv",
+          "Pure Color"
+        ]
+      },
+      {
+        "name": "祖玛珑 Jo Malone London",
+        "styles": [
+          "Wood Sage & Sea Salt",
+          "English Pear & Freesia",
+          "Peony & Blush Suede",
+          "Lime Basil & Mandarin",
+          "Myrrh & Tonka"
+        ]
+      },
+      {
+        "name": "NARS 纳斯",
+        "styles": [
+          "Light Reflecting",
+          "Soft Matte",
+          "Afterglow",
+          "Radiant Creamy",
+          "Orgasm"
+        ]
+      },
+      {
+        "name": "资生堂 Shiseido",
+        "styles": [
+          "Ultimune",
+          "Vital Perfection",
+          "Benefiance",
+          "Synchro Skin"
+        ]
+      },
+      {
+        "name": "圣罗兰 YSL",
+        "styles": [
+          "Rouge Pur Couture",
+          "Loveshine",
+          "All Hours",
+          "Libre",
+          "Black Opium",
+          "Touche Éclat"
         ]
       }
     ],
@@ -132,7 +368,13 @@ const EXPERT_CATALOG = [
         "styles": [
           "Air Force 1",
           "Dunk",
-          "Air Max"
+          "Air Max",
+          "Air Max 1",
+          "Air Max 90",
+          "Air Max 95",
+          "Air Max 97",
+          "Cortez",
+          "Blazer"
         ]
       },
       {
@@ -140,7 +382,12 @@ const EXPERT_CATALOG = [
         "styles": [
           "Samba",
           "Stan Smith",
-          "Superstar"
+          "Superstar",
+          "Gazelle",
+          "Campus 00s",
+          "Handball Spezial",
+          "SL 72",
+          "Ultraboost"
         ]
       },
       {
@@ -148,7 +395,13 @@ const EXPERT_CATALOG = [
         "styles": [
           "574",
           "990",
-          "2002R"
+          "2002R",
+          "530",
+          "550",
+          "9060",
+          "1906R",
+          "327",
+          "991"
         ]
       },
       {
@@ -157,6 +410,90 @@ const EXPERT_CATALOG = [
           "Chuck Taylor All Star",
           "Chuck 70",
           "One Star"
+        ]
+      },
+      {
+        "name": "亚瑟士 ASICS",
+        "styles": [
+          "GEL-KAYANO",
+          "GEL-NIMBUS",
+          "GEL-LYTE III",
+          "GEL-1130",
+          "GEL-NYC"
+        ]
+      },
+      {
+        "name": "HOKA",
+        "styles": [
+          "Clifton",
+          "Bondi",
+          "Speedgoat",
+          "Mach"
+        ]
+      },
+      {
+        "name": "Jordan",
+        "styles": [
+          "Air Jordan 1",
+          "Air Jordan 3",
+          "Air Jordan 4",
+          "Air Jordan 5",
+          "Air Jordan 6",
+          "Air Jordan 11"
+        ]
+      },
+      {
+        "name": "昂跑 On",
+        "styles": [
+          "Cloud",
+          "Cloudmonster",
+          "Cloudsurfer",
+          "Cloudnova",
+          "Cloudrunner"
+        ]
+      },
+      {
+        "name": "彪马 PUMA",
+        "styles": [
+          "Suede",
+          "Speedcat",
+          "Palermo",
+          "Clyde"
+        ]
+      },
+      {
+        "name": "锐步 Reebok",
+        "styles": [
+          "Club C",
+          "Classic Leather",
+          "Question Mid"
+        ]
+      },
+      {
+        "name": "萨洛蒙 Salomon",
+        "styles": [
+          "XT-6",
+          "XT-4",
+          "ACS Pro",
+          "Speedcross"
+        ]
+      },
+      {
+        "name": "添柏岚 Timberland",
+        "styles": [
+          "6-Inch Premium",
+          "Euro Hiker",
+          "3-Eye Lug"
+        ]
+      },
+      {
+        "name": "范斯 Vans",
+        "styles": [
+          "Old Skool",
+          "Authentic",
+          "Sk8-Hi",
+          "Slip-On",
+          "Era"
         ]
       }
     ],
@@ -174,7 +511,11 @@ const EXPERT_CATALOG = [
         "styles": [
           "T恤",
           "卫衣",
-          "运动外套"
+          "运动外套",
+          "ACG",
+          "Nike Sportswear",
+          "Nike Tech Fleece",
+          "Nike Dri-FIT"
         ]
       },
       {
@@ -182,7 +523,11 @@ const EXPERT_CATALOG = [
         "styles": [
           "T恤",
           "运动套装",
-          "运动外套"
+          "运动外套",
+          "Adicolor",
+          "adidas Originals",
+          "adidas Z.N.E.",
+          "adidas TERREX"
         ]
       },
       {
@@ -190,7 +535,11 @@ const EXPERT_CATALOG = [
         "styles": [
           "衬衫",
           "针织衫",
-          "羽绒服"
+          "羽绒服",
+          "AIRism",
+          "HEATTECH",
+          "Ultra Light Down",
+          "UNIQLO U"
         ]
       },
       {
@@ -198,7 +547,69 @@ const EXPERT_CATALOG = [
         "styles": [
           "Polo 衫",
           "衬衫",
-          "针织衫"
+          "针织衫",
+          "Polo Ralph Lauren",
+          "Purple Label",
+          "RRL",
+          "Lauren Ralph Lauren"
+        ]
+      },
+      {
+        "name": "始祖鸟 Arc’teryx",
+        "styles": [
+          "Alpha",
+          "Atom",
+          "Beta",
+          "Cerium",
+          "Gamma"
+        ]
+      },
+      {
+        "name": "哥伦比亚 Columbia",
+        "styles": [
+          "Titanium",
+          "Omni-Heat",
+          "Watertight II"
+        ]
+      },
+      {
+        "name": "李维斯 Levi’s",
+        "styles": [
+          "501",
+          "502",
+          "505",
+          "511",
+          "512",
+          "550",
+          "Type III Trucker"
+        ]
+      },
+      {
+        "name": "lululemon",
+        "styles": [
+          "Align",
+          "ABC",
+          "Define",
+          "Scuba",
+          "Wunder Train"
+        ]
+      },
+      {
+        "name": "巴塔哥尼亚 Patagonia",
+        "styles": [
+          "Better Sweater",
+          "Classic Retro-X",
+          "Nano Puff",
+          "Torrentshell"
+        ]
+      },
+      {
+        "name": "北面 The North Face",
+        "styles": [
+          "Nuptse",
+          "Denali",
+          "Mountain Jacket",
+          "Summit Series"
         ]
       }
     ],
@@ -216,7 +627,13 @@ const EXPERT_CATALOG = [
         "styles": [
           "Datejust",
           "Submariner",
-          "Daytona"
+          "Daytona",
+          "Oyster Perpetual",
+          "Day-Date",
+          "GMT-Master II",
+          "Explorer",
+          "Sea-Dweller",
+          "Sky-Dweller"
         ]
       },
       {
@@ -224,7 +641,12 @@ const EXPERT_CATALOG = [
         "styles": [
           "Seamaster",
           "Speedmaster",
-          "Constellation"
+          "Constellation",
+          "De Ville",
+          "Globemaster",
+          "Planet Ocean",
+          "Aqua Terra",
+          "Railmaster"
         ]
       },
       {
@@ -232,7 +654,11 @@ const EXPERT_CATALOG = [
         "styles": [
           "Tank",
           "Santos",
-          "Ballon Bleu"
+          "Ballon Bleu",
+          "Panthère de Cartier",
+          "Pasha de Cartier",
+          "Baignoire",
+          "Ronde de Cartier"
         ]
       },
       {
@@ -240,7 +666,92 @@ const EXPERT_CATALOG = [
         "styles": [
           "Master Collection",
           "DolceVita",
-          "HydroConquest"
+          "HydroConquest",
+          "Spirit",
+          "Conquest",
+          "Flagship",
+          "Record",
+          "Legend Diver"
+        ]
+      },
+      {
+        "name": "爱彼 Audemars Piguet",
+        "styles": [
+          "Royal Oak",
+          "Royal Oak Offshore",
+          "Royal Oak Concept",
+          "Code 11.59"
+        ]
+      },
+      {
+        "name": "百年灵 Breitling",
+        "styles": [
+          "Navitimer",
+          "Chronomat",
+          "Superocean",
+          "Avenger",
+          "Premier"
+        ]
+      },
+      {
+        "name": "万国 IWC",
+        "styles": [
+          "Portugieser",
+          "Pilot’s Watches",
+          "Portofino",
+          "Ingenieur",
+          "Aquatimer"
+        ]
+      },
+      {
+        "name": "百达翡丽 Patek Philippe",
+        "styles": [
+          "Nautilus",
+          "Aquanaut",
+          "Calatrava",
+          "Grand Complications",
+          "Twenty~4"
+        ]
+      },
+      {
+        "name": "精工 Seiko",
+        "styles": [
+          "Prospex",
+          "Presage",
+          "Astron",
+          "Seiko 5 Sports",
+          "King Seiko"
+        ]
+      },
+      {
+        "name": "泰格豪雅 TAG Heuer",
+        "styles": [
+          "Carrera",
+          "Monaco",
+          "Aquaracer",
+          "Formula 1",
+          "Autavia"
+        ]
+      },
+      {
+        "name": "天梭 Tissot",
+        "styles": [
+          "PRX",
+          "Le Locle",
+          "Seastar",
+          "Gentleman",
+          "T-Touch"
+        ]
+      },
+      {
+        "name": "帝舵 Tudor",
+        "styles": [
+          "Black Bay",
+          "Black Bay 58",
+          "Pelagos",
+          "Royal",
+          "1926",
+          "Ranger"
         ]
       }
     ],
@@ -258,7 +769,10 @@ const EXPERT_CATALOG = [
         "styles": [
           "丝巾",
           "腰带",
-          "帽饰"
+          "帽饰",
+          "Carré 70 丝巾",
+          "Carré 90 丝巾",
+          "Twilly 丝巾"
         ]
       },
       {
@@ -266,7 +780,10 @@ const EXPERT_CATALOG = [
         "styles": [
           "腰带",
           "围巾",
-          "帽饰"
+          "帽饰",
+          "Double G 腰带",
+          "GG Marmont 腰带",
+          "GG Jacquard 围巾"
         ]
       },
       {
@@ -274,7 +791,10 @@ const EXPERT_CATALOG = [
         "styles": [
           "腰带",
           "丝巾",
-          "太阳镜"
+          "太阳镜",
+          "LV Initiales 腰带",
+          "Monogram 披肩",
+          "Monogram 围巾"
         ]
       },
       {
@@ -283,6 +803,58 @@ const EXPERT_CATALOG = [
           "围巾",
           "帽饰",
           "腰带"
+        ]
+      },
+      {
+        "name": "卡地亚 Cartier",
+        "styles": [
+          "Signature C de Cartier 眼镜",
+          "Première de Cartier 眼镜",
+          "Santos de Cartier 眼镜"
+        ]
+      },
+      {
+        "name": "赛琳 Celine",
+        "styles": [
+          "Triomphe 太阳镜",
+          "Triomphe 腰带"
+        ]
+      },
+      {
+        "name": "迪奥 Dior",
+        "styles": [
+          "DiorSignature 太阳镜",
+          "DiorPacific 太阳镜",
+          "30Montaigne 太阳镜"
+        ]
+      },
+      {
+        "name": "欧克利 Oakley",
+        "styles": [
+          "Holbrook",
+          "Frogskins",
+          "Radar EV Path",
+          "Sutro",
+          "Jawbreaker",
+          "Flak 2.0"
+        ]
+      },
+      {
+        "name": "普拉达 Prada",
+        "styles": [
+          "Symbole 太阳镜",
+          "Linea Rossa 太阳镜"
+        ]
+      },
+      {
+        "name": "雷朋 Ray-Ban",
+        "styles": [
+          "Wayfarer",
+          "New Wayfarer",
+          "Aviator",
+          "Clubmaster",
+          "Round Metal",
+          "Erika"
         ]
       }
     ],
@@ -381,7 +953,12 @@ const EXPERT_CATALOG = [
         "styles": [
           "口红包装",
           "粉底包装",
-          "香水包装"
+          "香水包装",
+          "Rouge Dior",
+          "Dior Addict",
+          "Dior Forever",
+          "Miss Dior",
+          "Sauvage"
         ]
       },
       {
@@ -389,14 +966,22 @@ const EXPERT_CATALOG = [
         "styles": [
           "口红包装",
           "粉底包装",
-          "香水包装"
+          "香水包装",
+          "Rouge Allure",
+          "Rouge Coco",
+          "Les Beiges",
+          "N°5",
+          "Coco Mademoiselle"
         ]
       },
       {
         "name": "Estée Lauder",
         "styles": [
           "护肤品包装",
-          "粉底包装"
+          "粉底包装",
+          "Advanced Night Repair",
+          "Double Wear",
+          "Revitalizing Supreme+"
         ]
       },
       {
@@ -404,7 +989,46 @@ const EXPERT_CATALOG = [
         "styles": [
           "护肤品包装",
           "口红包装",
-          "粉底包装"
+          "粉底包装",
+          "L'Absolu Rouge",
+          "Teint Idole Ultra Wear",
+          "Génifique",
+          "Absolue"
+        ]
+      },
+      {
+        "name": "阿玛尼 Giorgio Armani",
+        "styles": [
+          "Luminous Silk",
+          "Lip Maestro",
+          "Acqua di Giò",
+          "Sì"
+        ]
+      },
+      {
+        "name": "祖玛珑 Jo Malone London",
+        "styles": [
+          "Wood Sage & Sea Salt",
+          "English Pear & Freesia",
+          "Peony & Blush Suede"
+        ]
+      },
+      {
+        "name": "NARS 纳斯",
+        "styles": [
+          "Light Reflecting",
+          "Soft Matte",
+          "Afterglow",
+          "Radiant Creamy"
+        ]
+      },
+      {
+        "name": "圣罗兰 YSL",
+        "styles": [
+          "Rouge Pur Couture",
+          "Loveshine",
+          "Libre",
+          "Black Opium"
         ]
       }
     ],
@@ -463,7 +1087,14 @@ const EXPERT_CATALOG = [
         "styles": [
           "手机",
           "平板电脑",
-          "笔记本电脑"
+          "笔记本电脑",
+          "iPhone",
+          "iPad",
+          "MacBook Air",
+          "MacBook Pro",
+          "AirPods",
+          "Apple Watch",
+          "Mac mini"
         ]
       },
       {
@@ -471,7 +1102,12 @@ const EXPERT_CATALOG = [
         "styles": [
           "手机",
           "平板电脑",
-          "笔记本电脑"
+          "笔记本电脑",
+          "Mate 系列",
+          "Pura 系列",
+          "MatePad",
+          "MateBook",
+          "Watch GT"
         ]
       },
       {
@@ -479,7 +1115,12 @@ const EXPERT_CATALOG = [
         "styles": [
           "相机",
           "耳机",
-          "游戏主机"
+          "游戏主机",
+          "Alpha 7",
+          "Alpha 6000",
+          "PlayStation 5",
+          "WH-1000XM",
+          "WF-1000XM"
         ]
       },
       {
@@ -487,7 +1128,74 @@ const EXPERT_CATALOG = [
         "styles": [
           "吸尘器",
           "吹风机",
-          "空气净化风扇"
+          "空气净化风扇",
+          "Airwrap",
+          "Supersonic",
+          "V8",
+          "V12 Detect Slim",
+          "V15 Detect",
+          "Purifier Cool"
+        ]
+      },
+      {
+        "name": "博士 Bose",
+        "styles": [
+          "QuietComfort",
+          "SoundLink",
+          "Smart Soundbar"
+        ]
+      },
+      {
+        "name": "佳能 Canon",
+        "styles": [
+          "EOS R",
+          "EOS M",
+          "PowerShot G",
+          "IXUS"
+        ]
+      },
+      {
+        "name": "戴尔 Dell",
+        "styles": [
+          "XPS",
+          "Inspiron",
+          "Latitude",
+          "Alienware"
+        ]
+      },
+      {
+        "name": "富士 Fujifilm",
+        "styles": [
+          "X100",
+          "X-T",
+          "X-Pro",
+          "GFX"
+        ]
+      },
+      {
+        "name": "联想 Lenovo",
+        "styles": [
+          "ThinkPad X1",
+          "ThinkBook",
+          "Yoga"
+        ]
+      },
+      {
+        "name": "任天堂 Nintendo",
+        "styles": [
+          "Nintendo Switch",
+          "Nintendo Switch Lite",
+          "Nintendo Switch（OLED款）"
+        ]
+      },
+      {
+        "name": "三星 Samsung",
+        "styles": [
+          "Galaxy S",
+          "Galaxy Z",
+          "Galaxy Tab S",
+          "Galaxy Buds",
+          "Galaxy Watch"
         ]
       }
     ],
@@ -505,7 +1213,13 @@ const EXPERT_CATALOG = [
         "styles": [
           "手机外观",
           "平板电脑外观",
-          "智能手表外观"
+          "智能手表外观",
+          "iPhone",
+          "iPad",
+          "MacBook Air",
+          "MacBook Pro",
+          "AirPods",
+          "Apple Watch"
         ]
       },
       {
@@ -513,7 +1227,12 @@ const EXPERT_CATALOG = [
         "styles": [
           "手机外观",
           "平板电脑外观",
-          "智能手表外观"
+          "智能手表外观",
+          "Mate 系列",
+          "Pura 系列",
+          "MatePad",
+          "MateBook",
+          "Watch GT"
         ]
       },
       {
@@ -521,7 +1240,12 @@ const EXPERT_CATALOG = [
         "styles": [
           "手机外观",
           "平板电脑外观",
-          "智能手表外观"
+          "智能手表外观",
+          "Galaxy S",
+          "Galaxy Z",
+          "Galaxy Tab S",
+          "Galaxy Buds",
+          "Galaxy Watch"
         ]
       },
       {
@@ -529,7 +1253,46 @@ const EXPERT_CATALOG = [
         "styles": [
           "相机外观",
           "耳机外观",
-          "游戏主机外观"
+          "游戏主机外观",
+          "Alpha 7",
+          "Alpha 6000",
+          "PlayStation 5",
+          "WH-1000XM",
+          "WF-1000XM"
+        ]
+      },
+      {
+        "name": "佳能 Canon",
+        "styles": [
+          "EOS R",
+          "EOS M",
+          "PowerShot G",
+          "IXUS"
+        ]
+      },
+      {
+        "name": "富士 Fujifilm",
+        "styles": [
+          "X100",
+          "X-T",
+          "X-Pro",
+          "GFX"
+        ]
+      },
+      {
+        "name": "联想 Lenovo",
+        "styles": [
+          "ThinkPad X1",
+          "ThinkBook",
+          "Yoga"
+        ]
+      },
+      {
+        "name": "任天堂 Nintendo",
+        "styles": [
+          "Nintendo Switch",
+          "Nintendo Switch Lite",
+          "Nintendo Switch（OLED款）"
         ]
       }
     ],

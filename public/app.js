@@ -221,7 +221,7 @@ $('newConversation').onclick=()=>{uploadRevision++;uploading=false;appraisal.res
 $('menuHome').onclick=()=>{closeConversation();$('menuPanel').hidden=true;};
 document.addEventListener('click',e=>{if(!e.target.closest('.menu-panel')&&!e.target.closest('.icon-menu'))$('menuPanel').hidden=true;});
 // Retain original expert interactions and content. No payment or real order is submitted.
-let agreed=false;$('expertCta').onclick=()=>window.expertPicker.open();
+$('expertCta').onclick=()=>window.expertPicker.open();
 document.querySelectorAll('.home-mode-tab-item').forEach(el=>el.onclick=()=>setTab(el.dataset.tab));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!e.defaultPrevented&&!document.querySelector('dialog[open]')){if($('skillPopup').classList.contains('show')||$('agreeSheet').classList.contains('show'))closePopup();else if(!$('menuPanel').hidden)$('menuPanel').hidden=true;else closeConversation();}if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"],[role="tab"]')){e.preventDefault();e.target.click();}if(e.key==='Tab'&&$('skillPopup').classList.contains('show')){const focusables=[...$('skillPopup').querySelectorAll('button,[tabindex="0"]')];const first=focusables[0],last=focusables.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
 new ResizeObserver(()=>positionCards(true)).observe($('skillCarousel'));

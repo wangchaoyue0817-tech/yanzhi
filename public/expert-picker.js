@@ -121,9 +121,8 @@
    } else if (previous?.view === 'series' && brandTrigger?.isConnected) {
     brandTrigger.focus({ preventScroll: true });
    } else if (previous?.view === 'upload') {
-    if (!categoryChanged) renderBrands(false);
-    const selected = e('epBrandGroups').querySelector(`[data-ep-brand="${previous.brand}"]`);
-    (selected ?? panel).focus({ preventScroll: true });
+    const previousBrand = e('epBrandGroups').querySelector(`[data-ep-brand="${previous.brand}"]`);
+    (previousBrand ?? panel).focus({ preventScroll: true });
    } else if (previous?.view === 'feedback') {
     e('epFeedback').focus({ preventScroll: true });
    } else {
@@ -221,12 +220,9 @@
   const { groups, popular } = directory.brands(category, e('epGroupSearch').value);
   e('epPopular').hidden = popular.length === 0;
   e('epPopularItems').innerHTML = popular.map(item => `<button type="button" data-ep-brand="${item.index}">${html(item.name)}</button>`).join('');
-  updateList(brandList, groups, item => {
-   const selected = selection?.category === route.category && selection.brand === item.index;
-   const style = selected ? category.groups[item.index].styles[selection.series] : null;
-   const styleName = typeof style === 'string' ? style : style?.name;
-   return `<button type="button" class="ep-directory-row" data-ep-brand="${item.index}" aria-haspopup="dialog"${selected ? ' aria-current="true"' : ''}><span class="ep-row-label">${html(item.name)}${styleName ? `<small class="ep-row-secondary">${html(styleName)}</small>` : ''}</span>${glyph('caret-right')}</button>`;
-  }, `没有找到相关${category.groupLabel}`, resetScroll);
+  updateList(brandList, groups, item =>
+   `<button type="button" class="ep-directory-row" data-ep-brand="${item.index}" aria-haspopup="dialog"><span class="ep-row-label">${html(item.name)}</span>${glyph('caret-right')}</button>`,
+   `没有找到相关${category.groupLabel}`, resetScroll);
  }
 
  function renderSeries(resetScroll) {

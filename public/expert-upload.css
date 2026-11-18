@@ -79,7 +79,6 @@
   transition: background .18s, border-color .18s;
 }
 
-.ep-upload-choose:not(:disabled):hover,
 .ep-upload-choose:not(:disabled):active {
   border-color: #b8a9ff;
   background: #222a47;
@@ -165,6 +164,8 @@
   font-size: 20px;
   line-height: 22px;
 }
+
+.ep-upload-remove:active { opacity: .7; }
 
 .ep-upload-remove::before {
   position: absolute;

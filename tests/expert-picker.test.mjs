@@ -112,6 +112,14 @@ test('expert picker routes from category and brand to photo upload on the first 
   assert.equal(get('epSeriesLayer').hidden, true);
   assert.equal(get('epConfirm'), undefined);
 
+  const popularBrands = get('epPopularItems');
+  assert.equal(popularBrands.children.length, 3);
+  click(popularBrands.querySelector('[data-ep-brand="0"]'));
+  assert.equal(get('epDrawerTitle').textContent, '香奈儿 Chanel');
+  click(get('epSeriesMask'));
+  assert.equal(get('epSeriesLayer').hidden, true);
+  assert.equal(get('epPopularItems'), popularBrands);
+
   const field = get('epGroupSearch');
   assert.equal(field.placeholder, '搜索品牌');
   field.value = 'Classic Flap';
